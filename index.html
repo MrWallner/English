@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Englisch-Lerntrainer</title>
+<style>
+:root{--ink:#29243a;--muted:#6f6577;--bg:#f8f5fa;--line:#e9dce8;--brand:#ac186d;--soft:#f8f1f8;--good:#1f9a5e;--goodbg:#e9f8ed;--bad:#d9822b;--badbg:#fff3e9;
+  font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+*{box-sizing:border-box}
+body{margin:0}
+.wrap{max-width:760px;margin:auto;padding:14px 14px 50px}
+header{background:linear-gradient(115deg,#8c145f,#dd4a91);color:#fff;padding:14px 20px;border-radius:18px}
+header h1{font-size:1.2rem;margin:6px 0 0}
+.pill{background:#fff3fa;color:#9a185f;display:inline-block;padding:4px 11px;border-radius:20px;font-weight:700;font-size:.78rem;text-transform:uppercase}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin:14px 0;box-shadow:0 3px 14px #3020350b}
+.card.compact{padding:12px 18px}
+h2{font-size:1.25rem;margin:2px 0 12px}
+h3{font-size:1.05rem;margin:18px 0 6px}
+button{font:inherit;cursor:pointer;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:10px 16px;min-height:44px}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{background:#efe6ef;color:#452e46}
+button.small{min-height:36px;padding:6px 12px;font-size:.88rem}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.note{font-size:.86rem;color:var(--muted)}
+.q{font-weight:700;font-size:1.1rem;margin:4px 0}
+.choices{display:grid;gap:9px;margin:14px 0}
+.choice{text-align:left;background:var(--soft);color:var(--ink);border:1px solid #e9d8e7}
+.choice.sel{outline:2px solid var(--brand);background:#fbe4f2}
+.choice.right{background:var(--goodbg);border-color:var(--good);outline:0}
+.choice.wrong{background:var(--badbg);border-color:var(--bad);outline:0}
+.choice:disabled{opacity:1;cursor:default}
+.fb{border-left:4px solid #6b74c9;background:#eef1ff;padding:11px 14px;border-radius:8px;margin:12px 0}
+.fb.good{background:var(--goodbg);border-color:var(--good)}
+.fb.bad{background:var(--badbg);border-color:var(--bad)}
+.sol{background:#fff8d6;border:2px dashed #d7a900;padding:12px 14px;border-radius:10px;font-size:1.2rem;font-weight:700;margin:10px 0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.input{width:100%;border:1px solid #c3b5c1;padding:12px;border-radius:10px;margin:8px 0;font:inherit;font-size:1.05rem;background:#fff;color:var(--ink)}
+textarea.input{min-height:110px;resize:vertical}
+.input[readonly]{background:#f6f2f6}
+select.input{padding:10px}
+label{display:block;font-size:.9rem;font-weight:600}
+.two{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.unit{margin-top:6px}
+.unit h3{margin:4px 0 8px}
+.hwrow{display:flex;gap:8px;align-items:stretch;margin:8px 0}
+.hwbtn{flex:1;text-align:left;background:var(--soft);color:var(--ink);border:1px solid #e9d8e7;padding:12px 14px}
+.hwbtn b{display:block;font-size:1rem}
+.hwbtn.done{background:var(--goodbg);border-color:#bfe6cc}
+.progress{height:9px;background:#e9e0e8;border-radius:9px;overflow:hidden;margin:8px 0 6px}
+.progress>div{height:100%;background:#a31d69;transition:width .3s}
+.clock{font-size:.88rem;color:var(--muted)}
+.clock.paused{color:#b4621b;font-weight:600}
+.clock.reached{color:var(--good);font-weight:600}
+.reading{background:#fffaf0;border:1px solid #ead9b4;border-radius:12px;padding:14px 18px;line-height:1.75;white-space:pre-line}
+.gloss{display:inline-block;background:#f3e7f0;border-radius:20px;padding:5px 11px;font-size:.86rem;margin:10px 0}
+.tiles,.slot,.words{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.tile{background:#efe2ed;color:#32283b}
+.slot{border:2px dashed #cbb8c9;border-radius:10px;padding:10px;min-height:62px;align-items:center}
+.slot .tile{background:#fbe4f2}
+.preview{font-weight:700;margin:4px 0}
+.word{background:var(--soft);color:var(--ink);border:1px solid #e9d8e7;padding:8px 12px}
+.word.hit{background:var(--goodbg);border-color:var(--good)}
+.word.bad{background:var(--badbg);border-color:var(--bad)}
+.word.miss{text-decoration:line-through}
+.word:disabled{opacity:1;cursor:default}
+.match{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.match .col{display:grid;gap:8px;align-content:start}
+.mitem{text-align:left;background:var(--soft);color:var(--ink);border:1px solid #e9d8e7;padding:9px 12px}
+.mitem.active{outline:3px solid var(--brand);background:#fbe4f2}
+.mitem .n{display:inline-block;min-width:1.5em;height:1.5em;line-height:1.5em;text-align:center;border-radius:50%;color:#fff;font-size:.8rem;font-weight:700;margin-right:6px;background:#bbb}
+.c1{background:#ac186d!important}.c2{background:#2a6fb0!important}.c3{background:#1f9a5e!important}.c4{background:#c76a12!important}.c5{background:#6b4fbb!important}.c6{background:#0f8a8a!important}.c7{background:#7a5a2a!important}.c8{background:#3a3a3a!important}
+.mitem.paired{border-color:#9b8a99}
+.mres{list-style:none;padding:0;margin:10px 0}
+.mres li{padding:6px 0;border-bottom:1px solid #f0e6ef}
+.scene{position:relative;width:100%;aspect-ratio:16/10;border-radius:14px;overflow:hidden;margin:12px 0;container-type:inline-size}
+.scene .ground{position:absolute;left:0;right:0;bottom:0;height:22%}
+.scene .it{position:absolute;line-height:1;transform:translate(-50%,-50%);user-select:none;-webkit-user-select:none}
+.nav{margin-top:6px;display:flex;gap:8px;flex-wrap:wrap}
+ul{padding-left:22px}
+.rule{background:#f5eef7;border-radius:10px;padding:10px 14px}
+/* Ergebniskarte */
+.rcard{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 4px 18px #3020351a;margin:14px 0}
+.rtop{background:linear-gradient(115deg,#8c145f,#dd4a91);color:#fff;padding:12px 18px}
+.rtop.partial{background:linear-gradient(115deg,#9a5a12,#d99a2b)}
+.rtop b{font-size:1.15rem;display:block}
+.rtop span{font-size:.85rem;opacity:.95}
+.rbody{padding:14px 18px 12px;text-align:center}
+.rname{font-size:1.35rem;font-weight:800;line-height:1.25}
+.rhw{color:var(--muted);font-size:.95rem;margin-top:2px}
+.rbig{font-size:3.3rem;font-weight:800;line-height:1;margin:12px 0 0;color:#a31d69}
+.rbig.partial{color:#b06a12}
+.rbiglabel{font-size:.85rem;color:var(--muted);margin-bottom:10px}
+.rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rgrid div{background:var(--soft);border-radius:12px;padding:9px 4px}
+.rgrid b{display:block;font-size:1.02rem}
+.rgrid span{font-size:.74rem;color:var(--muted);line-height:1.2;display:block}
+.rwords{margin:12px 0 0;font-size:.95rem}
+.rflag{margin-top:10px;background:var(--badbg);border-radius:10px;padding:7px 10px;font-size:.85rem;color:#8a4a0c}
+.rfoot{display:flex;justify-content:space-between;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid #f0e6ef;font-size:.85rem;color:var(--muted)}
+.rfoot b{color:var(--ink);letter-spacing:.08em}
+.steps{margin:6px 0 0;padding-left:20px}
+.linkbox{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:#fcfafc}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;border-bottom:1px solid #eee4ee;padding:7px 5px;vertical-align:top}
+.ok{color:var(--good);font-weight:700}.err{color:#b4621b;font-weight:700}
+footer{text-align:center;margin-top:20px}
+@media(max-width:560px){.card{padding:15px}.two{grid-template-columns:1fr}.rbig{font-size:2.9rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="hdr"><span class="pill" id="pill">Englisch</span><h1 id="htitle">Englisch-Lerntrainer</h1></header>
+  <main id="app"><section class="card">Aufgaben werden geladen …</section></main>
+  <footer class="note" id="foot"></footer>
+</div>
+<script>
+'use strict';
+/* =====================================================================
+   EINSTELLUNGEN – hier darfst du etwas ändern
+   ===================================================================== */
+const CONFIG = {
+  title: 'Englisch-Lerntrainer',
+  // Unit-Dateien im Ordner "units". Neue Units einfach in diese Liste eintragen (neueste zuerst).
+  units: [
+    'units/more2_unit3_halloween.js'
+  ],
+  minSeconds: 15 * 60,     // Mindest-Lernzeit pro Hausübung (nur aktive Zeit)
+  maxSeconds: 20 * 60,     // ab hier fallen offene Wiederholungen weg – nur Pflichtaufgaben bleiben
+  secret: 'lt-7f3k9q-2026',// für das Prüfzeichen auf der Ergebniskarte – beliebig ändern
+  storeKey: 'englisch-lerntrainer-v7',
+  idleLimit: 90,           // ohne Tippen/Scrollen pausiert die Uhr nach … Sekunden
+  stepCap: 180,            // höchstens so viele Sekunden pro Aufgabe zählen als Lernzeit
+  readingCap: 420,         // … beim Lesen eines Textes (erste Frage)
+  writingCap: 360,         // … bei freien Schreibaufgaben
+  quickMs: 1500,           // Antwort schneller als 1,5 s → „Schnellklick“
+  quickReadMs: 15000,      // erste Lesefrage nach weniger als 15 s → Text vermutlich nicht gelesen
+  flagAt: 6,               // ab so vielen Schnellklicks/Unsinn-Eingaben erscheint ein Hinweis auf der Karte
+  maxReviews: 8,           // höchstens so viele Wiederholungsaufgaben pro Hausübung
+  version: '7.0'
+};
+/* ===================================================================== */
+const UNITS = [], LOAD_ERRORS = [];
+function registerUnit(u){
+  if(!u||!u.id){LOAD_ERRORS.push('Eine Unit-Datei hat keine id.');return}
+  if(UNITS.some(x=>x.id===u.id)){LOAD_ERRORS.push('Unit doppelt eingetragen: '+u.id);return}
+  UNITS.push(u);
+}
+window.addEventListener('error',e=>{if(e.filename&&/units\//.test(e.filename))LOAD_ERRORS.push(`Fehler in ${e.filename.split('/').pop().split('?')[0]} (Zeile ${e.lineno}): ${e.message}`)});
+</script>
+<!--UNITS-INLINE-->
+<script>
+'use strict';
+/* =====================================================================
+   HILFSFUNKTIONEN
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+const app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=x=>JSON.parse(JSON.stringify(x));
+const shuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const fmt=n=>`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;
+const lowerFirst=s=>/^(You|We|The|They|She|He|It|I'm|My|Our|There)\b/.test(s)?s[0].toLowerCase()+s.slice(1):s;
+const reCache={};
+const RX=s=>reCache[s]||(reCache[s]=new RegExp(s,'i'));
+const CONTRACTIONS=[[/\bdo not\b/g,"don't"],[/\bdoes not\b/g,"doesn't"],[/\bdid not\b/g,"didn't"],[/\bis not\b/g,"isn't"],[/\bare not\b/g,"aren't"],[/\bwas not\b/g,"wasn't"],[/\bwere not\b/g,"weren't"],[/\bcan ?not\b/g,"can't"],[/\bshould not\b/g,"shouldn't"],[/\bwould not\b/g,"wouldn't"],[/\bcould not\b/g,"couldn't"],[/\bwill not\b/g,"won't"],[/\bhave not\b/g,"haven't"],[/\bhas not\b/g,"hasn't"],[/\bmust not\b/g,"mustn't"]];
+function canon(s,U){
+  let c=String(s??'').toLowerCase().replace(/[’‘`´]/g,"'").replace(/[“”„"«»]/g,'').replace(/\s+/g,' ').trim().replace(/[.!?]+$/,'').trim().replace(/\s+,/g,',');
+  CONTRACTIONS.forEach(([r,v])=>c=c.replace(r,v));
+  ((U||cur?.unit)?.normalize||[]).forEach(([a,b])=>c=c.replace(new RegExp(a,'gi'),b));
+  return c;
+}
+const splitSentences=v=>String(v).split(/[.!?]+/).map(x=>x.trim()).filter(Boolean);
+function lev(a,b){
+  if(Math.abs(a.length-b.length)>2)return 9;
+  let prev=Array.from({length:b.length+1},(_,j)=>j);
+  for(let i=1;i<=a.length;i++){const row=[i];for(let j=1;j<=b.length;j++)row[j]=Math.min(prev[j]+1,row[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=row}
+  return prev[b.length];
+}
+function cyrb53(str,seed=0){let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
+// Mini-Formatierung für Texte aus Unit-Dateien: **fett**, *kursiv*, ~~durchgestrichen~~, Listen mit "- ", Absätze
+function md(text){
+  return String(text||'').split(/\n{2,}/).map(block=>{
+    const lines=block.split('\n');
+    const inline=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/~~(.+?)~~/g,'<s>$1</s>').replace(/\*(.+?)\*/g,'<i>$1</i>');
+    if(lines.every(l=>/^- /.test(l)))return'<ul>'+lines.map(l=>'<li>'+inline(l.slice(2))+'</li>').join('')+'</ul>';
+    return'<p>'+lines.map(inline).join('<br>')+'</p>';
+  }).join('');
+}
+const normName=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+function dateStr(d=new Date()){const p=n=>String(n).padStart(2,'0');return`${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`}
+const LS_LABEL={S:'🟢 sicher',U:'🟡 überwiegend sicher',B:'🟠 braucht noch Übung','-':'–'};
+const DEFAULT_TOPIC={mc:'vocabulary',gap:'vocabulary',match:'vocabulary',sent:'grammar',order:'grammar',find:'grammar',reading:'reading',pic:'picture',open:'writing'};
+
+/* =====================================================================
+   SPEICHER
+   ===================================================================== */
+let storageOK=true,memStore=null;
+function loadStore(){
+  try{const raw=localStorage.getItem(CONFIG.storeKey);localStorage.setItem('__t','1');localStorage.removeItem('__t');const s=raw?JSON.parse(raw):{};s.last??={};s.users??={};return s}
+  catch(e){storageOK=false;return memStore||{last:{},users:{}}}
+}
+let store=loadStore();
+function save(){if(cur?.preview)return;try{localStorage.setItem(CONFIG.storeKey,JSON.stringify(store))}catch(e){storageOK=false;memStore=store}}
+let saveTimer=null;
+function saveSoon(){clearTimeout(saveTimer);saveTimer=setTimeout(save,400)}
+const userKey=(name,k)=>normName(k)+'|'+normName(name);
+
+/* =====================================================================
+   UNITS PRÜFEN (für die Lehrerseite)
+   ===================================================================== */
+function validateUnit(U){
+  const P=[],W=U.words||{},R=U.readings||{},SC=U.scenes||{};
+  const re=(r,where)=>{try{new RegExp(r,'i')}catch(e){P.push(`${where}: ungültiger Ausdruck „${r}“`)}};
+  if(!U.title)P.push('title fehlt');
+  if(!Array.isArray(U.homeworks)||!U.homeworks.length)P.push('homeworks fehlt oder leer');
+  (U.errors||[]).forEach((e,i)=>re(e.re,'errors '+(i+1)));
+  (U.normalize||[]).forEach((n,i)=>re(n[0],'normalize '+(i+1)));
+  Object.entries(R).forEach(([id,r])=>{
+    if(!r.text||!Array.isArray(r.questions)||!r.questions.length)P.push(`Lesetext „${id}“: text oder questions fehlt`);
+    (r.questions||[]).forEach((q,i)=>{if(q.tf==null&&(!q.right||!Array.isArray(q.wrong)||!q.wrong.length))P.push(`Lesetext „${id}“, Frage ${i+1}: right/wrong oder tf fehlt`)});
+  });
+  const tasks=[...(U.homeworks||[]).flatMap((h,hi)=>(h.tasks||[]).map((t,ti)=>[t,`HÜ ${hi+1}, Aufgabe ${ti+1}`])),...(U.extras||[]).map((t,i)=>[t,`Zusatz ${i+1}`])];
+  for(const [t,where] of tasks){
+    if(!DEFAULT_TOPIC[t.t]&&t.t!=='intro'){P.push(`${where}: unbekannter Typ „${t.t}“`);continue}
+    (t.w||[]).forEach(w=>{if(!W[w])P.push(`${where}: Wort „${w}“ fehlt in words`)});
+    (t.accept||[]).forEach(r=>re(r,where));
+    (t.rules||[]).forEach(r=>{if(r.re)re(r.re,where);(r.res||[]).forEach(x=>re(x,where))});
+    switch(t.t){
+      case'intro':if(!t.title)P.push(`${where}: title fehlt`);break;
+      case'mc':if(!t.q||!t.right||!Array.isArray(t.wrong)||!t.wrong.length)P.push(`${where}: q/right/wrong fehlt`);else if(t.wrong.includes(t.right))P.push(`${where}: richtige Antwort steht auch bei wrong`);break;
+      case'gap':if(!t.q||!t.ans?.length)P.push(`${where}: q/ans fehlt`);break;
+      case'sent':case'pic':case'open':
+        if(!t.q)P.push(`${where}: q fehlt`);
+        if(!(t.ans?.length||t.accept?.length||t.rules?.length))P.push(`${where}: ans, accept oder rules nötig`);
+        if(t.t!=='sent'&&!t.model)P.push(`${where}: model fehlt`);
+        if(t.t==='pic'&&!SC[t.scene])P.push(`${where}: Bild „${t.scene}“ fehlt in scenes`);break;
+      case'order':if(!Array.isArray(t.tiles)||t.tiles.length<2)P.push(`${where}: tiles fehlt`);break;
+      case'match':if(!Array.isArray(t.words)||t.words.length<3)P.push(`${where}: words (mind. 3) fehlt`);else t.words.forEach(w=>{if(!W[w])P.push(`${where}: Wort „${w}“ fehlt in words`)});break;
+      case'find':if((String(t.sentence).match(/\*[^*]+\*/g)||[]).length!==1)P.push(`${where}: sentence braucht genau ein *falsches* Wort`);if(!t.fix?.length)P.push(`${where}: fix fehlt`);break;
+      case'reading':if(!R[t.reading])P.push(`${where}: Lesetext „${t.reading}“ fehlt`);break;
+    }
+  }
+  (U.homeworks||[]).forEach((h,hi)=>(h.control?.sentences||[]).forEach((s,i)=>{if(!s.de||!s.ans?.length)P.push(`HÜ ${hi+1}, Lernkontrolle Satz ${i+1}: de/ans fehlt`)}));
+  return P;
+}
+function selfTest(U){
+  const P=[];let n=0;
+  const tasks=[...U.homeworks.flatMap((h,hi)=>h.tasks.map((t,ti)=>[t,`HÜ ${hi+1}, Aufgabe ${ti+1}`])),...(U.extras||[]).map((t,i)=>[t,`Zusatz ${i+1}`])];
+  for(const [t0,where] of tasks){
+    if(!['gap','sent','pic','open','find'].includes(t0.t))continue;
+    const t=prep(clone(t0),U);n++;
+    const good=t.t==='find'?t.fix[0]:t.t==='gap'?t.ans[0]:(t.model||t.ans?.[0]);
+    try{
+      if(!evaluate(t,good,U).ok)P.push(`${where}: Musterlösung „${good}“ wird nicht akzeptiert`);
+      if(evaluate(t,'xyz',U).ok)P.push(`${where}: Unsinn („xyz“) wird akzeptiert – Regel zu locker`);
+    }catch(e){P.push(`${where}: Prüffehler ${e.message}`)}
+  }
+  return{n,P};
+}
+
+/* =====================================================================
+   ABLAUF
+   ===================================================================== */
+let view='home',cur=null,lastActivity=Date.now(),clockState='',cardData=null;
+const shownAt={};
+const minSec=()=>cur?.preview?0:CONFIG.minSeconds;
+
+function prep(a,U){
+  a.st=a.st||{};a.topic=a.topic||DEFAULT_TOPIC[a.t]||'general';a.w=a.w||[];
+  if(a.t==='mc'){if(a.right!=null){a.opts=[a.right,...a.wrong];a.ans=0;delete a.right;delete a.wrong}const idx=shuffle(a.opts.map((_,i)=>i));a.opts=idx.map(i=>a.opts[i]);a.ans=idx.indexOf(a.ans)}
+  if(a.t==='order'){let p;do{p=shuffle(a.tiles.map((_,i)=>i))}while(a.tiles.length>1&&p.every((v,i)=>v===i));a.shuf=p;a.alts=a.alts||[]}
+  if(a.t==='match'){a.ids=a.words;a.pairs=a.ids.map(id=>[U.words[id].en,U.words[id].de]);a.w=a.ids;a.lord=shuffle(a.pairs.map((_,i)=>i));a.rord=shuffle(a.pairs.map((_,i)=>i))}
+  if(a.t==='reading'){a.qs=U.readings[a.reading].questions.map(q=>{if(q.tf!=null)return{q:q.q,tf:!!q.tf,tip:q.tip||''};const o=[q.right,...q.wrong];const idx=shuffle(o.map((_,i)=>i));return{q:q.q,o:idx.map(i=>o[i]),ans:idx.indexOf(0),tip:q.tip||''}})}
+  if(a.t==='find'){const toks=a.sentence.split(' ');a.wrong=toks.findIndex(x=>x.includes('*'));a.tokens=toks.map(x=>x.replace(/\*/g,''));a.wrongWord=a.tokens[a.wrong].replace(/[.,!?]/g,'')}
+  if(a.t==='sent'&&!a.model)a.model=(a.ans||[])[0];
+  if(a.t==='open'||a.multi)a.multi=true;
+  return a;
+}
+function addTask(d,a,pos){
+  prep(a,cur.unit);
+  if(a.key)d.usedKeys.push(a.key);
+  if(a.t==='gap')a.w.forEach(w=>d.usedKeys.push('g-gap-'+w));
+  if(a.t==='mc'&&a.topic==='vocabulary')a.w.forEach(w=>d.usedKeys.push('g-mc-'+w));
+  if((a.t==='sent')&&a.model)d.usedKeys.push('s:'+canon(a.model));
+  if(pos==null||pos>=d.queue.length)d.queue.push(a);else d.queue.splice(pos,0,a);
+  return a;
+}
+const currentTask=()=>cur.d.queue[cur.d.index];
+const isStep=a=>a.t!=='intro'&&!a.extra;
+function newSession(){return{queue:[],index:0,seconds:0,stepSec:0,phase:'core',usedKeys:[],reviews:0,quick:0,junk:0,extraN:0,matchN:0,started:new Date().toISOString()}}
+function buildHW(d,U,h){U.homeworks[h-1].tasks.forEach((t,i)=>addTask(d,{...clone(t),key:`c${h}-${i}`}))}
+
+function readUser(){
+  const name=($('#name')?.value||'').trim().replace(/\s+/g,' '),k=($('#klasse')?.value||'').trim().toUpperCase().replace(/\s+/g,'');
+  return{name,k};
+}
+function startHW(ui,h){
+  const {name,k}=readUser();
+  if(name.length<3||!/\S\s+\S/.test(name)){alert('Bitte gib deinen Vor- und Nachnamen ein.');$('#name').focus();return}
+  if(!k){alert('Bitte gib deine Klasse ein.');$('#klasse').focus();return}
+  const U=UNITS[ui];
+  store.last={name,klasse:k};
+  const key=userKey(name,k);
+  store.users[key]??={name,klasse:k,units:{}};
+  const u=store.users[key];u.units[U.id]??={};
+  cur={u,unit:U,ui,h,d:u.units[U.id][h],preview:false};
+  const dl=FOCUS?.deadline||null;
+  if(!cur.d){
+    if(dl&&Date.now()>dl){cur=null;alert(`Die Abgabefrist ist am ${fmtDeadline(dl)} abgelaufen. Du hast diese Hausübung nicht begonnen.`);return}
+    cur.d=u.units[U.id][h]=newSession();buildHW(cur.d,U,h);
+  }
+  if(FOCUS)cur.d.deadline=dl;   // die Frist kommt immer aus dem Link der Lehrkraft
+  save();
+  if(!cur.d.finished&&cur.d.deadline&&Date.now()>cur.d.deadline){endHW('deadline');return}
+  if(cur.d.finished){cardData=cur.d.result;view='card'}else view='task';
+  render();window.scrollTo(0,0);
+}
+function startPreview(ui,h){
+  const U=UNITS[ui];
+  cur={u:{name:'Vorschau',klasse:'–'},unit:U,ui,h,d:newSession(),preview:true};
+  buildHW(cur.d,U,h);view='task';render();window.scrollTo(0,0);
+}
+function complete(a,first,errWords){
+  const st=a.st;st.done=true;st.first=first;cur.d.stepSec=0;
+  if(!first&&!a.control){st.errWords=errWords||a.w||[];scheduleReview(a,st.errWords)}
+  save();
+}
+
+/* ---------- Wortschatz-Generator ---------- */
+function introduced(U,h){const s=new Set();U.homeworks.slice(0,h).forEach(hw=>hw.tasks.forEach(t=>(t.w||t.words||[]).forEach(w=>s.add(w))));return[...s].filter(w=>U.words[w]&&!U.words[w].skipGen)}
+function hwWords(U,h){const s=new Set();U.homeworks[h-1].tasks.forEach(t=>(t.w||t.words||[]).forEach(w=>s.add(w)));return[...s].filter(w=>U.words[w]&&!U.words[w].skipGen)}
+function genGap(w){const W=cur.unit.words[w];if(!W||W.skipGen)return null;return{t:'gap',q:`Wie heißt das auf Englisch? → ${W.de}`,ans:[W.en,...(W.alt||[])],w:[w],key:'g-gap-'+w}}
+function genMC(w){
+  const U=cur.unit,W=U.words[w];if(!W||W.skipGen)return null;
+  let pool=introduced(U,cur.h).filter(x=>x!==w&&U.words[x].de!==W.de);
+  if(pool.length<3)pool=Object.keys(U.words).filter(x=>x!==w&&!U.words[x].skipGen&&U.words[x].de!==W.de);
+  return{t:'mc',q:`Was bedeutet „${W.en}“?`,right:W.de,wrong:shuffle(pool).slice(0,3).map(x=>U.words[x].de),why:`${W.en} = ${W.de}`,w:[w],key:'g-mc-'+w};
+}
+function genMatch(d){d.matchN=(d.matchN||0)+1;const ids=[...new Set([...weakIds(d),...shuffle(introduced(cur.unit,cur.h))])].slice(0,5);return{t:'match',words:ids,key:'g-match-'+d.matchN}}
+function weakIds(d){const out=[];d.queue.forEach(a=>{if(a.st.done&&!a.st.first&&!a.control)(a.st.errWords||[]).forEach(w=>{if(cur.unit.words[w]&&!out.includes(w))out.push(w)})});return out}
+function extrasFor(){return(cur.unit.extras||[]).map((x,i)=>({x,i})).filter(({x})=>(x.minHw||1)<=cur.h)}
+
+function scheduleReview(a,words){
+  const d=cur.d;if(d.reviews>=CONFIG.maxReviews||d.seconds>=CONFIG.maxSeconds)return;
+  const used=new Set(d.usedKeys);const made=[];
+  if(a.topic==='vocabulary'||(words.length&&a.topic!=='grammar')){
+    for(const w of words){
+      if(made.length>=2)break;
+      const order=(a.t==='gap'||a.t==='find')?[genMC,genGap]:[genGap,genMC];
+      for(const f of order){const c=f(w);if(c&&!used.has(c.key)){made.push(c);used.add(c.key);break}}
+    }
+  }else if(a.topic==='grammar'||a.topic==='writing'){
+    const pool=extrasFor().filter(({x,i})=>(x.topic||DEFAULT_TOPIC[x.t])==='grammar'&&!used.has('x'+i)&&!(x.model&&used.has('s:'+canon(x.model)))&&!(x.ans&&x.t==='sent'&&used.has('s:'+canon(x.ans[0]))));
+    const other=pool.filter(({x})=>x.t!==a.t);
+    const pick=shuffle(other.length?other:pool)[0];
+    if(pick)made.push({...clone(pick.x),key:'x'+pick.i});
+  }
+  made.forEach((t,n)=>{if(d.reviews>=CONFIG.maxReviews)return;t.review=true;if(d.phase==='extra')t.extra=true;d.reviews++;addTask(d,t,Math.min(d.index+4+n*2,d.queue.length))});
+}
+function nextExtra(d){
+  const used=new Set(d.usedKeys);
+  for(const w of weakIds(d))for(const f of [genGap,genMC]){const t=f(w);if(t&&!used.has(t.key))return t}
+  if(d.extraN>0&&d.extraN%5===0)return genMatch(d);
+  const cands=[];
+  extrasFor().forEach(({x,i})=>{const m=x.t==='sent'?(x.model||x.ans?.[0]):null;if(!used.has('x'+i)&&!(m&&used.has('s:'+canon(m))))cands.push({...clone(x),key:'x'+i})});
+  introduced(cur.unit,cur.h).forEach(w=>{for(const f of [genGap,genMC]){const t=f(w);if(t&&!used.has(t.key))cands.push(t)}});
+  if(!cands.length)return genMatch(d);
+  const recent=d.queue.slice(-3).map(x=>x.t);
+  let best=cands[0],bs=-1;
+  for(const c of cands){let sc=Math.random();if(!recent.includes(c.t))sc+=2;if(c.key.startsWith('x'))sc+=.5;if(sc>bs){bs=sc;best=c}}
+  return best;
+}
+function controlPlan(){const c=cur.unit.homeworks[cur.h-1].control||{};return{words:c.words??4,sentences:c.sentences||[],nSent:Math.min(c.nSentences??1,(c.sentences||[]).length)}}
+function addControl(d){
+  const U=cur.unit,plan=controlPlan(),used=new Set(d.usedKeys);
+  addTask(d,{t:'intro',control:true,title:'Lernkontrolle',text:'Zum Schluss ein paar kurze Aufgaben **ohne Hilfe** – du hast jeweils **einen** Versuch.\n\nDas zeigt dir und deiner Lehrkraft, was schon richtig gut sitzt.'});
+  const words=[...new Set([...weakIds(d),...shuffle(hwWords(U,cur.h)),...shuffle(introduced(U,cur.h))])].slice(0,plan.words);
+  words.forEach(w=>{const W=U.words[w];addTask(d,{t:'gap',control:true,q:`Wie heißt das auf Englisch? → ${W.de}`,ans:[W.en,...(W.alt||[])],w:[w],key:'ctl-w-'+w})});
+  const sents=shuffle(plan.sentences.filter(s=>!used.has('s:'+canon(s.ans[0])))).concat(shuffle(plan.sentences)).filter((s,i,arr)=>arr.indexOf(s)===i).slice(0,plan.nSent);
+  sents.forEach((s,i)=>addTask(d,{t:'sent',control:true,q:'Übersetze ins Englische: '+s.de,ans:s.ans,key:'ctl-s-'+i}));
+}
+function prune(d,pred){d.queue=d.queue.filter((x,i)=>i<d.index||x.st.done||!pred(x))}
+
+function advance(){
+  const d=cur.d;d.index++;d.stepSec=0;clockState='';
+  if(d.seconds>=CONFIG.maxSeconds)prune(d,x=>(x.review||x.extra)&&!x.control);
+  else if(d.seconds>=minSec())prune(d,x=>x.extra&&!x.control);
+  if(d.index>=d.queue.length){
+    if(d.phase==='control')return finishHW();
+    if(d.seconds<minSec()){
+      if(d.phase!=='extra'){d.phase='extra';addTask(d,{t:'intro',extra:true,title:'Zusatzrunde',text:`Super, du hast alle Aufgaben geschafft! Bis zu den ${Math.round(CONFIG.minSeconds/60)} Minuten Lernzeit fehlt aber noch etwas.\n\nJetzt kommen **Zusatzaufgaben** – zuerst zu Wörtern und Regeln, bei denen du Fehler hattest. Danach folgt eine kurze Lernkontrolle.`})}
+      else{const t=nextExtra(d);t.extra=true;d.extraN++;addTask(d,t)}
+    }else{d.phase='control';addControl(d)}
+  }
+  save();render();window.scrollTo(0,0);
+}
+
+/* ---------- Auswertung ---------- */
+function stats(d){
+  let practice=0,first=0,stepsDone=0,stepsTotal=0,ctlOk=0,ctlTotal=0;const weak=[];
+  for(const a of d.queue){
+    const st=a.st||{};
+    if(a.t==='intro')continue;
+    if(isStep(a)){stepsTotal++;if(st.done)stepsDone++}
+    if(a.control){if(st.done){ctlTotal++;if(st.first)ctlOk++;else{const e=cur.unit.words[a.w[0]]?.en;if(e&&!weak.includes(e))weak.push(e)}}continue}
+    if(a.t==='reading'){(st.ans||[]).forEach(x=>{if(x&&x.done){practice++;if(x.ok)first++}});continue}
+    if(!st.done)continue;
+    practice++;if(st.first)first++;
+    else(st.errWords||[]).forEach(w=>{const e=cur.unit.words[w]?.en||w;if(!weak.includes(e))weak.push(e)});
+  }
+  if(d.phase!=='control'){const p=controlPlan();stepsTotal+=p.words+p.nSent}
+  const lvl=!ctlTotal?'-':ctlOk/ctlTotal>=.8?'S':ctlOk/ctlTotal>=.5?'U':'B';
+  return{wert:stepsTotal?Math.round(100*stepsDone/stepsTotal):0,firstPct:practice?Math.round(100*first/practice):0,ctlOk,ctlTotal,lvl,weak};
+}
+function sig(p){return cyrb53([CONFIG.secret,p.unit,p.h,normName(p.n),normName(p.k),p.wert,p.lvl,p.date].join('|')).toString(36).toUpperCase().slice(-5)}
+// status: 'done' = vollständig · 'early' = vom Kind vorzeitig beendet · 'deadline' = bei Fristende nicht fertig
+function makeResult(status){
+  const d=cur.d,s=stats(d),finished=status==='done';
+  const p={unit:cur.unit.id,unitLabel:unitLabel(cur.unit),hwTitle:`HÜ ${cur.h}: ${cur.unit.homeworks[cur.h-1].title}`,h:cur.h,n:cur.u.name,k:cur.u.klasse,
+    wert:finished?100:Math.min(99,s.wert),sec:d.seconds,lvl:finished?s.lvl:'-',ctl:finished?`${s.ctlOk}/${s.ctlTotal}`:'',first:s.firstPct,weak:s.weak.slice(0,8),quick:d.quick,junk:d.junk,date:dateStr(),finished,status};
+  p.code=sig(p);return p;
+}
+function endHW(status){
+  const d=cur.d;
+  d.finished=new Date().toISOString();d.result=makeResult(status);
+  save();cardData=d.result;view='card';render();window.scrollTo(0,0);
+}
+const finishHW=()=>endHW('done');
+const STATUS_HEAD={done:'✓ Hausübung erledigt',early:'⏹ Vorzeitig beendet – nicht fertig',deadline:'⏰ Frist abgelaufen – nicht fertig'};
+const statusOf=p=>p.status||(p.finished?'done':'early');
+function fmtDeadline(ms){return new Date(ms).toLocaleString('de-AT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+const unitLabel=U=>[U.book,U.title].filter(Boolean).join(' · ');
+
+/* ---------- Uhr ---------- */
+function capFor(a){
+  if(!a)return CONFIG.stepCap;
+  if(a.t==='intro')return 60;
+  if(a.t==='reading')return(a.st.qi||0)===0&&!a.st.ans?.[0]?.done?CONFIG.readingCap:CONFIG.stepCap;
+  if(a.multi)return CONFIG.writingCap;
+  return CONFIG.stepCap;
+}
+function tick(){
+  if(view!=='task'||!cur)return;
+  if(!cur.preview&&cur.d.deadline&&Date.now()>cur.d.deadline){endHW('deadline');return}
+  const d=cur.d,a=currentTask();
+  if(document.visibilityState!=='visible'){clockState='hidden';return}
+  const idle=(Date.now()-lastActivity)/1000;
+  if(idle>CONFIG.idleLimit)clockState='idle';
+  else if(d.stepSec>=capFor(a))clockState=a&&a.st.done?'capdone':'cap';
+  else{clockState='';d.seconds++;d.stepSec++;if(d.seconds%5===0)save()}
+  updateClock();
+}
+function updateClock(){
+  const el=$('#clock');if(!el||!cur)return;
+  const d=cur.d,left=minSec()-d.seconds;
+  let txt,cls='clock';
+  if(clockState==='idle'){txt='⏸ Uhr pausiert – tippe oder scrolle, um weiterzumachen.';cls+=' paused'}
+  else if(clockState==='cap'){txt='⏸ Uhr angehalten – beantworte zuerst diese Aufgabe.';cls+=' paused'}
+  else if(clockState==='capdone'){txt='⏸ Uhr angehalten – tippe auf „Weiter“.';cls+=' paused'}
+  else if(d.phase==='control'){txt='✓ Lernkontrolle – fast geschafft!';cls+=' reached'}
+  else if(left<=0){txt=d.phase==='extra'?'✓ Lernzeit erreicht – nach dieser Aufgabe kommt die Lernkontrolle.':'✓ Lernzeit erreicht – mach noch die restlichen Aufgaben fertig.';cls+=' reached'}
+  else txt=`⏱ Lernzeit ${fmt(d.seconds)} · noch ${Math.ceil(left/60)} Min.`;
+  el.textContent=txt;el.className=cls;
+}
+['pointerdown','keydown','input','touchstart','wheel'].forEach(ev=>window.addEventListener(ev,()=>{lastActivity=Date.now()},{passive:true,capture:true}));
+window.addEventListener('scroll',()=>{lastActivity=Date.now()},{passive:true,capture:true});
+
+/* =====================================================================
+   DARSTELLUNG
+   ===================================================================== */
+function setHeader(pill,title){$('#pill').textContent=pill;$('#htitle').textContent=title}
+function render(){
+  if(view==='teacher')return renderTeacher();
+  if(view==='card')return renderCard(cardData);
+  if(view==='paused'&&cur)return renderPaused();
+  if(view==='home'||!cur)return renderHome();
+  const a=currentTask();
+  if(!a){advance();return}
+  const sk=a.key+'-'+(a.t==='reading'?(a.st.qi||0):0);
+  if(!shownAt[sk])shownAt[sk]=Date.now();
+  let html='';
+  switch(a.t){
+    case'intro':html=`<h2>${esc(a.title)}</h2>${md(a.text)}<p><button data-act="next" id="nextbtn">Los geht’s →</button></p>`;break;
+    case'mc':html=rMC(a);break;
+    case'reading':html=rReading(a);break;
+    case'gap':html=rTyped(a,a.control?'Lernkontrolle':'Schreibe das fehlende Wort',`<p class="q">${esc(a.q)}</p>`);break;
+    case'sent':html=rTyped(a,a.control?'Lernkontrolle':'Schreibe auf Englisch',`<p class="q">${esc(a.q)}</p>`);break;
+    case'pic':html=rTyped(a,'Bildaufgabe',scene(a.scene)+`<p class="q">${esc(a.q)}</p>`);break;
+    case'open':html=rTyped(a,'Schreibe selbst',`<p class="q">${esc(a.q)}</p>`);break;
+    case'order':html=rOrder(a);break;
+    case'match':html=rMatch(a);break;
+    case'find':html=rFind(a);break;
+  }
+  shell(html);
+}
+function shell(inner){
+  const d=cur.d,U=cur.unit;
+  setHeader(unitLabel(U),cur.preview?'Vorschau – nichts wird gespeichert':CONFIG.title);
+  const steps=d.queue.filter(isStep),done=steps.filter(a=>a.st.done).length,total=Math.max(1,steps.length);
+  const pct=d.phase==='extra'?100:Math.round(100*done/total);
+  const label=d.phase==='extra'?'Zusatzrunde':d.phase==='control'?'Lernkontrolle':`Aufgabe ${Math.min(done+1,total)} von ${total}`;
+  app.innerHTML=`<section class="card compact"><div class="row"><strong>HÜ ${cur.h} – ${esc(U.homeworks[cur.h-1].title)}</strong><span class="note">${label}</span></div><div class="progress"><div style="width:${pct}%"></div></div><div id="clock" class="clock"></div></section>
+  <section class="card" id="task">${inner}</section>
+  <div class="nav"><button class="secondary small" data-act="${cur.preview?'teacher':'pause'}">${cur.preview?'← Zur Lehrerseite':'⏸ Pause'}</button>${cur.preview?'<button class="secondary small" data-act="next">Überspringen ⏭</button>':'<button class="secondary small" data-act="endearly" style="margin-left:auto">Hausübung beenden</button>'}</div>`;
+  updateClock();
+}
+const nextBtn=(l='Weiter →')=>`<p><button data-act="next" id="nextbtn">${l}</button></p>`;
+const fbox=(msg,good)=>msg?`<div class="fb ${good?'good':'bad'}" id="msg">${esc(msg)}</div>`:'';
+
+function rMC(a){
+  const st=a.st;
+  const opts=a.opts.map((o,i)=>{let c='choice';if(st.done){if(i===a.ans)c+=' right';else if(i===st.sel)c+=' wrong'}else if(st.sel===i)c+=' sel';return`<button class="${c}" data-act="mc-sel" data-i="${i}" ${st.done?'disabled':''}>${String.fromCharCode(65+i)}) ${esc(o)}</button>`}).join('');
+  return`<h2>Wähle die passende Antwort</h2><p class="q">${esc(a.q)}</p><div class="choices">${opts}</div>`+
+    (st.done?fbox((st.first?'✓ Richtig! ':'Leider falsch. Richtig ist: „'+a.opts[a.ans]+'“. ')+(a.why||''),st.first)+nextBtn()
+            :`<button data-act="mc-check" ${st.sel==null?'disabled':''}>Antwort bestätigen</button>`);
+}
+function rReading(a){
+  const R=cur.unit.readings[a.reading],st=a.st;st.qi??=0;st.ans??=[];
+  const q=a.qs[st.qi],x=st.ans[st.qi]||{};
+  const labels=q.tf!=null?['True – das stimmt.','False – das stimmt nicht.']:q.o;
+  const right=q.tf!=null?(q.tf?0:1):q.ans;
+  const opts=labels.map((o,i)=>{let c='choice';if(x.done){if(i===right)c+=' right';else if(i===x.sel)c+=' wrong'}else if(x.sel===i)c+=' sel';return`<button class="${c}" data-act="rd-sel" data-i="${i}" ${x.done?'disabled':''}>${q.tf!=null?'':String.fromCharCode(65+i)+') '}${esc(o)}</button>`}).join('');
+  const last=st.qi===a.qs.length-1;
+  return`<h2>Reading: ${esc(R.title)}</h2><p class="note">Lies zuerst den ganzen Text. Die Antworten findest du im Text.</p>
+  <div class="reading">${esc(R.text)}</div>${R.gloss?`<span class="gloss">Wort-Hilfe: ${esc(R.gloss)}</span>`:''}
+  <hr><p class="q">Frage ${st.qi+1} von ${a.qs.length}: ${esc(q.q)}</p>${q.tf!=null?'<p class="note">Stimmt das? (true = richtig, false = falsch)</p>':''}
+  <div class="choices">${opts}</div>`+
+  (x.done?fbox((x.ok?'✓ Richtig! ':'Leider falsch. ')+q.tip,x.ok)+`<p><button data-act="rd-next" id="nextbtn">${last?'Weiter →':'Nächste Frage →'}</button></p>`
+         :`<button data-act="rd-check" ${x.sel==null?'disabled':''}>Antwort bestätigen</button>`);
+}
+function solutionFor(a){return a.t==='find'?a.fix[0]:a.t==='gap'?a.ans[0]:a.model}
+function typedField(a){
+  const st=a.st,ro=st.done?'readonly':'';
+  const caps=(a.t==='gap'||a.t==='find'||a.caps===false)?'off':'sentences';
+  const attrs=`id="answer" class="input" autocomplete="off" autocorrect="off" autocapitalize="${caps}" spellcheck="false" ${ro} placeholder="Deine Antwort …"`;
+  return a.multi?`<textarea ${attrs} rows="4">${esc(st.val||'')}</textarea>`:`<input ${attrs} value="${esc(st.val||'')}" enterkeyhint="done">`;
+}
+function typedBlock(a){
+  const st=a.st;
+  const sol=st.showSol&&!st.done?`<div class="sol" id="sol">${esc(solutionFor(a))}</div>`:'';
+  return fbox(st.msg,st.msgGood)+sol+typedField(a)+(st.done?nextBtn():`<p><button data-act="typed-check">Prüfen</button></p>`);
+}
+function rTyped(a,head,body){
+  let extra='';
+  if(a.control){const c=cur.d.queue.filter(x=>x.control&&x.t!=='intro');extra=`<p class="note">Aufgabe ${c.indexOf(a)+1} von ${c.length} · ohne Hilfe · ein Versuch</p>`}
+  return`<h2>${head}</h2>${extra}${body}${a.multi?'<p class="note">Schreibe mehrere Sätze und beende jeden mit einem Punkt.</p>':''}${typedBlock(a)}`;
+}
+function rOrder(a){
+  const st=a.st;st.picked??=[];
+  const disp=i=>i===0?lowerFirst(a.tiles[i]):a.tiles[i];
+  const built=st.picked.map(disp).join(' ');
+  const avail=a.shuf.filter(i=>!st.picked.includes(i));
+  const preview=built?built[0].toUpperCase()+built.slice(1)+(avail.length?' …':'.'):'';
+  return`<h2>Baue den Satz</h2><p class="note">Tippe die Bausteine in der richtigen Reihenfolge an. Tippst du einen Baustein im Satz an, kommt er zurück. Du hast <b>einen</b> Versuch.</p>
+  <div class="slot">${st.picked.map((i,j)=>`<button class="tile" data-act="ord-rem" data-j="${j}" ${st.done?'disabled':''}>${esc(disp(i))}</button>`).join('')||'<span class="note">Hier entsteht dein Satz.</span>'}</div>
+  ${preview?`<p class="preview">${esc(preview)}</p>`:''}
+  <div class="tiles">${avail.map(i=>`<button class="tile" data-act="ord-add" data-i="${i}">${esc(disp(i))}</button>`).join('')}</div>`+
+  (st.done?fbox(st.msg,st.first)+nextBtn():`<button data-act="ord-check" ${avail.length?'disabled':''}>Satz prüfen</button>`);
+}
+function rMatch(a){
+  const st=a.st;st.pairs??={};
+  const num=i=>a.lord.indexOf(i)+1;
+  if(st.done){
+    const rows=a.lord.map(i=>{const j=st.pairs[i];const ok=j===i;return`<li>${ok?'✓':'✗'} <b>${esc(a.pairs[i][0])}</b> = ${esc(a.pairs[i][1])}${ok?'':` <span class="note">(du: ${esc(a.pairs[j]?.[1]||'–')})</span>`}</li>`}).join('');
+    return`<h2>Wörter zuordnen</h2><ul class="mres">${rows}</ul>`+fbox(st.msg,st.first)+nextBtn();
+  }
+  const left=a.lord.map(i=>{const p=st.pairs[i]!=null;return`<button class="mitem ${st.active===i?'active':''} ${p?'paired':''}" data-act="m-left" data-i="${i}"><span class="n ${p||st.active===i?'c'+num(i):''}">${num(i)}</span>${esc(a.pairs[i][0])}</button>`}).join('');
+  const right=a.rord.map(j=>{const owner=Object.keys(st.pairs).find(k=>st.pairs[k]===j);const n=owner!=null?num(+owner):null;return`<button class="mitem ${n?'paired':''}" data-act="m-right" data-j="${j}">${n?`<span class="n c${n}">${n}</span>`:'<span class="n">?</span>'}${esc(a.pairs[j][1])}</button>`}).join('');
+  const all=Object.keys(st.pairs).length===a.pairs.length;
+  return`<h2>Wörter zuordnen</h2><p class="note">Tippe links ein englisches Wort an, dann rechts die passende Bedeutung. Zum Ändern tippst du ein Paar noch einmal an. Geprüft wird <b>einmal</b> am Ende.</p>
+  <div class="match"><div class="col">${left}</div><div class="col">${right}</div></div><button data-act="m-check" ${all?'':'disabled'}>Zuordnung prüfen</button>`;
+}
+function rFind(a){
+  const st=a.st,clicked=st.clicked!=null;
+  const words=a.tokens.map((w,i)=>{let c='word';if(clicked){if(i===a.wrong)c+=st.clickOk?' hit':' bad';else if(i===st.clicked)c+=' miss'}return`<button class="${c}" data-act="find-word" data-i="${i}" ${clicked?'disabled':''}>${esc(w)}</button>`}).join('');
+  let html=`<h2>Finde den Fehler</h2><p class="q">In diesem Satz ist genau <b>ein</b> Wort falsch. Tippe es an.</p><div class="words">${words}</div>`;
+  if(clicked)html+=`<div class="fb ${st.clickOk?'good':'bad'}">${st.clickOk?'✓ Genau, dieses Wort ist falsch.':'Nicht ganz – falsch ist „'+esc(a.wrongWord)+'“.'}</div><p class="q">Wie heißt das Wort richtig?</p>`+typedBlock(a);
+  return html;
+}
+function scene(id){
+  const S=cur.unit.scenes[id];
+  return`<div class="scene" role="img" aria-label="Bild zum Beschreiben" style="background:${S.sky||'#2b3557'}"><div class="ground" style="background:${S.ground||'transparent'}"></div>${S.items.map(([e,x,y,s,z])=>`<span class="it" style="left:${x}%;top:${y}%;font-size:${(s*0.7).toFixed(1)}vw;font-size:${s}cqw;z-index:${z||2}">${e}</span>`).join('')}</div>`;
+}
+
+/* ---------- Pause ---------- */
+function renderPaused(){
+  const d=cur.d,steps=d.queue.filter(isStep),done=steps.filter(a=>a.st.done).length;
+  const dl=d.deadline?`<p>📅 Denk an die Abgabefrist: <b>${esc(fmtDeadline(d.deadline))}</b></p>`:'';
+  app.innerHTML=`<section class="card center" style="text-align:center"><div style="font-size:3rem">⏸</div><h2>Pause</h2>
+  <p><b>${esc(cur.u.name)}</b> · HÜ ${cur.h} – ${esc(cur.unit.homeworks[cur.h-1].title)}</p>
+  <p>Bisher: <b>${fmt(d.seconds)}</b> Lernzeit · <b>${done} von ${steps.length}</b> Aufgaben erledigt</p>
+  <p>Dein Fortschritt ist gespeichert. Die Uhr steht still.<br>Du kannst die Seite jetzt schließen.</p>
+  ${dl}
+  <p><button data-act="resume">▶ Weitermachen</button></p>
+  <p class="note">Später einfach <b>denselben Link auf demselben Gerät</b> öffnen und deinen Namen eingeben – dann geht es genau hier weiter.</p></section>`;
+}
+
+/* ---------- Übersicht ---------- */
+function renderHome(){
+  view='home';cur=null;setHeader('Englisch',CONFIG.title);
+  const L=store.last||{};
+  if(!UNITS.length){app.innerHTML=`<section class="card"><h2>Keine Aufgaben gefunden</h2><p>Die Unit-Dateien konnten nicht geladen werden.</p>${LOAD_ERRORS.map(e=>`<p class="note">${esc(e)}</p>`).join('')}</section>`;return}
+  if(!FOCUS||FOCUS.bad){app.innerHTML=`<section class="card"><h2>${FOCUS?'Dieser Link funktioniert nicht':'Willkommen!'}</h2><p>${FOCUS?'Der Link ist unvollständig oder wurde verändert.':'Öffne deine Hausübung bitte über den Link, den du von deiner Lehrkraft bekommen hast (z. B. in edhu).'}</p>${FOCUS?'<p class="note">Bitte frag deine Lehrkraft nach dem richtigen Link.</p>':''}</section>`;return}
+  const dl=FOCUS.deadline,over=dl&&Date.now()>dl;
+  const dlInfo=dl?`<div class="fb ${over?'bad':''}">${over?`⏰ Die Abgabefrist ist am <b>${esc(fmtDeadline(dl))}</b> abgelaufen. Du kannst nur noch deine Ergebniskarte ansehen.`:`📅 Abgabe bis <b>${esc(fmtDeadline(dl))}</b>`}</div>`:'';
+  app.innerHTML=`<section class="card"><h2>Deine Hausübung</h2>${dlInfo}
+  ${storageOK?'':'<div class="fb bad">Achtung: Dieser Browser speichert nichts (z. B. privates Fenster). Schließt du die Seite, ist dein Fortschritt weg.</div>'}
+  <div class="two"><label>Vor- und Nachname<input id="name" class="input" autocomplete="off" value="${esc(L.name||'')}" placeholder="z. B. Lena Huber"></label><label>Klasse<input id="klasse" class="input" autocomplete="off" value="${esc(L.klasse||'')}" placeholder="z. B. 2B"></label></div>
+  <p class="note">Nicht du? Trag deinen eigenen Namen und deine Klasse ein, bevor du startest.</p>
+  <div id="hwlist"></div>
+  <p class="note">So funktioniert’s: Pro Hausübung arbeitest du mindestens <b>${Math.round(CONFIG.minSeconds/60)} Minuten</b> – die Uhr läuft nur, während du wirklich arbeitest. Mit <b>⏸ Pause</b> kannst du jederzeit aufhören und später über denselben Link weitermachen. Am Ende bekommst du eine <b>Ergebniskarte</b>. Mach davon einen Screenshot und lade ihn in edhu hoch.</p></section>`;
+  renderHWList();
+}
+function renderHWList(){
+  const el=$('#hwlist');if(!el)return;
+  const {name,k}=readUser();const u=store.users[userKey(name,k)];
+  el.innerHTML=UNITS.map((U,ui)=>FOCUS&&FOCUS.ui!==ui?'':`<div class="unit"><h3>${esc(unitLabel(U))}</h3>${U.homeworks.map((hw,i)=>{
+    if(FOCUS&&FOCUS.h!==i+1)return'';
+    const d=u?.units?.[U.id]?.[i+1],over=FOCUS?.deadline&&Date.now()>FOCUS.deadline;let status=over?'Nicht begonnen':'Noch nicht begonnen – starten',cls='hwbtn';
+    if(d?.finished){const st=statusOf(d.result);status=(st==='done'?`✓ Erledigt · 100 % · Lernstand ${LS_LABEL[d.result.lvl]}`:`${STATUS_HEAD[st].split(' – ')[0]} · ${d.result.wert} %`)+' – Ergebniskarte anzeigen';cls+=' done'}
+    else if(d)status=over?'Frist abgelaufen – Ergebniskarte anzeigen':`Begonnen · ${fmt(d.seconds)} Lernzeit – weitermachen`;
+    return`<div class="hwrow"><button class="${cls}" data-act="start" data-u="${ui}" data-h="${i+1}" ${over&&!d?'disabled':''}><b>HÜ ${i+1} – ${esc(hw.title)}</b><span class="note">${status}</span></button></div>`;
+  }).join('')}</div>`).join('');
+}
+
+/* ---------- Ergebniskarte ---------- */
+function renderCard(p){
+  setHeader(p.unitLabel,CONFIG.title);
+  const flag=(p.quick+p.junk)>=CONFIG.flagAt;
+  app.innerHTML=`<div class="rcard" id="rcard">
+    <div class="rtop ${p.finished?'':'partial'}"><b>${STATUS_HEAD[statusOf(p)]}</b><span>${esc(p.unitLabel)}</span></div>
+    <div class="rbody">
+      <div class="rname">${esc(p.n)} · ${esc(p.k)}</div>
+      <div class="rhw">${esc(p.hwTitle)}</div>
+      <div class="rbig ${p.finished?'':'partial'}">${p.wert} %</div><div class="rbiglabel">HÜ-Wert (erledigte Lernschritte)</div>
+      <div class="rgrid"><div><b>${Math.round(p.sec/60)} Min.</b><span>Lernzeit</span></div><div><b>${p.finished?LS_LABEL[p.lvl].split(' ')[0]+' '+p.ctl:'–'}</b><span>${p.finished?esc(LS_LABEL[p.lvl].split(' ').slice(1).join(' ')):'Lernstand'}</span></div><div><b>${p.first} %</b><span>beim Üben auf Anhieb richtig</span></div></div>
+      ${p.weak.length?`<div class="rwords">Noch üben: <b>${esc(p.weak.join(', '))}</b></div>`:(p.finished?'<div class="rwords">Keine Fehlerwörter – super!</div>':'')}
+      ${flag?`<div class="rflag">⚠ Hinweis für die Lehrkraft: ${p.quick} sehr schnelle Antworten, ${p.junk} Unsinn-Eingaben</div>`:''}
+      <div class="rfoot"><span>${esc(p.date)}</span><span>Prüfzeichen <b>${esc(p.code)}</b></span></div>
+    </div></div>
+  <section class="card"><h3 style="margin-top:0">📸 So gibst du ab</h3>
+    <ol class="steps"><li>Mach einen <b>Screenshot</b> von der Karte oben:<br><span class="note">iPad/iPhone: Ein-/Aus-Taste + Lauter-Taste gleichzeitig (mit Home-Taste: Home + Ein/Aus) · Android: Ein/Aus + Leiser · Windows: Windows-Taste + Umschalt + S</span></li><li>Lade das Bild in <b>edhu</b> bei der Aufgabe hoch.</li></ol>
+    <p><button data-act="saveimg">Ergebnis als Bild speichern</button> <button class="secondary" data-act="home">Zur Übersicht</button></p>
+    <p class="note" id="imgnote">Klappt der Screenshot nicht? Dann speichere die Karte mit dem Knopf als Bild.</p></section>`;
+}
+function drawCard(p){
+  const W=900,H=1180,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  const F='system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
+  const rr=(x,y,w,h,r)=>{g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()};
+  const text=(t,x,y,size,color,weight='normal',align='center')=>{g.font=`${weight} ${size}px ${F}`;g.fillStyle=color;g.textAlign=align;g.fillText(t,x,y)};
+  const wrap=(t,x,y,size,color,weight,maxW,lh)=>{g.font=`${weight} ${size}px ${F}`;const words=t.split(' ');let line='',yy=y;for(const w of words){const test=line?line+' '+w:w;if(g.measureText(test).width>maxW&&line){text(line,x,yy,size,color,weight);line=w;yy+=lh}else line=test}if(line)text(line,x,yy,size,color,weight);return yy};
+  g.fillStyle='#f8f5fa';g.fillRect(0,0,W,H);
+  rr(30,30,W-60,H-60,36);g.fillStyle='#fff';g.fill();
+  g.save();rr(30,30,W-60,170,36);g.clip();const grd=g.createLinearGradient(0,0,W,0);
+  if(p.finished){grd.addColorStop(0,'#8c145f');grd.addColorStop(1,'#dd4a91')}else{grd.addColorStop(0,'#9a5a12');grd.addColorStop(1,'#d99a2b')}
+  g.fillStyle=grd;g.fillRect(30,30,W-60,170);g.restore();
+  text(STATUS_HEAD[statusOf(p)],80,110,p.finished?44:38,'#fff','bold','left');
+  text(p.unitLabel,80,165,30,'#fff','normal','left');
+  wrap(`${p.n} · ${p.k}`,W/2,290,54,'#29243a','bold',W-140,62);
+  text(p.hwTitle,W/2,350,32,'#6f6577');
+  text(`${p.wert} %`,W/2,500,140,p.finished?'#a31d69':'#b06a12','bold');
+  text('HÜ-Wert (erledigte Lernschritte)',W/2,550,28,'#6f6577');
+  const tiles=[[`${Math.round(p.sec/60)} Min.`,'Lernzeit'],[p.finished?`${LS_LABEL[p.lvl].split(' ')[0]} ${p.ctl}`:'–',p.finished?LS_LABEL[p.lvl].split(' ').slice(1).join(' '):'Lernstand'],[`${p.first} %`,'auf Anhieb richtig']];
+  tiles.forEach((t,i)=>{const x=70+i*260;rr(x,590,240,150,22);g.fillStyle='#f8f1f8';g.fill();text(t[0],x+120,665,40,'#29243a','bold');text(t[1],x+120,712,24,'#6f6577')});
+  let y=810;
+  if(p.weak.length){y=wrap('Noch üben: '+p.weak.join(', '),W/2,y,32,'#29243a','bold',W-140,42)+50}
+  else if(p.finished){text('Keine Fehlerwörter – super!',W/2,y,32,'#29243a','bold');y+=50}
+  if((p.quick+p.junk)>=CONFIG.flagAt){rr(70,y-38,W-140,60,16);g.fillStyle='#fff3e9';g.fill();text(`⚠ Hinweis: ${p.quick} sehr schnelle Antworten, ${p.junk} Unsinn-Eingaben`,W/2,y+2,26,'#8a4a0c');y+=70}
+  g.fillStyle='#f0e6ef';g.fillRect(70,1050,W-140,2);
+  text(p.date,70,1105,30,'#6f6577','normal','left');
+  text(`Prüfzeichen ${p.code}`,W-70,1105,30,'#29243a','bold','right');
+  return c;
+}
+function saveImage(){
+  const p=cardData,c=drawCard(p);
+  const fname=`HUE${p.h}_${(p.n||'ergebnis').replace(/[^A-Za-z0-9ÄÖÜäöüß]+/g,'_')}.jpg`;
+  // Teilen-Menü nur auf Handy/Tablet (dort: „Bild sichern“ → Fotos). Am Computer direkt herunterladen.
+  const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  c.toBlob(b=>{
+    const file=new File([b],fname,{type:'image/jpeg'});
+    const note=$('#imgnote');
+    if(mobile&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:'Ergebniskarte'}).catch(()=>{});if(note)note.textContent='Tippe auf „Bild sichern“ – dann ist das Bild in deinen Fotos. Lade es von dort in edhu hoch.'}
+    else{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);if(note)note.innerHTML=`✓ Bild gespeichert: <b>${esc(fname)}</b> im Ordner „Downloads“. Lade es von dort in edhu hoch.`}
+  },'image/jpeg',0.92);
+}
+
+/* ---------- Lehrerseite ---------- */
+function renderTeacher(){
+  view='teacher';cur=null;setHeader('Lehrkraft',CONFIG.title+' – Lehrerseite');
+  const unitOpts=UNITS.flatMap((U,ui)=>U.homeworks.map((h,i)=>`<option value="${ui}:${i+1}">${esc(unitLabel(U))} – HÜ ${i+1}</option>`)).join('');
+  const checks=UNITS.map((U,ui)=>{const P=validateUnit(U);const T=P.length?{n:0,P:[]}:selfTest(U);const all=[...P,...T.P];
+    return`<div class="unit"><h3>${esc(unitLabel(U))}</h3>${all.length?`<p class="err">⚠ ${all.length} Problem(e):</p><ul>${all.map(x=>`<li class="note">${esc(x)}</li>`).join('')}</ul>`:`<p class="ok">✓ Datei in Ordnung · ${T.n} Schreibaufgaben geprüft – alle Musterlösungen werden akzeptiert.</p>`}
+    <div class="nav">${U.homeworks.map((h,i)=>`<button class="secondary small" data-act="preview" data-u="${ui}" data-h="${i+1}">Vorschau HÜ ${i+1}</button>`).join('')}</div></div>`}).join('');
+  const links=UNITS.map((U,ui)=>`<div class="unit"><h3>${esc(unitLabel(U))}</h3>${U.homeworks.map((h,i)=>{const l=hwLink(U,i+1,'');return`<div class="linkbox"><b>HÜ ${i+1} – ${esc(h.title)}</b>
+    <label class="note" style="font-weight:400">Abgabefrist (leer lassen = keine Frist)<input type="datetime-local" class="input dl" data-u="${ui}" data-h="${i+1}"></label>
+    <div class="hwrow" style="margin:0"><input class="input linkout" readonly value="${esc(l)}" style="font-size:.8rem;margin:0"><button class="secondary small" data-act="copylink" data-link="${esc(l)}" style="align-self:center">Kopieren</button></div></div>`}).join('')}</div>`).join('');
+  app.innerHTML=`<section class="card"><h2>Links für deine Hausübungen</h2><p class="note">Jede Hausübung hat einen eigenen Link. Wähle bei Bedarf eine Abgabefrist – der Link darunter ändert sich dann automatisch. Diesen Link stellst du in die edhu-Aufgabe. Nur Links von dieser Seite funktionieren; wird die Frist in der Adresse verändert, wird der Link ungültig. ${location.protocol==='file:'?'<br><b>Achtung:</b> Du hast die Datei gerade lokal geöffnet – die richtigen Links siehst du, sobald die Seite online ist.':''}</p>${links}</section>
+  <section class="card"><h2>Prüfzeichen kontrollieren</h2>
+  <p class="note">Nur nötig, wenn dir eine Ergebniskarte verdächtig vorkommt. Trag die Werte genau so ein, wie sie auf der Karte stehen.</p>
+  <label>Hausübung<select id="v-hw" class="input">${unitOpts}</select></label>
+  <div class="two"><label>Name<input id="v-n" class="input"></label><label>Klasse<input id="v-k" class="input"></label></div>
+  <div class="two"><label>HÜ-Wert (%)<input id="v-w" class="input" inputmode="numeric"></label><label>Lernstand<select id="v-l" class="input"><option value="S">🟢 sicher</option><option value="U">🟡 überwiegend sicher</option><option value="B">🟠 braucht noch Übung</option><option value="-">– (nicht fertig)</option></select></label></div>
+  <div class="two"><label>Datum und Uhrzeit (z. B. 21.10.2026 14:05)<input id="v-d" class="input"></label><label>Prüfzeichen<input id="v-c" class="input" style="text-transform:uppercase"></label></div>
+  <p><button data-act="verify">Prüfen</button></p><div id="v-out"></div></section>
+  <section class="card"><h2>Units und Vorschau</h2><p class="note">Hier siehst du, ob jede Unit-Datei fehlerfrei ist. In der Vorschau kannst du jede Hausübung ohne Zeitvorgabe durchklicken – es wird nichts gespeichert.</p>
+  ${LOAD_ERRORS.length?`<div class="fb bad">${LOAD_ERRORS.map(esc).join('<br>')}</div>`:''}${checks||'<p>Keine Units geladen.</p>'}</section>`;
+}
+function verify(){
+  const [ui,h]=$('#v-hw').value.split(':').map(Number),U=UNITS[ui];
+  const p={unit:U.id,h,n:$('#v-n').value,k:$('#v-k').value.toUpperCase().replace(/\s+/g,''),wert:+$('#v-w').value,lvl:$('#v-l').value,date:$('#v-d').value.trim().replace(/\s+/g,' ')};
+  const ok=sig(p)===$('#v-c').value.trim().toUpperCase();
+  $('#v-out').innerHTML=ok?'<div class="fb good">✓ Das Prüfzeichen passt – die Karte ist echt.</div>':'<div class="fb bad">✗ Das Prüfzeichen passt nicht. Entweder wurde ein Wert falsch abgetippt oder die Karte wurde verändert.</div>';
+}
+
+/* =====================================================================
+   EINGABEN
+   ===================================================================== */
+function errorHint(c,U){for(const e of U?.errors||[]){if(RX(e.re).test(c))return e.hint}return null}
+function rulesHint(rules,raw,U){
+  const S=splitSentences(raw),cs=S.map(s=>canon(s,U)),C=canon(raw,U);
+  for(const r of rules){
+    let pass=true,found='';
+    switch(r.type){
+      case'match':pass=RX(r.re).test(C);break;
+      case'notMatch':pass=!RX(r.re).test(C);break;
+      case'count':found=r.res.filter(x=>RX(x).test(C)).length;pass=found>=r.n;break;
+      case'sentences':pass=S.length>=r.min;break;
+      case'words':pass=C.split(' ').filter(Boolean).length>=r.min;break;
+      case'wordsPerSentence':pass=cs.length>0&&cs.every(s=>s.split(' ').length>=r.min);break;
+      case'eachSentence':pass=cs.length>0&&cs.every(s=>RX(r.re).test(s));break;
+      case'someSentence':pass=cs.some(s=>RX(r.re).test(s));break;
+      case'differentStarts':{const st=cs.map(s=>s.split(' ').slice(0,r.words||2).join(' '));pass=new Set(st).size===st.length;break}
+    }
+    if(!pass)return(r.hint||'Lies die Aufgabe noch einmal genau.').replace('{found}',found);
+  }
+  return null;
+}
+function evaluate(a,raw,U){
+  U=U||cur.unit;
+  const c=canon(raw,U),list=a.t==='find'?a.fix:(a.ans||[]),acc=a.accept||[];
+  let ok=list.some(x=>canon(x,U)===c)||acc.some(r=>RX(r).test(c));
+  if(!ok&&!list.length&&!acc.length&&a.rules)ok=!errorHint(c,U)&&rulesHint(a.rules,raw,U)===null;
+  if(ok)return{ok:true};
+  let hint=errorHint(c,U);
+  if(!hint&&a.rules)hint=rulesHint(a.rules,raw,U);
+  if(!hint&&a.else)hint=a.else;
+  const near=list.some(x=>{const cx=canon(x,U);return cx.length>=4&&lev(c,cx)<=(a.t==='sent'?2:1)});
+  return{ok:false,hint,near};
+}
+function isJunk(raw){const l=String(raw).toLowerCase().replace(/[^a-zäöüß]/g,'');return l.length<2||!/[aeiouyäöü]/.test(l)||/^(.)\1+$/.test(l)||/(asdf|qwer|yxcv|zxcv|hjkl|xyz)/.test(l)}
+function startOf(model){const first=splitSentences(model)[0]||model;const w=first.split(' ');return w.length>2?`So kann ${splitSentences(model).length>1?'der erste Satz':'die Antwort'} beginnen: „${w.slice(0,2).join(' ')} …“`:''}
+function hintText(a,level,r){
+  if(level>=3)return'Präge dir die Lösung ein. Sobald du zu tippen beginnst, verschwindet sie – dann schreibst du selbst.';
+  if(a.t==='gap'||a.t==='find'){
+    const w=solutionFor(a),multi=w.includes(' ');
+    const pre=r.near?'Fast! Ein Buchstabe stimmt nicht. ':(r.hint?r.hint+' ':'');
+    if(level===1)return pre+(a.tip?a.tip+' ':'')+`Tipp: Es beginnt mit „${w[0]}“`+(multi?` (${w.split(' ').length} Wörter).`:` und hat ${w.length} Buchstaben.`);
+    return pre+`Tipp: Es beginnt mit „${w.slice(0,Math.min(3,Math.max(1,w.length-1)))}…“.`;
+  }
+  const base=r.hint||(r.near?'Fast! Prüfe die Rechtschreibung.':'Vergleiche Wörter und Wortstellung noch einmal mit der Aufgabe.');
+  if(level===1)return base;
+  const more=a.hint2||startOf(a.model||'');
+  return more?(r.hint?r.hint+' ':'')+more:base;
+}
+function checkTyped(){
+  const d=cur.d,a=currentTask(),st=a.st;
+  const raw=String(st.val||'').trim();if(!raw||st.done)return;
+  const r=evaluate(a,raw);
+  st.tries=(st.tries||0)+1;d.stepSec=0;
+  if(!r.ok&&isJunk(raw))d.junk++;
+  if(a.control){
+    st.final=raw;st.msgGood=r.ok;st.msg=r.ok?'✓ Richtig!':`Leider falsch. Richtig wäre: „${solutionFor(a)}“`;
+    complete(a,r.ok);render();focusAnswer();return;
+  }
+  if(r.ok){
+    st.final=raw;st.showSol=false;
+    const first=st.tries===1&&(a.t!=='find'||st.clickOk);
+    const capNote=(a.t==='sent'||a.t==='open'||(a.t==='pic'&&a.caps!==false))&&/^[a-z]/.test(raw)?' Tipp: Schreib den Satzanfang groß.':'';
+    st.msg=(first?'✓ Richtig!':'✓ Richtig – diesmal mit Hilfe. Du übst das später noch einmal.')+capNote+(a.t==='find'&&a.why?' '+a.why:'');
+    st.msgGood=true;
+    complete(a,first);
+  }else{
+    st.level=Math.min(3,(st.level||0)+1);
+    st.msg=hintText(a,st.level,r);st.msgGood=false;
+    if(st.level>=3){st.showSol=true;st.val=''}
+    save();
+  }
+  render();focusAnswer();
+}
+function focusAnswer(){const el=$('#answer');if(el&&el.readOnly){$('#nextbtn')?.focus();return}if(el){el.focus();const n=el.value.length;try{el.setSelectionRange(n,n)}catch(e){}}}
+function quick(key,ms){if(shownAt[key]&&Date.now()-shownAt[key]<ms)cur.d.quick++}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
+  const act=b.dataset.act,i=+b.dataset.i,j=+b.dataset.j;
+  switch(act){
+    case'start':startHW(+b.dataset.u,+b.dataset.h);return;
+    case'home':save();cur=null;view='home';render();window.scrollTo(0,0);return;
+    case'pause':if(cur&&view==='task'){cur.d.stepSec=0;clockState='';save();view='paused';render();window.scrollTo(0,0)}return;
+    case'resume':if(cur){if(cur.d.deadline&&Date.now()>cur.d.deadline){endHW('deadline');return}lastActivity=Date.now();view='task';render();window.scrollTo(0,0)}return;
+    case'teacher':cur=null;view='teacher';render();window.scrollTo(0,0);return;
+    case'preview':startPreview(+b.dataset.u,+b.dataset.h);return;
+    case'verify':verify();return;
+    case'saveimg':saveImage();return;
+    case'copylink':{const l=b.dataset.link;const ok=()=>{b.textContent='✓ Kopiert';setTimeout(()=>b.textContent='Kopieren',1500)};
+      if(navigator.clipboard?.writeText)navigator.clipboard.writeText(l).then(ok,()=>{b.previousElementSibling?.querySelector('input')?.select()});else{b.previousElementSibling?.querySelector('input')?.select();document.execCommand('copy');ok()}return}
+  }
+  if(!cur||view!=='task')return;
+  const a=currentTask(),st=a?.st;
+  switch(act){
+    case'endearly':{const w=Math.min(99,stats(cur.d).wert);
+      if(confirm(`Willst du die Hausübung wirklich jetzt beenden?\n\nDu kannst danach NICHT mehr weitermachen.\nDein Ergebnis: ${w} %`))endHW('early');return}
+    case'next':advance();return;
+    case'mc-sel':if(!st.done){st.sel=i;saveSoon();render()}return;
+    case'mc-check':if(st.done||st.sel==null)return;quick(a.key+'-0',CONFIG.quickMs);complete(a,st.sel===a.ans);render();focusAnswer();return;
+    case'rd-sel':{const x=(st.ans[st.qi]??={});if(!x.done){x.sel=i;saveSoon();render()}return}
+    case'rd-check':{const x=st.ans[st.qi];if(!x||x.done||x.sel==null)return;const q=a.qs[st.qi];
+      x.ok=q.tf!=null?(x.sel===0)===q.tf:x.sel===q.ans;x.done=true;
+      quick(a.key+'-'+st.qi,st.qi===0?CONFIG.quickReadMs:CONFIG.quickMs);
+      cur.d.stepSec=0;if(st.ans.filter(y=>y&&y.done).length===a.qs.length){st.done=true;st.first=st.ans.every(y=>y.ok)}save();render();focusAnswer();return}
+    case'rd-next':if(st.qi<a.qs.length-1){st.qi++;save();render();window.scrollTo({top:document.querySelector('hr')?.offsetTop||0,behavior:'smooth'})}else advance();return;
+    case'typed-check':checkTyped();return;
+    case'ord-add':if(!st.done&&!st.picked.includes(i)){st.picked.push(i);saveSoon();render()}return;
+    case'ord-rem':if(!st.done){st.picked.splice(j,1);saveSoon();render()}return;
+    case'ord-check':{if(st.done||st.picked.length!==a.tiles.length)return;quick(a.key+'-0',2500);
+      const built=st.picked.map(k=>a.tiles[k]).join(' '),ok=[a.tiles.join(' '),...a.alts].some(x=>canon(x)===canon(built));
+      st.msg=ok?'✓ Richtig zusammengesetzt!':'Leider falsch. Richtig ist: „'+a.tiles.join(' ')+'.“';complete(a,ok);render();focusAnswer();return}
+    case'm-left':if(st.pairs[i]!=null){delete st.pairs[i];st.active=null}else st.active=st.active===i?null:i;render();return;
+    case'm-right':{const owner=Object.keys(st.pairs).find(k=>st.pairs[k]===j);
+      if(st.active==null){if(owner!=null)delete st.pairs[owner]}
+      else{if(owner!=null)delete st.pairs[owner];st.pairs[st.active]=j;st.active=null}
+      saveSoon();render();return}
+    case'm-check':{if(st.done||Object.keys(st.pairs).length!==a.pairs.length)return;quick(a.key+'-0',6000);
+      const wrong=a.pairs.map((_,k)=>k).filter(k=>st.pairs[k]!==k);
+      st.msg=wrong.length?`${a.pairs.length-wrong.length} von ${a.pairs.length} richtig. Schau dir die falschen Paare genau an – sie kommen später noch einmal.`:'✓ Alles richtig zugeordnet!';
+      complete(a,!wrong.length,wrong.map(k=>a.ids[k]));render();focusAnswer();return}
+    case'find-word':if(st.clicked!=null)return;st.clicked=i;st.clickOk=i===a.wrong;cur.d.stepSec=0;save();render();focusAnswer();return;
+  }
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='name'||t.id==='klasse'){renderHWList();return}
+  if(t.classList?.contains('dl')){const U=UNITS[+t.dataset.u],v=t.value;const bis=v?v.replace(/[-T:]/g,''):'';const l=hwLink(U,+t.dataset.h,bis);
+    const box=t.closest('.linkbox');box.querySelector('.linkout').value=l;box.querySelector('[data-act=copylink]').dataset.link=l;return}
+  if(t.id!=='answer'||!cur||view!=='task')return;
+  const st=currentTask().st;if(st.done)return;
+  st.val=t.value;
+  if(st.showSol){st.showSol=false;$('#sol')?.remove();const m=$('#msg');st.msg='Jetzt schreib die Lösung selbst.';if(m)m.textContent=st.msg}
+  saveSoon();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='answer'&&e.target.tagName==='INPUT'){e.preventDefault();checkTyped()}});
+['paste','drop'].forEach(ev=>document.addEventListener(ev,e=>{
+  if(e.target.id==='answer'){e.preventDefault();const m=$('#msg');if(m){m.textContent='Einfügen ist hier nicht möglich – bitte selbst tippen.';m.className='fb bad'}}
+}));
+document.addEventListener('copy',e=>{if(e.target.closest&&e.target.closest('.sol'))e.preventDefault()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()});
+window.addEventListener('pagehide',save);
+
+/* =====================================================================
+   START
+   ===================================================================== */
+function loadUnits(done){
+  if(window.INLINE_UNITS||!CONFIG.units.length){done();return}
+  let i=0;
+  const next=()=>{
+    if(i>=CONFIG.units.length){done();return}
+    const src=CONFIG.units[i++],s=document.createElement('script');
+    s.src=location.protocol==='file:'?src:src+'?v='+encodeURIComponent(CONFIG.version);
+    s.onload=next;s.onerror=()=>{LOAD_ERRORS.push('Datei nicht gefunden: '+src);next()};
+    document.head.appendChild(s);
+  };
+  next();
+}
+let FOCUS=null;
+// Links sind signiert: Wer unit, hue oder bis in der Adresse ändert, macht den Link ungültig.
+const linkSig=(id,h,bis)=>cyrb53([CONFIG.secret,'link',id,h,bis||''].join('|')).toString(36).slice(-6);
+function hwLink(U,h,bis){return location.href.split('#')[0].split('?')[0]+'?unit='+encodeURIComponent(U.id)+'&hue='+h+(bis?'&bis='+bis:'')+'&s='+linkSig(U.id,h,bis)}
+function parseBis(b){const m=/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(b||'');return m?new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5]).getTime():null}
+$('#foot').textContent='Version '+CONFIG.version;
+loadUnits(()=>{
+  const qs=new URLSearchParams(location.search);
+  if(qs.has('unit')||qs.has('hue')){
+    const ui=UNITS.findIndex(U=>U.id===qs.get('unit')),h=+qs.get('hue'),bis=qs.get('bis')||'';
+    const valid=ui>=0&&h>=1&&h<=UNITS[ui].homeworks.length&&qs.get('s')===linkSig(qs.get('unit'),h,bis)&&(!bis||parseBis(bis));
+    FOCUS=valid?{ui,h,deadline:bis?parseBis(bis):null}:{bad:true};
+  }
+  if(new URLSearchParams(location.search).get('lehrer')==='1')view='teacher';
+  render();
+  setInterval(tick,1000);
+});
+</script>
+</body>
+</html>
