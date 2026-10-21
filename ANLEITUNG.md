@@ -155,6 +155,24 @@ Wörter werden automatisch gewählt (zuerst die mit Fehlern). Ergebnis = Lernsta
 ### extras – Zusatzaufgaben
 Gleiche Aufgabentypen. `minHw: 2` = erst ab HÜ 2 (z. B. Grammatik, die erst in HÜ 2 eingeführt wird). Grammatik-Extras (`topic` grammar, `sent`, `find`, `order`) werden auch als Wiederholung nach Grammatikfehlern verwendet. Mindestens 20 Stück.
 
+### vocab – Vokabeltraining (optional, ein eigener Link pro Unit)
+```js
+vocab: {
+  title: 'Vokabeltraining Unit 4',
+  items: [
+    {en: 'knife', de: 'Messer', ex: 'Dad cuts the pumpkin with a big ___.', wrong: ['knives', 'dress', 'sticker'],
+     avoid: ['knives'], trap: {knives: 'Fast! knives ist die Mehrzahl.'}},
+    {forms: ['come', 'came', 'come'], de: 'kommen', ex: 'Yesterday ten friends ___ to my party.', target: 'came', wrong: ['come', 'comed', 'coming']}
+  ]
+}
+```
+- `en` = was das Kind schreibt. **Einfach halten:** keine Klammern, kein „/“, keine Zusätze. Aus „knife (pl knives)“ werden zwei Einträge, aus „to be proud (of)“ wird `be proud` = `stolz sein`. Ein vorangestelltes „to“ ist bei der Eingabe automatisch egal.
+- Unregelmäßige Verben: `forms` mit genau 3 Formen. Das Kind schreibt sie mit Leerzeichen, Bindestrichen oder Kommas – alles wird akzeptiert.
+- `ex` = Beispielsatz mit `___`; `target` = das Wort, das in die Lücke gehört (Standard: `en`, bei Verben die 2. Form); `wrong` = genau 3 falsche Auswahlmöglichkeiten, die eindeutig nicht passen.
+- optional: `img: 'units/bilder/knife.jpg'` (Bild auf der Lernkarte; quadratisch, ohne Schrift, ca. 400 px), `pic: true` (zusätzlich Bildfrage „Was ist das?“ – nur bei eindeutig zeichenbaren Wörtern), `alt` (ebenfalls richtig), `avoid` (beim Erkennen nicht gemeinsam anbieten, z. B. fear/scare), `trap` (typische falsche Eingabe → freundlicher Hinweis).
+- Wertung je Wort: erkennen 25 % · im Satz 50 % · mit Hilfe schreiben 75 % · zweimal ohne Hilfe (mit anderen Wörtern dazwischen) 100 %. Fehler werfen höchstens eine Stufe zurück.
+- Auf der Lehrerseite: eigener Link mit Frist, **Vorschau Vokabeln** und **Wortliste ansehen** zum Korrekturlesen.
+
 ### Qualitätsregeln
 1. **Aufbau jeder HÜ:** Intro → Erkennen (mc, match) → Lesen → selbst Schreiben (gap, find, sent) → Anwenden (pic, open). 18–24 Aufgaben, ca. 10–12 Minuten.
 2. **HÜ 1** Wortschatz, **HÜ 2** Grammatik der Unit, **HÜ 3** Lesen/Schreiben/Anwenden. Keine Aufgabe wortgleich in zwei HÜs.

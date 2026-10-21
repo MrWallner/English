@@ -295,4 +295,58 @@ P.S. The house with the big pumpkin in the front window is ours!`,
     {t: 'mc', minHw: 2, q: 'The children walk past the graveyard. What does “walk past” mean?', right: 'vorbeigehen', wrong: ['hineingehen', 'weglaufen', 'stehen bleiben'], why: 'walk past = vorbeigehen.'},
     {t: 'mc', minHw: 2, q: 'Ruby says: “You should try again.” What does she mean?', right: 'Sam should do it one more time.', wrong: ['Sam should stop now.', 'Sam should go home.', 'Sam should eat an apple.'], why: 'try again = es noch einmal versuchen.'}
   ]
+  ,
+
+  /* ---------- Vokabeltraining ----------
+     Wörter: en, de, ex (Beispielsatz mit ___), wrong (3 falsche Auswahlmöglichkeiten für den Satz)
+     optional: alt (auch richtig), target (Wort im Satz, falls anders als en), avoid (nicht als Ablenker beim Erkennen),
+               trap (typische falsche Eingabe → Hinweis)
+     Unregelmäßige Verben: forms: [Grundform, Vergangenheit, 3. Form], target = Form im Beispielsatz */
+  vocab: {
+    title: 'Vokabeln - Unit 3',
+    items: [
+      {en: 'tradition', img: 'units/bilder/tradition.jpg', de: 'Tradition', ex: 'Carving pumpkins is an old Halloween ___.', wrong: ['century', 'sticker', 'picnic']},
+      {en: 'fear', img: 'units/bilder/fear.jpg', de: 'sich fürchten', ex: 'Many little children ___ the dark.', wrong: ['scare', 'lose', 'keep'], avoid: ['scare'], trap: {scare: 'Fast – scare heißt „Angst machen“. Gesucht ist „sich fürchten“.'}},
+      {en: 'cut off', img: 'units/bilder/cut-off.jpg', de: 'abschneiden', ex: 'Be careful! Don’t ___ your finger with that knife!', wrong: ['keep', 'fear', 'scare']},
+      {en: 'front window', img: 'units/bilder/front-window.jpg', pic: true, trap: {window: 'Fast! Welches Fenster genau? f… window'}, de: 'Vorderfenster', ex: 'We put a big pumpkin in the ___, so everybody on the street can see it.', wrong: ['stairs', 'graveyard', 'century']},
+      {en: 'keep', img: 'units/bilder/keep.jpg', de: 'behalten', ex: 'You can ___ the costume. I don’t need it any more.', wrong: ['lose', 'fear', 'cut off']},
+      {en: 'be proud', img: 'units/bilder/be-proud.jpg', de: 'stolz sein', alt: ['be proud of'], ex: 'You can ___ of your costume – it looks great!', wrong: ['be scared', 'be sick', 'be wild'], trap: {proud: 'Fast! „stolz sein“ heißt be proud – schreib das „be“ dazu.'}},
+      {en: 'stairs', img: 'units/bilder/stairs.jpg', pic: true, de: 'Treppe', ex: 'Mia runs up the ___ to her bedroom.', wrong: ['sweets', 'guys', 'stickers'], trap: {stair: 'Fast! Treppe heißt immer stairs – mit s am Ende.', staircase: 'Gute Übersetzung! Gesucht ist das kürzere Wort aus der Unit: st…'}},
+      {en: 'sticker', img: 'units/bilder/sticker.jpg', pic: true, de: 'Aufkleber', ex: 'There is a ___ with a pumpkin on my school bag.', wrong: ['century', 'graveyard', 'tradition']},
+      {en: 'sweets', img: 'units/bilder/sweets.jpg', pic: true, de: 'Süßigkeiten', alt: ['candy'], ex: 'The children shout “Trick or treat!” and get lots of ___.', wrong: ['stairs', 'knives', 'guys']},
+      {en: 'trick or treat', img: 'units/bilder/trick-or-treat.jpg', de: 'Süßes oder Saures', ex: 'When the door opens, the children shout: “___!”', target: 'Trick or treat', wrong: ['Happy birthday', 'Good night', 'Excuse me']},
+      {en: 'knife', img: 'units/bilder/knife.jpg', de: 'Messer', ex: 'Dad cuts the pumpkin with a big ___.', wrong: ['knives', 'dress', 'sticker'], avoid: ['knives'], trap: {knives: 'Fast! knives ist die Mehrzahl. Gesucht ist ein Messer.'}},
+      {en: 'knives', img: 'units/bilder/knife.jpg', pic: true, de: 'Messer (Mehrzahl)', ex: 'There are three sharp ___ on the kitchen table.', wrong: ['knife', 'stickers', 'guys'], avoid: ['knife'], trap: {knife: 'Fast! Gesucht ist die Mehrzahl: mehrere Messer.', knifes: 'Fast! Die Mehrzahl von knife ist unregelmäßig: kni…'}},
+      {en: 'century', img: 'units/bilder/century.jpg', de: 'Jahrhundert', ex: 'This old house is from the 18th ___.', wrong: ['tradition', 'picnic', 'graveyard']},
+      {en: 'costume', img: 'units/bilder/costume.jpg', pic: true, trap: {vampire: 'Das ist ein Vampir – gesucht ist das Wort für seine Verkleidung: c…'}, de: 'Kostüm', ex: 'Leo is a vampire tonight. His ___ is black and red.', wrong: ['century', 'picnic', 'tradition']},
+      {en: "couldn't", img: 'units/bilder/couldn-t.jpg', de: 'konnte nicht', trap: {couldnt: 'Fast! Denk an den Apostroph: couldn’t.', 'could not': 'Richtig übersetzt – gesucht ist aber die Kurzform mit Apostroph.'}, ex: 'I looked everywhere, but I ___ find my witch hat.', wrong: ['shall', 'myself', 'can']},
+      {en: 'cute', img: 'units/bilder/cute.jpg', de: 'niedlich, süß', ex: 'Look at the little cat in the ghost costume! It’s so ___!', wrong: ['sick', 'proud', 'wild']},
+      {en: 'dress', img: 'units/bilder/dress.jpg', pic: true, trap: {witch: 'Schau auf die Kleidung: Was trägt das Mädchen? d…'}, de: 'Kleid', ex: 'My sister wears a long black ___ and a witch hat.', wrong: ['knife', 'sticker', 'stairs']},
+      {en: 'graveyard', img: 'units/bilder/graveyard.jpg', pic: true, trap: {cemetery: 'Gute Übersetzung! Gesucht ist aber das Wort aus der Unit: g…'}, de: 'Friedhof', ex: 'There are many old graves in the ___ next to the church.', wrong: ['picnic', 'front window', 'century']},
+      {en: 'myself', img: 'units/bilder/myself.jpg', de: 'mich selbst, mir selbst', ex: 'Nobody helped me. I made the costume ___.', wrong: ['guys', 'shall', "couldn't"]},
+      {en: 'shall', img: 'units/bilder/shall.jpg', de: 'sollen (Sollen wir …? = ___ we …?)', ex: 'It’s cold outside. ___ we go inside?', target: 'Shall', wrong: ['Myself', 'Guys', 'Cute'], trap: {should: 'Fast – gesucht ist das Wort für Vorschläge: „Sollen wir …?“ = „___ we …?“'}},
+      {en: 'sick', img: 'units/bilder/sick.jpg', pic: true, de: 'krank, übel', alt: ['ill'], ex: 'Tom can’t come to the party. He is ___ and must stay in bed.', wrong: ['cute', 'proud', 'wild']},
+      {en: 'superheroine', img: 'units/bilder/superheroine.jpg', pic: true, trap: {superhero: 'Fast! Es ist ein Mädchen: superhero…ine'}, de: 'Superheldin', alt: ['super heroine'], ex: 'Ruby can fly like a ___ in her costume.', wrong: ['graveyard', 'century', 'picnic']},
+      {en: 'wild', img: 'units/bilder/wild.jpg', de: 'wild', ex: 'The children run, jump and shout. The party is very ___.', wrong: ['sick', 'cute', 'sweets']},
+      {en: 'scare', img: 'units/bilder/scare.jpg', de: 'Angst machen, erschrecken', ex: 'Leo hides behind the door. He wants to ___ his little sister.', wrong: ['fear', 'keep', 'lose'], avoid: ['fear'], trap: {fear: 'Fast – fear heißt „sich fürchten“. Gesucht ist „Angst machen“.'}},
+      {en: 'cycle helmet', img: 'units/bilder/cycle-helmet.jpg', pic: true, de: 'Fahrradhelm', ex: 'When you ride your bike, you should always wear a ___.', wrong: ['dress', 'sticker', 'front window'], trap: {helmet: 'Fast! Was für ein Helm? c… helmet', 'bike helmet': 'Gute Übersetzung! Gesucht ist aber das Wort aus der Unit: c… helmet.', 'bicycle helmet': 'Gute Übersetzung! Gesucht ist aber das Wort aus der Unit: c… helmet.'}},
+      {en: 'guys', img: 'units/bilder/guys.jpg', de: 'Leute', ex: 'Come on, ___! Let’s go trick-or-treating!', wrong: ['myself', 'sweets', 'stairs'], trap: {people: 'Gute Übersetzung! Gesucht ist aber das lockere Wort aus der Unit: g…'}},
+      {en: 'lose', img: 'units/bilder/lose.jpg', de: 'verlieren', ex: 'Hold your bag! Don’t ___ your sweets.', wrong: ['keep', 'scare', 'fear'], trap: {loose: 'Fast! verlieren = lose – nur mit einem o.'}},
+      {en: 'picnic', img: 'units/bilder/picnic.jpg', pic: true, de: 'Picknick', ex: 'It’s sunny, so we have a ___ in the park.', wrong: ['graveyard', 'century', 'tradition'], trap: {picknick: 'Fast! Auf Englisch ohne k in der Mitte: pic…'}},
+
+      {forms: ['cut', 'cut', 'cut'], de: 'schneiden', ex: 'Yesterday Mum ___ the pumpkin with a big knife.', target: 'cut', wrong: ['cutted', 'cuts', 'cutting']},
+      {forms: ['hit', 'hit', 'hit'], de: 'schlagen, treffen', ex: 'Last week Tom ___ the ball very hard.', target: 'hit', wrong: ['hitted', 'hits', 'hitting']},
+      {forms: ['hurt', 'hurt', 'hurt'], de: 'verletzen, wehtun', ex: 'I fell off my bike yesterday and ___ my knee.', target: 'hurt', wrong: ['hurted', 'hurts', 'hurting']},
+      {forms: ['let', 'let', 'let'], de: 'lassen', ex: 'Last Halloween my parents ___ me stay up late.', target: 'let', wrong: ['letted', 'lets', 'letting']},
+      {forms: ['put', 'put', 'put'], de: 'legen, stellen', ex: 'Yesterday I ___ a pumpkin in the front window.', target: 'put', wrong: ['putted', 'puts', 'putting']},
+      {forms: ['read', 'read', 'read'], de: 'lesen', ex: 'Last night I ___ a scary Halloween story.', target: 'read', wrong: ['readed', 'reads', 'reading']},
+      {forms: ['come', 'came', 'come'], de: 'kommen', ex: 'Yesterday ten friends ___ to my party.', target: 'came', wrong: ['come', 'comed', 'coming']},
+      {forms: ['become', 'became', 'become'], de: 'werden', ex: 'Last year Ruby ___ the best player in our team.', target: 'became', wrong: ['become', 'becomed', 'becoming']},
+      {forms: ['run', 'ran', 'run'], de: 'laufen, rennen', ex: 'The cat jumped out and ___ away.', target: 'ran', wrong: ['run', 'runned', 'running']},
+      {forms: ['get', 'got', 'got'], de: 'bekommen', ex: 'Last Halloween I ___ a lot of sweets.', target: 'got', wrong: ['get', 'getted', 'getting']},
+      {forms: ['get up', 'got up', 'got up'], de: 'aufstehen', ex: 'Yesterday I ___ at seven o’clock.', target: 'got up', wrong: ['get up', 'getted up', 'getting up']},
+      {forms: ['can', 'could', 'been able to'], de: 'können', ex: 'When I was five, I ___ already swim.', target: 'could', wrong: ['can', 'canned', 'been able to']}
+    ]
+  }
+
 });

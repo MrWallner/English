@@ -99,6 +99,14 @@ ul{padding-left:22px}
 .rfoot{display:flex;justify-content:space-between;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid #f0e6ef;font-size:.85rem;color:var(--muted)}
 .rfoot b{color:var(--ink);letter-spacing:.08em}
 .steps{margin:6px 0 0;padding-left:20px}
+.vcard{background:var(--soft);border-radius:14px;padding:18px;text-align:center;margin:10px 0}
+.ven{font-size:1.7rem;font-weight:800}
+.vde{font-size:1.15rem;margin:4px 0 8px}
+.vex{font-style:italic;color:var(--muted);margin-bottom:10px}
+.vbig{font-size:1.35rem}
+.vimg{display:block;width:min(280px,80%);aspect-ratio:1;object-fit:cover;border-radius:16px;margin:8px auto 10px;box-shadow:0 2px 10px #3020351f}
+.vthumb{width:56px;height:56px;object-fit:cover;border-radius:8px}
+.vdist{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.8rem;color:var(--muted);margin-bottom:4px}
 .linkbox{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:#fcfafc}
 table{width:100%;border-collapse:collapse;font-size:.88rem}
 th,td{text-align:left;border-bottom:1px solid #eee4ee;padding:7px 5px;vertical-align:top}
@@ -163,9 +171,9 @@ const lowerFirst=s=>/^(You|We|The|They|She|He|It|I'm|My|Our|There)\b/.test(s)?s[
 const reCache={};
 const RX=s=>reCache[s]||(reCache[s]=new RegExp(s,'i'));
 const CONTRACTIONS=[[/\bdo not\b/g,"don't"],[/\bdoes not\b/g,"doesn't"],[/\bdid not\b/g,"didn't"],[/\bis not\b/g,"isn't"],[/\bare not\b/g,"aren't"],[/\bwas not\b/g,"wasn't"],[/\bwere not\b/g,"weren't"],[/\bcan ?not\b/g,"can't"],[/\bshould not\b/g,"shouldn't"],[/\bwould not\b/g,"wouldn't"],[/\bcould not\b/g,"couldn't"],[/\bwill not\b/g,"won't"],[/\bhave not\b/g,"haven't"],[/\bhas not\b/g,"hasn't"],[/\bmust not\b/g,"mustn't"]];
-function canon(s,U){
+function canon(s,U,keepShort){
   let c=String(s??'').toLowerCase().replace(/[’‘`´]/g,"'").replace(/[“”„"«»]/g,'').replace(/\s+/g,' ').trim().replace(/[.!?]+$/,'').trim().replace(/\s+,/g,',');
-  CONTRACTIONS.forEach(([r,v])=>c=c.replace(r,v));
+  if(!keepShort)CONTRACTIONS.forEach(([r,v])=>c=c.replace(r,v));
   ((U||cur?.unit)?.normalize||[]).forEach(([a,b])=>c=c.replace(new RegExp(a,'gi'),b));
   return c;
 }
@@ -440,7 +448,17 @@ function capFor(a){
   return CONFIG.stepCap;
 }
 function tick(){
-  if(view!=='task'||!cur)return;
+  if(!cur)return;
+  if(view==='vocab'){
+    const v=cur.v;
+    if(!cur.preview&&!v.submitted&&vOver()){vSubmit('vdeadline');return}
+    if(document.visibilityState!=='visible'){clockState='hidden';return}
+    if((Date.now()-lastActivity)/1000>CONFIG.idleLimit)clockState='idle';
+    else if(v.stepSec>=CONFIG.stepCap)clockState=v.cur?.st?.done?'capdone':'cap';
+    else{clockState='';v.seconds++;v.sessionSec++;v.stepSec++;if(v.seconds%5===0)save()}
+    updateClock();return;
+  }
+  if(view!=='task')return;
   if(!cur.preview&&cur.d.deadline&&Date.now()>cur.d.deadline){endHW('deadline');return}
   const d=cur.d,a=currentTask();
   if(document.visibilityState!=='visible'){clockState='hidden';return}
@@ -452,8 +470,17 @@ function tick(){
 }
 function updateClock(){
   const el=$('#clock');if(!el||!cur)return;
-  const d=cur.d,left=minSec()-d.seconds;
   let txt,cls='clock';
+  if(view==='vocab'){
+    const v=cur.v;
+    if(clockState==='idle'){txt='⏸ Uhr pausiert – tippe oder scrolle, um weiterzumachen.';cls+=' paused'}
+    else if(clockState==='cap'){txt='⏸ Uhr angehalten – beantworte zuerst diese Aufgabe.';cls+=' paused'}
+    else if(clockState==='capdone'){txt='⏸ Uhr angehalten – tippe auf „Weiter“.';cls+=' paused'}
+    else if(v.sessionSec>=CONFIG.minSeconds){txt=`⏱ Übungszeit ${fmt(v.seconds)} · Super, für heute reicht’s! Morgen weiterüben hilft beim Merken.`;cls+=' reached'}
+    else txt=`⏱ Übungszeit ${fmt(v.seconds)}`;
+    el.textContent=txt;el.className=cls;return;
+  }
+  const d=cur.d,left=minSec()-d.seconds;
   if(clockState==='idle'){txt='⏸ Uhr pausiert – tippe oder scrolle, um weiterzumachen.';cls+=' paused'}
   else if(clockState==='cap'){txt='⏸ Uhr angehalten – beantworte zuerst diese Aufgabe.';cls+=' paused'}
   else if(clockState==='capdone'){txt='⏸ Uhr angehalten – tippe auf „Weiter“.';cls+=' paused'}
@@ -471,7 +498,10 @@ window.addEventListener('scroll',()=>{lastActivity=Date.now()},{passive:true,cap
 function setHeader(pill,title){$('#pill').textContent=pill;$('#htitle').textContent=title}
 function render(){
   if(view==='teacher')return renderTeacher();
+  if(view==='vlist')return renderVList(cardData);
   if(view==='card')return renderCard(cardData);
+  if(view==='vpause'&&cur)return renderVPause();
+  if(view==='vocab'&&cur)return renderVocab();
   if(view==='paused'&&cur)return renderPaused();
   if(view==='home'||!cur)return renderHome();
   const a=currentTask();
@@ -603,17 +633,25 @@ function renderHome(){
   if(!FOCUS||FOCUS.bad){app.innerHTML=`<section class="card"><h2>${FOCUS?'Dieser Link funktioniert nicht':'Willkommen!'}</h2><p>${FOCUS?'Der Link ist unvollständig oder wurde verändert.':'Öffne deine Hausübung bitte über den Link, den du von deiner Lehrkraft bekommen hast (z. B. in edhu).'}</p>${FOCUS?'<p class="note">Bitte frag deine Lehrkraft nach dem richtigen Link.</p>':''}</section>`;return}
   const dl=FOCUS.deadline,over=dl&&Date.now()>dl;
   const dlInfo=dl?`<div class="fb ${over?'bad':''}">${over?`⏰ Die Abgabefrist ist am <b>${esc(fmtDeadline(dl))}</b> abgelaufen. Du kannst nur noch deine Ergebniskarte ansehen.`:`📅 Abgabe bis <b>${esc(fmtDeadline(dl))}</b>`}</div>`:'';
-  app.innerHTML=`<section class="card"><h2>Deine Hausübung</h2>${dlInfo}
+  const isV=FOCUS.h==='V';
+  app.innerHTML=`<section class="card"><h2>${isV?'Dein Vokabeltraining':'Deine Hausübung'}</h2>${dlInfo.replace('Du kannst nur noch deine Ergebniskarte ansehen.',isV?'Du kannst weiterüben, aber nicht mehr abgeben.':'Du kannst nur noch deine Ergebniskarte ansehen.')}
   ${storageOK?'':'<div class="fb bad">Achtung: Dieser Browser speichert nichts (z. B. privates Fenster). Schließt du die Seite, ist dein Fortschritt weg.</div>'}
   <div class="two"><label>Vor- und Nachname<input id="name" class="input" autocomplete="off" value="${esc(L.name||'')}" placeholder="z. B. Lena Huber"></label><label>Klasse<input id="klasse" class="input" autocomplete="off" value="${esc(L.klasse||'')}" placeholder="z. B. 2B"></label></div>
   <p class="note">Nicht du? Trag deinen eigenen Namen und deine Klasse ein, bevor du startest.</p>
   <div id="hwlist"></div>
-  <p class="note">So funktioniert’s: Pro Hausübung arbeitest du mindestens <b>${Math.round(CONFIG.minSeconds/60)} Minuten</b> – die Uhr läuft nur, während du wirklich arbeitest. Mit <b>⏸ Pause</b> kannst du jederzeit aufhören und später über denselben Link weitermachen. Am Ende bekommst du eine <b>Ergebniskarte</b>. Mach davon einen Screenshot und lade ihn in edhu hoch.</p></section>`;
+  ${isV?`<p class="note">So funktioniert’s: Ziel ist, dass du <b>alle Wörter sicher schreiben</b> kannst. Jedes Wort lernst du in Stufen: erkennen → im Satz verwenden → mit Hilfe schreiben → ohne Hilfe schreiben. Wörter, die noch nicht sitzen, kommen immer wieder. Es gibt keine Mindestzeit – übe am besten öfter kurz. Mit <b>⏸ Pause</b> hörst du auf und machst später über denselben Link weiter. Wenn du fertig bist, tippe auf <b>Abgeben</b>, mach einen Screenshot von der Karte und lade ihn in edhu hoch.</p></section>`:`<p class="note">So funktioniert’s: Pro Hausübung arbeitest du mindestens <b>${Math.round(CONFIG.minSeconds/60)} Minuten</b> – die Uhr läuft nur, während du wirklich arbeitest. Mit <b>⏸ Pause</b> kannst du jederzeit aufhören und später über denselben Link weitermachen. Am Ende bekommst du eine <b>Ergebniskarte</b>. Mach davon einen Screenshot und lade ihn in edhu hoch.</p></section>`}`;
   renderHWList();
 }
 function renderHWList(){
   const el=$('#hwlist');if(!el)return;
   const {name,k}=readUser();const u=store.users[userKey(name,k)];
+  if(FOCUS?.h==='V'){
+    const U=UNITS[FOCUS.ui],v=u?.units?.[U.id]?.voc,over=FOCUS.deadline&&Date.now()>FOCUS.deadline;
+    let status=over?'Frist abgelaufen – du kannst trotzdem üben':'Noch nicht begonnen – starten',cls='hwbtn';
+    if(v?.submitted){status=`✓ Abgegeben · ${v.submitted.wert} % – Karte ansehen oder weiterüben`;cls+=' done'}
+    else if(v&&Object.keys(v.items).length){const s=vStats(v,U);status=`Stand ${s.pct} % · ${s.c[4]} von ${s.N} Wörtern sicher – weiterüben`}
+    el.innerHTML=`<div class="unit"><h3>${esc(unitLabel(U))}</h3><div class="hwrow"><button class="${cls}" data-act="start" data-u="${FOCUS.ui}" data-h="V"><b>${esc(vTitle(U))}</b><span class="note">${status}</span></button></div></div>`;return;
+  }
   el.innerHTML=UNITS.map((U,ui)=>FOCUS&&FOCUS.ui!==ui?'':`<div class="unit"><h3>${esc(unitLabel(U))}</h3>${U.homeworks.map((hw,i)=>{
     if(FOCUS&&FOCUS.h!==i+1)return'';
     const d=u?.units?.[U.id]?.[i+1],over=FOCUS?.deadline&&Date.now()>FOCUS.deadline;let status=over?'Nicht begonnen':'Noch nicht begonnen – starten',cls='hwbtn';
@@ -624,23 +662,33 @@ function renderHWList(){
 }
 
 /* ---------- Ergebniskarte ---------- */
+STATUS_HEAD.voc='✓ Vokabeltraining abgegeben';STATUS_HEAD.vdeadline='⏰ Frist abgelaufen – automatisch abgegeben';
+const isOrange=p=>['early','deadline','vdeadline'].includes(statusOf(p));
+function cardInfo(p){
+  const min=`${Math.round(p.sec/60)} Min.`;
+  if(p.kind==='voc')return{bigLabel:'Vokabel-Stand',tiles:[[min,'Übungszeit'],[`${p.counts[4]}/${p.N}`,'sicher (2× ohne Hilfe)'],[`${p.counts[3]}/${p.N}`,'mit Hilfe schreiben']],
+    line:`im Satz ${p.counts[2]} · erkannt ${p.counts[1]} · noch neu ${p.counts[0]}`,none:'Alle Wörter sitzen sicher – super!'};
+  return{bigLabel:'HÜ-Wert (erledigte Lernschritte)',tiles:[[min,'Lernzeit'],[p.finished?`${LS_LABEL[p.lvl].split(' ')[0]} ${p.ctl}`:'–',p.finished?LS_LABEL[p.lvl].split(' ').slice(1).join(' '):'Lernstand'],[`${p.first} %`,'auf Anhieb richtig']],line:'',none:p.finished?'Keine Fehlerwörter – super!':''};
+}
 function renderCard(p){
   setHeader(p.unitLabel,CONFIG.title);
-  const flag=(p.quick+p.junk)>=CONFIG.flagAt;
+  const flag=(p.quick+p.junk)>=CONFIG.flagAt,I=cardInfo(p),o=isOrange(p);
   app.innerHTML=`<div class="rcard" id="rcard">
-    <div class="rtop ${p.finished?'':'partial'}"><b>${STATUS_HEAD[statusOf(p)]}</b><span>${esc(p.unitLabel)}</span></div>
+    <div class="rtop ${o?'partial':''}"><b>${STATUS_HEAD[statusOf(p)]}</b><span>${esc(p.unitLabel)}</span></div>
     <div class="rbody">
       <div class="rname">${esc(p.n)} · ${esc(p.k)}</div>
       <div class="rhw">${esc(p.hwTitle)}</div>
-      <div class="rbig ${p.finished?'':'partial'}">${p.wert} %</div><div class="rbiglabel">HÜ-Wert (erledigte Lernschritte)</div>
-      <div class="rgrid"><div><b>${Math.round(p.sec/60)} Min.</b><span>Lernzeit</span></div><div><b>${p.finished?LS_LABEL[p.lvl].split(' ')[0]+' '+p.ctl:'–'}</b><span>${p.finished?esc(LS_LABEL[p.lvl].split(' ').slice(1).join(' ')):'Lernstand'}</span></div><div><b>${p.first} %</b><span>beim Üben auf Anhieb richtig</span></div></div>
-      ${p.weak.length?`<div class="rwords">Noch üben: <b>${esc(p.weak.join(', '))}</b></div>`:(p.finished?'<div class="rwords">Keine Fehlerwörter – super!</div>':'')}
+      <div class="rbig ${o?'partial':''}">${p.wert} %</div><div class="rbiglabel">${I.bigLabel}</div>
+      <div class="rgrid">${I.tiles.map(t=>`<div><b>${esc(t[0])}</b><span>${esc(t[1])}</span></div>`).join('')}</div>
+      ${I.line?`<div class="note" style="margin-top:8px">${esc(I.line)}</div>`:''}
+      ${p.weak.length?`<div class="rwords">Noch üben: <b>${esc(p.weak.join(', '))}</b></div>`:(I.none?`<div class="rwords">${I.none}</div>`:'')}
       ${flag?`<div class="rflag">⚠ Hinweis für die Lehrkraft: ${p.quick} sehr schnelle Antworten, ${p.junk} Unsinn-Eingaben</div>`:''}
       <div class="rfoot"><span>${esc(p.date)}</span><span>Prüfzeichen <b>${esc(p.code)}</b></span></div>
     </div></div>
   <section class="card"><h3 style="margin-top:0">📸 So gibst du ab</h3>
     <ol class="steps"><li>Mach einen <b>Screenshot</b> von der Karte oben:<br><span class="note">iPad/iPhone: Ein-/Aus-Taste + Lauter-Taste gleichzeitig (mit Home-Taste: Home + Ein/Aus) · Android: Ein/Aus + Leiser · Windows: Windows-Taste + Umschalt + S</span></li><li>Lade das Bild in <b>edhu</b> bei der Aufgabe hoch.</li></ol>
-    <p><button data-act="saveimg">Ergebnis als Bild speichern</button> <button class="secondary" data-act="home">Zur Übersicht</button></p>
+    <p><button data-act="saveimg">Ergebnis als Bild speichern</button> <button class="secondary" data-act="${cur?.preview?'teacher':'home'}">Zur Übersicht</button> ${p.kind==='voc'&&cur?.v?'<button class="secondary" data-act="vresume">Weiterüben</button>':''}</p>
+    ${p.kind==='voc'?'<p class="note">Du kannst nach dem Abgeben weiterüben. Die abgegebene Karte bleibt dabei gleich.</p>':''}
     <p class="note" id="imgnote">Klappt der Screenshot nicht? Dann speichere die Karte mit dem Knopf als Bild.</p></section>`;
 }
 function drawCard(p){
@@ -652,19 +700,20 @@ function drawCard(p){
   g.fillStyle='#f8f5fa';g.fillRect(0,0,W,H);
   rr(30,30,W-60,H-60,36);g.fillStyle='#fff';g.fill();
   g.save();rr(30,30,W-60,170,36);g.clip();const grd=g.createLinearGradient(0,0,W,0);
-  if(p.finished){grd.addColorStop(0,'#8c145f');grd.addColorStop(1,'#dd4a91')}else{grd.addColorStop(0,'#9a5a12');grd.addColorStop(1,'#d99a2b')}
+  const I=cardInfo(p),o=isOrange(p);
+  if(!o){grd.addColorStop(0,'#8c145f');grd.addColorStop(1,'#dd4a91')}else{grd.addColorStop(0,'#9a5a12');grd.addColorStop(1,'#d99a2b')}
   g.fillStyle=grd;g.fillRect(30,30,W-60,170);g.restore();
-  text(STATUS_HEAD[statusOf(p)],80,110,p.finished?44:38,'#fff','bold','left');
+  text(STATUS_HEAD[statusOf(p)],80,110,o?36:44,'#fff','bold','left');
   text(p.unitLabel,80,165,30,'#fff','normal','left');
   wrap(`${p.n} · ${p.k}`,W/2,290,54,'#29243a','bold',W-140,62);
   text(p.hwTitle,W/2,350,32,'#6f6577');
-  text(`${p.wert} %`,W/2,500,140,p.finished?'#a31d69':'#b06a12','bold');
-  text('HÜ-Wert (erledigte Lernschritte)',W/2,550,28,'#6f6577');
-  const tiles=[[`${Math.round(p.sec/60)} Min.`,'Lernzeit'],[p.finished?`${LS_LABEL[p.lvl].split(' ')[0]} ${p.ctl}`:'–',p.finished?LS_LABEL[p.lvl].split(' ').slice(1).join(' '):'Lernstand'],[`${p.first} %`,'auf Anhieb richtig']];
-  tiles.forEach((t,i)=>{const x=70+i*260;rr(x,590,240,150,22);g.fillStyle='#f8f1f8';g.fill();text(t[0],x+120,665,40,'#29243a','bold');text(t[1],x+120,712,24,'#6f6577')});
-  let y=810;
-  if(p.weak.length){y=wrap('Noch üben: '+p.weak.join(', '),W/2,y,32,'#29243a','bold',W-140,42)+50}
-  else if(p.finished){text('Keine Fehlerwörter – super!',W/2,y,32,'#29243a','bold');y+=50}
+  text(`${p.wert} %`,W/2,500,140,o?'#b06a12':'#a31d69','bold');
+  text(I.bigLabel,W/2,550,28,'#6f6577');
+  I.tiles.forEach((t,i)=>{const x=70+i*260;rr(x,590,240,150,22);g.fillStyle='#f8f1f8';g.fill();text(t[0],x+120,665,40,'#29243a','bold');text(t[1],x+120,712,22,'#6f6577')});
+  let y=800;
+  if(I.line){text(I.line,W/2,y-10,26,'#6f6577');y+=45}
+  if(p.weak.length){y=wrap('Noch üben: '+p.weak.join(', '),W/2,y,30,'#29243a','bold',W-140,40)+50}
+  else if(I.none){text(I.none,W/2,y,32,'#29243a','bold');y+=50}
   if((p.quick+p.junk)>=CONFIG.flagAt){rr(70,y-38,W-140,60,16);g.fillStyle='#fff3e9';g.fill();text(`⚠ Hinweis: ${p.quick} sehr schnelle Antworten, ${p.junk} Unsinn-Eingaben`,W/2,y+2,26,'#8a4a0c');y+=70}
   g.fillStyle='#f0e6ef';g.fillRect(70,1050,W-140,2);
   text(p.date,70,1105,30,'#6f6577','normal','left');
@@ -673,7 +722,7 @@ function drawCard(p){
 }
 function saveImage(){
   const p=cardData,c=drawCard(p);
-  const fname=`HUE${p.h}_${(p.n||'ergebnis').replace(/[^A-Za-z0-9ÄÖÜäöüß]+/g,'_')}.jpg`;
+  const fname=`${p.kind==='voc'?'Vokabeln':'HUE'+p.h}_${(p.n||'ergebnis').replace(/[^A-Za-z0-9ÄÖÜäöüß]+/g,'_')}.jpg`;
   // Teilen-Menü nur auf Handy/Tablet (dort: „Bild sichern“ → Fotos). Am Computer direkt herunterladen.
   const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   c.toBlob(b=>{
@@ -684,29 +733,240 @@ function saveImage(){
   },'image/jpeg',0.92);
 }
 
+/* =====================================================================
+   VOKABELTRAINING
+   Stufen je Wort: 0 neu · 1 erkennen (25 %) · 2 im Satz (50 %) · 3 mit Hilfe schreiben (75 %) · 4 sicher (100 %)
+   „sicher“ = zweimal ohne Hilfe richtig geschrieben, mit anderen Wörtern dazwischen.
+   ===================================================================== */
+const V_VAL=[0,25,50,75,100];
+const V_NAMES=['neu','erkannt','im Satz','mit Hilfe','sicher'];
+const canSay='speechSynthesis' in window;
+function say(t){try{const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+function canonV(s,U){return canon(s,U,true).replace(/[–—,;\/]+/g,' ').replace(/-/g,' ').replace(/\s+/g,' ').trim().replace(/^to /,'')}
+const vTitle=U=>U.vocab?.title||'Vokabeltraining';
+const imgSrc=p=>(window.INLINE_IMGS||{})[p]||p;
+function vItems(U){
+  if(U._vi)return U._vi;
+  const list=(U.vocab?.items||[]).map(x=>{
+    const verb=Array.isArray(x.forms);
+    const en=verb?x.forms.join(' '):x.en;
+    const id=(verb?'v-':'w-')+(verb?x.forms[0]:x.en).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    return{...x,verb,en,id,show:verb?x.forms.join(' – '):x.en,target:x.target||(verb?x.forms[1]:x.en)};
+  });
+  // Wörter und Verben gemischt einführen
+  const w=list.filter(x=>!x.verb),v=list.filter(x=>x.verb),order=[];let wi=0,vi=0;
+  const ratio=v.length?w.length/v.length:Infinity;
+  while(wi<w.length||vi<v.length){if(vi<v.length&&(wi>=w.length||wi>=ratio*(vi+.5)))order.push(v[vi++]);else order.push(w[wi++])}
+  return U._vi=order;
+}
+const vItem=id=>vItems(cur.unit).find(x=>x.id===id);
+function vNewState(){return{items:{},n:0,seconds:0,sessionSec:0,stepSec:0,quick:0,junk:0,cur:null,lastId:null,submitted:null,started:new Date().toISOString()}}
+function vStats(v,U){
+  const L=vItems(U),c=[0,0,0,0,0];let sum=0;const weak=[];
+  L.forEach(it=>{const l=v.items[it.id]?.lvl||0;c[l]++;sum+=V_VAL[l];if(l<4)weak.push([l,it.show])});
+  weak.sort((a,b)=>a[0]-b[0]);
+  return{pct:L.length?Math.round(sum/L.length):0,c,N:L.length,weak:weak.map(x=>x[1])};
+}
+function vPick(){
+  const v=cur.v,L=vItems(cur.unit),S=v.items;
+  const intro=L.filter(it=>S[it.id]),fresh=L.filter(it=>!S[it.id]);
+  const learning=intro.filter(it=>S[it.id].lvl<3);
+  const due=intro.filter(it=>S[it.id].due<=v.n&&it.id!==v.lastId);
+  const introduce=()=>{const it=fresh[0];S[it.id]={lvl:0,wins:0,due:v.n+1,lastWin:null};return{type:'learn',id:it.id}};
+  if(fresh.length&&learning.length<4)return introduce();   // höchstens 4 Wörter gleichzeitig in der Lernphase
+  let pool=due.filter(it=>S[it.id].lvl<4);if(!pool.length)pool=due;
+  if(!pool.length)pool=intro.filter(it=>it.id!==v.lastId&&S[it.id].lvl<4).sort((a,b)=>S[a.id].due-S[b.id].due).slice(0,3);
+  if(!pool.length&&fresh.length)return introduce();
+  if(!pool.length)pool=intro.filter(it=>it.id!==v.lastId);
+  if(!pool.length)pool=intro;
+  pool.sort((a,b)=>S[a.id].lvl-S[b.id].lvl||S[a.id].due-S[b.id].due);
+  const minL=S[pool[0].id].lvl,cand=pool.filter(it=>S[it.id].lvl===minL).slice(0,3);
+  const it=cand[Math.floor(Math.random()*cand.length)],l=S[it.id].lvl;
+  return{type:l===0?'rec':l===1?'ctx':'write',id:it.id};
+}
+function vMake(t){
+  const U=cur.unit,all=vItems(U),it=all.find(x=>x.id===t.id);t.st={};
+  if(t.type==='rec'){
+    const ok=x=>x.id!==it.id&&x.de!==it.de&&!(it.avoid||[]).includes(x.en)&&!(x.avoid||[]).includes(it.en);
+    let pool=all.filter(x=>ok(x)&&x.verb===it.verb);if(pool.length<3)pool=all.filter(ok);
+    t.opts=shuffle([it.de,...shuffle(pool).slice(0,3).map(x=>x.de)]);t.ans=t.opts.indexOf(it.de);
+  }
+  if(t.type==='write'&&it.img&&it.pic)t.mode=Math.random()<.5?'pic':'de';
+  if(t.type==='ctx'){
+    let wrong=(it.wrong||[]).slice(0,3);
+    if(wrong.length<3)wrong=wrong.concat(shuffle(all.filter(x=>x.id!==it.id&&x.verb===it.verb).map(x=>x.target)).filter(x=>x!==it.target&&!wrong.includes(x))).slice(0,3);
+    t.opts=shuffle([it.target,...wrong]);t.ans=t.opts.indexOf(it.target);
+  }
+  return t;
+}
+function vNextTask(){
+  const v=cur.v;v.lastId=v.cur?.id||v.lastId;v.cur=vMake(vPick());v.stepSec=0;clockState='';
+  save();render();window.scrollTo(0,0);
+}
+function vAfter(id,type,ok,help){
+  const v=cur.v,S=v.items[id];v.n++;v.stepSec=0;
+  if(type==='rec'){if(ok)S.lvl=Math.max(S.lvl,1);S.due=v.n+(ok?2:1)}
+  if(type==='ctx'){if(ok)S.lvl=Math.max(S.lvl,2);else S.lvl=Math.min(S.lvl,1);S.due=v.n+(ok?3:2)}
+  if(type==='write'){
+    if(ok&&!help){
+      if(S.lastWin==null||v.n-S.lastWin>=4)S.wins++;
+      S.lastWin=v.n;S.lvl=Math.max(S.lvl,3);if(S.wins>=2)S.lvl=4;
+      S.due=v.n+(S.lvl>=4?20:6)+Math.floor(Math.random()*3);
+    }else{S.wins=0;S.lvl=3;S.due=v.n+3}
+  }
+  save();
+}
+function vFormCheck(it,c,U){
+  const tgt=it.forms.map(f=>canonV(f,U).split(' ')),tok=c.split(' ');
+  if(tok.length!==tgt.flat().length)return null;
+  let k=0;return tgt.map(f=>{const part=tok.slice(k,k+f.length).join(' ');k+=f.length;return part===f.join(' ')});
+}
+function vHint(it,c,level,U){
+  const trap=it.trap&&Object.entries(it.trap).find(([k])=>canonV(k,U)===c);
+  if(level>=3)return'Präge dir die Lösung ein. Sobald du zu tippen beginnst, verschwindet sie – dann schreibst du selbst.';
+  if(trap)return trap[1];
+  if(it.verb){
+    const per=vFormCheck(it,c,U);
+    const pre=!per?'Schreibe alle drei Formen hintereinander, mit Leerzeichen dazwischen. ':per.every(x=>!x)?'Noch keine Form stimmt. ':`Die ${per.map((ok,i)=>ok?null:(i+1)+'.').filter(Boolean).join(' und ')} Form ${per.filter(x=>!x).length>1?'stimmen':'stimmt'} noch nicht. `;
+    if(level===1)return pre+`Tipp: Die Formen beginnen mit ${it.forms.map(f=>'„'+f[0]+'…“').join(', ')}.`;
+    return pre+`Tipp: Die Grundform ist „${it.forms[0]}“, die anderen beginnen mit ${it.forms.slice(1).map(f=>'„'+f.slice(0,2)+'…“').join(' und ')}.`;
+  }
+  const w=it.en,near=[it.en,...(it.alt||[])].some(x=>{const cx=canonV(x,U);return cx.length>=4&&lev(c,cx)<=1});
+  const pre=near?'Fast! Ein Buchstabe stimmt nicht. ':'';
+  if(level===1)return pre+`Tipp: Es beginnt mit „${w[0]}“`+(w.includes(' ')?` (${w.split(' ').length} Wörter).`:` und hat ${w.replace(/'/g,'').length} Buchstaben${w.includes("'")?' und einen Apostroph':''}.`);
+  return pre+`Tipp: Es beginnt mit „${w.slice(0,Math.min(3,Math.max(1,w.length-1)))}…“.`;
+}
+function vCheckWrite(){
+  const v=cur.v,t=v.cur,st=t.st,U=cur.unit,it=vItem(t.id);
+  const raw=String(st.val||'').trim();if(!raw||st.done)return;
+  const c=canonV(raw,U),answers=[it.en,...(it.alt||[])].map(x=>canonV(x,U));
+  st.tries=(st.tries||0)+1;v.stepSec=0;
+  if(answers.includes(c)){
+    const help=st.tries>1;st.done=true;st.msgGood=true;st.showSol=false;
+    vAfter(it.id,'write',true,help);
+    const S=v.items[it.id];
+    st.msg=help?`✓ Richtig – diesmal mit Hilfe. „${it.show}“ kommt bald noch einmal.`:S.lvl===4?`✓ Richtig! „${it.show}“ sitzt jetzt sicher. ⭐`:'✓ Richtig, ohne Hilfe! Noch einmal so, dann sitzt das Wort sicher.';
+  }else{
+    if(isJunk(raw))v.junk++;
+    st.level=Math.min(3,(st.level||0)+1);st.msgGood=false;
+    st.msg=vHint(it,c,st.level,U);
+    if(st.level>=3){st.showSol=true;st.val=''}
+    save();
+  }
+  render();focusAnswer();
+}
+function needUser(){
+  const {name,k}=readUser();
+  if(name.length<3||!/\S\s+\S/.test(name)){alert('Bitte gib deinen Vor- und Nachnamen ein.');$('#name').focus();return null}
+  if(!k){alert('Bitte gib deine Klasse ein.');$('#klasse').focus();return null}
+  store.last={name,klasse:k};const key=userKey(name,k);store.users[key]??={name,klasse:k,units:{}};return store.users[key];
+}
+const vOver=()=>cur?.v?.deadline&&Date.now()>cur.v.deadline;
+function startVocab(ui){
+  const u=needUser();if(!u)return;
+  const U=UNITS[ui];u.units[U.id]??={};
+  const v=u.units[U.id].voc??=vNewState();
+  if(FOCUS)v.deadline=FOCUS.deadline||null;
+  v.sessionSec=0;cur={u,unit:U,ui,h:'V',v,preview:false};save();
+  if(!v.submitted&&vOver()){
+    if(Object.keys(v.items).length){vSubmit('vdeadline');return}
+    alert('Die Abgabefrist ist abgelaufen. Du kannst trotzdem üben – abgeben geht aber nicht mehr.');
+  }
+  if(v.submitted){cardData=v.submitted;view='card';render();window.scrollTo(0,0);return}
+  view='vocab';if(!v.cur)vNextTask();else{render();window.scrollTo(0,0)}
+}
+function startVocabPreview(ui){cur={u:{name:'Vorschau',klasse:'–'},unit:UNITS[ui],ui,h:'V',v:vNewState(),preview:true};view='vocab';vNextTask()}
+function vSubmit(status){
+  const v=cur.v,s=vStats(v,cur.unit);
+  const p={kind:'voc',unit:cur.unit.id,unitLabel:unitLabel(cur.unit),hwTitle:vTitle(cur.unit),h:'V',n:cur.u.name,k:cur.u.klasse,wert:s.pct,sec:v.seconds,lvl:'-',
+    counts:s.c,N:s.N,weak:s.weak.slice(0,10),quick:v.quick,junk:v.junk,date:dateStr(),finished:true,status};
+  p.code=sig(p);v.submitted=p;save();cardData=p;view='card';render();window.scrollTo(0,0);
+}
+function renderVocab(){
+  const v=cur.v,t=v.cur,it=vItem(t.id),st=t.st;
+  const sk='v'+v.n+'-'+t.id;if(!shownAt[sk])shownAt[sk]=Date.now();
+  let h='';
+  if(t.type==='learn'){
+    const ex=it.ex?it.ex.replace('___',it.target):'';
+    h=`<h2>Neues Wort</h2><div class="vcard">${it.img?`<img class="vimg" src="${esc(imgSrc(it.img))}" alt="">`:''}<div class="ven">${esc(it.show)}</div><div class="vde">= ${esc(it.de)}</div>${ex?`<div class="vex">${esc(ex)}</div>`:''}${canSay?`<button class="secondary small" data-act="v-say">🔊 Anhören</button>`:''}</div>
+    <p class="note">Lies das Wort, sprich es leise nach und merk dir die Bedeutung. Gleich wird es abgefragt.</p>${nextBtn('Verstanden →')}`;
+  }else if(t.type==='rec'||t.type==='ctx'){
+    const opts=t.opts.map((o,i)=>{let c='choice';if(st.done){if(i===t.ans)c+=' right';else if(i===st.sel)c+=' wrong'}else if(st.sel===i)c+=' sel';return`<button class="${c}" data-act="v-sel" data-i="${i}" ${st.done?'disabled':''}>${String.fromCharCode(65+i)}) ${esc(o)}</button>`}).join('');
+    const q=t.type==='rec'?`<h2>Was bedeutet das?</h2><p class="q vbig">${esc(it.show)}</p>`:`<h2>Welches Wort passt in den Satz?</h2><p class="q">${esc(it.ex)}${it.verb?` <span class="note">(${esc(it.forms[0])})</span>`:''}</p>`;
+    const fbText=st.done?(st.ok?'✓ Richtig! ':`Leider falsch. Richtig ist: „${t.opts[t.ans]}“. `)+(t.type==='rec'?`${it.show} = ${it.de}`:''):'';
+    h=q+`<div class="choices">${opts}</div>`+(st.done?fbox(fbText,st.ok)+nextBtn():`<button data-act="v-check" ${st.sel==null?'disabled':''}>Antwort bestätigen</button>`);
+  }else{
+    h=(t.mode==='pic'?`<h2>Was ist das? Schreibe das englische Wort.</h2><img class="vimg" src="${esc(imgSrc(it.img))}" alt="Bild">`:`<h2>Schreibe auf Englisch</h2><p class="q vbig">${esc(it.de)}</p>`)+`${it.verb?'<p class="note">Schreibe alle drei Formen hintereinander, mit Leerzeichen dazwischen.</p>':''}`+typedBlock({t:'gap',st,ans:[it.show]});
+  }
+  shellV(h);
+}
+function shellV(inner){
+  const v=cur.v,s=vStats(v,cur.unit);
+  setHeader(unitLabel(cur.unit),cur.preview?'Vorschau – nichts wird gespeichert':CONFIG.title);
+  const right=cur.preview?'<button class="secondary small" data-act="next" style="margin-left:auto">Überspringen ⏭</button>':v.submitted?'<button class="secondary small" data-act="vcard" style="margin-left:auto">Meine Ergebniskarte</button>':vOver()?'':'<button class="secondary small" data-act="vsubmit" style="margin-left:auto">Abgeben</button>';
+  app.innerHTML=`<section class="card compact"><div class="row"><strong>${esc(vTitle(cur.unit))}</strong><span class="note">Stand: <b>${s.pct} %</b></span></div><div class="progress"><div style="width:${s.pct}%"></div></div>
+  <div class="vdist">${[4,3,2,1,0].map(i=>`<span>${V_NAMES[i]} <b>${s.c[i]}</b></span>`).join('')}</div><div id="clock" class="clock"></div></section>
+  <section class="card" id="task">${inner}</section>
+  <div class="nav"><button class="secondary small" data-act="${cur.preview?'teacher':'vpause'}">${cur.preview?'← Zur Lehrerseite':'⏸ Pause'}</button>${right}</div>`;
+  updateClock();
+}
+function renderVPause(){
+  const v=cur.v,s=vStats(v,cur.unit);
+  app.innerHTML=`<section class="card" style="text-align:center"><div style="font-size:3rem">⏸</div><h2>Pause</h2>
+  <p><b>${esc(cur.u.name)}</b> · ${esc(vTitle(cur.unit))}</p>
+  <p>Stand: <b>${s.pct} %</b> · ${s.c[4]} von ${s.N} Wörtern sicher · Übungszeit ${fmt(v.seconds)}</p>
+  <p>Dein Fortschritt ist gespeichert. Du kannst die Seite jetzt schließen.</p>
+  ${v.deadline&&!v.submitted?`<p>📅 Abgabe bis <b>${esc(fmtDeadline(v.deadline))}</b></p>`:''}
+  <p><button data-act="vresume">▶ Weiterüben</button></p>
+  <p class="note">Tipp: Übe lieber öfter kurz (10–15 Minuten an mehreren Tagen) als einmal lang – so merkst du dir die Wörter besser. Später einfach <b>denselben Link auf demselben Gerät</b> öffnen.</p></section>`;
+}
+function renderVList(ui){
+  const U=UNITS[ui];
+  app.innerHTML=`<section class="card"><h2>Wortliste – ${esc(vTitle(U))}</h2><p class="note">So werden die Wörter abgefragt. „Im Satz“ zeigt den Beispielsatz und die Auswahl (richtige Antwort fett).</p>
+  <div style="overflow-x:auto"><table><tr><th>Bild</th><th>Englisch (zu schreiben)</th><th>Deutsch</th><th>Im Satz</th></tr>
+  ${vItems(U).map(it=>`<tr><td>${it.img?`<img class="vthumb" src="${esc(imgSrc(it.img))}" alt="">${it.pic?'<br><span class="note">Bildfrage</span>':''}`:'–'}</td><td><b>${esc(it.show)}</b>${it.alt?.length?`<br><span class="note">auch richtig: ${esc(it.alt.join(', '))}</span>`:''}</td><td>${esc(it.de)}</td><td>${esc(it.ex||'–')}<br><span class="note"><b>${esc(it.target)}</b> · ${esc((it.wrong||[]).join(' · '))}</span></td></tr>`).join('')}</table></div>
+  <p><button class="secondary" data-act="teacher">← Zur Lehrerseite</button></p></section>`;
+}
+function validateVocab(U){
+  const P=[],seen=new Set();
+  (U.vocab?.items||[]).forEach((x,i)=>{
+    const w=`Vokabel ${i+1}${x.en||x.forms?` (${x.en||x.forms.join(' ')})`:''}`;
+    if(!x.de)P.push(`${w}: de fehlt`);
+    if(x.forms&&(!Array.isArray(x.forms)||x.forms.length!==3))P.push(`${w}: forms braucht genau 3 Formen`);
+    if(!x.forms&&!x.en)P.push(`${w}: en fehlt`);
+    if(!x.ex||!x.ex.includes('___'))P.push(`${w}: Beispielsatz (ex) mit ___ fehlt`);
+    if(x.wrong&&x.wrong.includes(x.target||(x.forms?x.forms[1]:x.en)))P.push(`${w}: richtige Antwort steht auch bei wrong`);
+    const id=(x.forms?'v-'+x.forms[0]:'w-'+x.en||'').toLowerCase();if(seen.has(id))P.push(`${w}: doppelt`);seen.add(id);
+    if(x.en&&/[()\/]/.test(x.en))P.push(`${w}: keine Klammern oder / im englischen Wort`);
+  });
+  return P;
+}
+
 /* ---------- Lehrerseite ---------- */
 function renderTeacher(){
   view='teacher';cur=null;setHeader('Lehrkraft',CONFIG.title+' – Lehrerseite');
-  const unitOpts=UNITS.flatMap((U,ui)=>U.homeworks.map((h,i)=>`<option value="${ui}:${i+1}">${esc(unitLabel(U))} – HÜ ${i+1}</option>`)).join('');
-  const checks=UNITS.map((U,ui)=>{const P=validateUnit(U);const T=P.length?{n:0,P:[]}:selfTest(U);const all=[...P,...T.P];
-    return`<div class="unit"><h3>${esc(unitLabel(U))}</h3>${all.length?`<p class="err">⚠ ${all.length} Problem(e):</p><ul>${all.map(x=>`<li class="note">${esc(x)}</li>`).join('')}</ul>`:`<p class="ok">✓ Datei in Ordnung · ${T.n} Schreibaufgaben geprüft – alle Musterlösungen werden akzeptiert.</p>`}
-    <div class="nav">${U.homeworks.map((h,i)=>`<button class="secondary small" data-act="preview" data-u="${ui}" data-h="${i+1}">Vorschau HÜ ${i+1}</button>`).join('')}</div></div>`}).join('');
+  const unitOpts=UNITS.flatMap((U,ui)=>[...U.homeworks.map((h,i)=>`<option value="${ui}:${i+1}">${esc(unitLabel(U))} – HÜ ${i+1}</option>`),...(U.vocab?[`<option value="${ui}:V">${esc(unitLabel(U))} – ${esc(vTitle(U))}</option>`]:[])]).join('');
+  const checks=UNITS.map((U,ui)=>{const P=[...validateUnit(U),...validateVocab(U)];const T=P.length?{n:0,P:[]}:selfTest(U);const all=[...P,...T.P];
+    return`<div class="unit"><h3>${esc(unitLabel(U))}</h3>${all.length?`<p class="err">⚠ ${all.length} Problem(e):</p><ul>${all.map(x=>`<li class="note">${esc(x)}</li>`).join('')}</ul>`:`<p class="ok">✓ Datei in Ordnung · ${T.n} Schreibaufgaben geprüft – alle Musterlösungen werden akzeptiert.${U.vocab?` · ${vItems(U).length} Vokabeln.`:''}</p>`}
+    <div class="nav">${U.homeworks.map((h,i)=>`<button class="secondary small" data-act="preview" data-u="${ui}" data-h="${i+1}">Vorschau HÜ ${i+1}</button>`).join('')}${U.vocab?`<button class="secondary small" data-act="vpreview" data-u="${ui}">Vorschau Vokabeln</button><button class="secondary small" data-act="vlist" data-u="${ui}">Wortliste ansehen</button>`:''}</div></div>`}).join('');
   const links=UNITS.map((U,ui)=>`<div class="unit"><h3>${esc(unitLabel(U))}</h3>${U.homeworks.map((h,i)=>{const l=hwLink(U,i+1,'');return`<div class="linkbox"><b>HÜ ${i+1} – ${esc(h.title)}</b>
     <label class="note" style="font-weight:400">Abgabefrist (leer lassen = keine Frist)<input type="datetime-local" class="input dl" data-u="${ui}" data-h="${i+1}"></label>
-    <div class="hwrow" style="margin:0"><input class="input linkout" readonly value="${esc(l)}" style="font-size:.8rem;margin:0"><button class="secondary small" data-act="copylink" data-link="${esc(l)}" style="align-self:center">Kopieren</button></div></div>`}).join('')}</div>`).join('');
+    <div class="hwrow" style="margin:0"><input class="input linkout" readonly value="${esc(l)}" style="font-size:.8rem;margin:0"><button class="secondary small" data-act="copylink" data-link="${esc(l)}" style="align-self:center">Kopieren</button></div></div>`}).join('')}${U.vocab?(()=>{const l=hwLink(U,'V','');return`<div class="linkbox"><b>📚 ${esc(vTitle(U))}</b>
+    <label class="note" style="font-weight:400">Abgabefrist (leer lassen = keine Frist)<input type="datetime-local" class="input dl" data-u="${ui}" data-h="V"></label>
+    <div class="hwrow" style="margin:0"><input class="input linkout" readonly value="${esc(l)}" style="font-size:.8rem;margin:0"><button class="secondary small" data-act="copylink" data-link="${esc(l)}" style="align-self:center">Kopieren</button></div></div>`})():''}</div>`).join('');
   app.innerHTML=`<section class="card"><h2>Links für deine Hausübungen</h2><p class="note">Jede Hausübung hat einen eigenen Link. Wähle bei Bedarf eine Abgabefrist – der Link darunter ändert sich dann automatisch. Diesen Link stellst du in die edhu-Aufgabe. Nur Links von dieser Seite funktionieren; wird die Frist in der Adresse verändert, wird der Link ungültig. ${location.protocol==='file:'?'<br><b>Achtung:</b> Du hast die Datei gerade lokal geöffnet – die richtigen Links siehst du, sobald die Seite online ist.':''}</p>${links}</section>
   <section class="card"><h2>Prüfzeichen kontrollieren</h2>
   <p class="note">Nur nötig, wenn dir eine Ergebniskarte verdächtig vorkommt. Trag die Werte genau so ein, wie sie auf der Karte stehen.</p>
   <label>Hausübung<select id="v-hw" class="input">${unitOpts}</select></label>
   <div class="two"><label>Name<input id="v-n" class="input"></label><label>Klasse<input id="v-k" class="input"></label></div>
-  <div class="two"><label>HÜ-Wert (%)<input id="v-w" class="input" inputmode="numeric"></label><label>Lernstand<select id="v-l" class="input"><option value="S">🟢 sicher</option><option value="U">🟡 überwiegend sicher</option><option value="B">🟠 braucht noch Übung</option><option value="-">– (nicht fertig)</option></select></label></div>
+  <div class="two"><label>Prozent auf der Karte<input id="v-w" class="input" inputmode="numeric"></label><label>Lernstand<select id="v-l" class="input"><option value="S">🟢 sicher</option><option value="U">🟡 überwiegend sicher</option><option value="B">🟠 braucht noch Übung</option><option value="-">– (nicht fertig / Vokabeltraining)</option></select></label></div>
   <div class="two"><label>Datum und Uhrzeit (z. B. 21.10.2026 14:05)<input id="v-d" class="input"></label><label>Prüfzeichen<input id="v-c" class="input" style="text-transform:uppercase"></label></div>
   <p><button data-act="verify">Prüfen</button></p><div id="v-out"></div></section>
   <section class="card"><h2>Units und Vorschau</h2><p class="note">Hier siehst du, ob jede Unit-Datei fehlerfrei ist. In der Vorschau kannst du jede Hausübung ohne Zeitvorgabe durchklicken – es wird nichts gespeichert.</p>
   ${LOAD_ERRORS.length?`<div class="fb bad">${LOAD_ERRORS.map(esc).join('<br>')}</div>`:''}${checks||'<p>Keine Units geladen.</p>'}</section>`;
 }
 function verify(){
-  const [ui,h]=$('#v-hw').value.split(':').map(Number),U=UNITS[ui];
+  const [uis,h]=$('#v-hw').value.split(':'),U=UNITS[+uis];
   const p={unit:U.id,h,n:$('#v-n').value,k:$('#v-k').value.toUpperCase().replace(/\s+/g,''),wert:+$('#v-w').value,lvl:$('#v-l').value,date:$('#v-d').value.trim().replace(/\s+/g,' ')};
   const ok=sig(p)===$('#v-c').value.trim().toUpperCase();
   $('#v-out').innerHTML=ok?'<div class="fb good">✓ Das Prüfzeichen passt – die Karte ist echt.</div>':'<div class="fb bad">✗ Das Prüfzeichen passt nicht. Entweder wurde ein Wert falsch abgetippt oder die Karte wurde verändert.</div>';
@@ -794,7 +1054,10 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
   const act=b.dataset.act,i=+b.dataset.i,j=+b.dataset.j;
   switch(act){
-    case'start':startHW(+b.dataset.u,+b.dataset.h);return;
+    case'start':if(b.dataset.h==='V')startVocab(+b.dataset.u);else startHW(+b.dataset.u,+b.dataset.h);return;
+    case'vresume':if(cur?.v){if(!cur.preview&&!cur.v.submitted&&vOver()){vSubmit('vdeadline');return}lastActivity=Date.now();cur.v.sessionSec=cur.v.sessionSec||0;view='vocab';if(!cur.v.cur)vNextTask();else{render();window.scrollTo(0,0)}}return;
+    case'vpreview':startVocabPreview(+b.dataset.u);return;
+    case'vlist':cardData=+b.dataset.u;view='vlist';render();window.scrollTo(0,0);return;
     case'home':save();cur=null;view='home';render();window.scrollTo(0,0);return;
     case'pause':if(cur&&view==='task'){cur.d.stepSec=0;clockState='';save();view='paused';render();window.scrollTo(0,0)}return;
     case'resume':if(cur){if(cur.d.deadline&&Date.now()>cur.d.deadline){endHW('deadline');return}lastActivity=Date.now();view='task';render();window.scrollTo(0,0)}return;
@@ -804,6 +1067,21 @@ document.addEventListener('click',e=>{
     case'saveimg':saveImage();return;
     case'copylink':{const l=b.dataset.link;const ok=()=>{b.textContent='✓ Kopiert';setTimeout(()=>b.textContent='Kopieren',1500)};
       if(navigator.clipboard?.writeText)navigator.clipboard.writeText(l).then(ok,()=>{b.previousElementSibling?.querySelector('input')?.select()});else{b.previousElementSibling?.querySelector('input')?.select();document.execCommand('copy');ok()}return}
+  }
+  if(cur&&view==='vocab'){
+    const v=cur.v,t=v.cur,vst=t?.st;
+    switch(act){
+      case'next':if(t.type==='learn'){v.n++;v.stepSec=0;vNextTask()}else if(vst.done||cur.preview)vNextTask();return;
+      case'v-say':{const it=vItem(t.id);say(it.verb?it.forms.join(', '):it.en);return}
+      case'v-sel':if(!vst.done){vst.sel=i;saveSoon();render()}return;
+      case'v-check':{if(vst.done||vst.sel==null)return;const sk='v'+v.n+'-'+t.id;if(shownAt[sk]&&Date.now()-shownAt[sk]<1200)v.quick++;
+        vst.done=true;vst.ok=vst.sel===t.ans;vAfter(t.id,t.type,vst.ok,false);render();focusAnswer();return}
+      case'typed-check':vCheckWrite();return;
+      case'vpause':v.stepSec=0;clockState='';save();view='vpause';render();window.scrollTo(0,0);return;
+      case'vcard':cardData=v.submitted;view='card';render();window.scrollTo(0,0);return;
+      case'vsubmit':{const s=vStats(v,cur.unit);if(confirm(`Du hast ${s.pct} % erreicht (${s.c[4]} von ${s.N} Wörtern sicher).\n\nWenn du abgibst, wird deine Ergebniskarte festgehalten. Du kannst danach weiterüben, aber die Karte ändert sich nicht mehr.\n\nJetzt abgeben?`))vSubmit('voc');return}
+    }
+    return;
   }
   if(!cur||view!=='task')return;
   const a=currentTask(),st=a?.st;
@@ -840,15 +1118,15 @@ document.addEventListener('click',e=>{
 document.addEventListener('input',e=>{
   const t=e.target;
   if(t.id==='name'||t.id==='klasse'){renderHWList();return}
-  if(t.classList?.contains('dl')){const U=UNITS[+t.dataset.u],v=t.value;const bis=v?v.replace(/[-T:]/g,''):'';const l=hwLink(U,+t.dataset.h,bis);
+  if(t.classList?.contains('dl')){const U=UNITS[+t.dataset.u],v=t.value;const bis=v?v.replace(/[-T:]/g,''):'';const l=hwLink(U,t.dataset.h==='V'?'V':+t.dataset.h,bis);
     const box=t.closest('.linkbox');box.querySelector('.linkout').value=l;box.querySelector('[data-act=copylink]').dataset.link=l;return}
-  if(t.id!=='answer'||!cur||view!=='task')return;
-  const st=currentTask().st;if(st.done)return;
+  if(t.id!=='answer'||!cur||(view!=='task'&&view!=='vocab'))return;
+  const st=view==='vocab'?cur.v.cur.st:currentTask().st;if(st.done)return;
   st.val=t.value;
   if(st.showSol){st.showSol=false;$('#sol')?.remove();const m=$('#msg');st.msg='Jetzt schreib die Lösung selbst.';if(m)m.textContent=st.msg}
   saveSoon();
 });
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='answer'&&e.target.tagName==='INPUT'){e.preventDefault();checkTyped()}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='answer'&&e.target.tagName==='INPUT'){e.preventDefault();view==='vocab'?vCheckWrite():checkTyped()}});
 ['paste','drop'].forEach(ev=>document.addEventListener(ev,e=>{
   if(e.target.id==='answer'){e.preventDefault();const m=$('#msg');if(m){m.textContent='Einfügen ist hier nicht möglich – bitte selbst tippen.';m.className='fb bad'}}
 }));
@@ -880,8 +1158,8 @@ $('#foot').textContent='Version '+CONFIG.version;
 loadUnits(()=>{
   const qs=new URLSearchParams(location.search);
   if(qs.has('unit')||qs.has('hue')){
-    const ui=UNITS.findIndex(U=>U.id===qs.get('unit')),h=+qs.get('hue'),bis=qs.get('bis')||'';
-    const valid=ui>=0&&h>=1&&h<=UNITS[ui].homeworks.length&&qs.get('s')===linkSig(qs.get('unit'),h,bis)&&(!bis||parseBis(bis));
+    const ui=UNITS.findIndex(U=>U.id===qs.get('unit')),hs=qs.get('hue'),h=hs==='V'?'V':+hs,bis=qs.get('bis')||'';
+    const valid=ui>=0&&(h==='V'?!!UNITS[ui].vocab:h>=1&&h<=UNITS[ui].homeworks.length)&&qs.get('s')===linkSig(qs.get('unit'),h,bis)&&(!bis||parseBis(bis));
     FOCUS=valid?{ui,h,deadline:bis?parseBis(bis):null}:{bad:true};
   }
   if(new URLSearchParams(location.search).get('lehrer')==='1')view='teacher';
