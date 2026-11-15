@@ -52,6 +52,9 @@ label{display:block;font-size:.9rem;font-weight:600}
 .clock.paused{color:#b4621b;font-weight:600}
 .clock.reached{color:var(--good);font-weight:600}
 .reading{background:#fffaf0;border:1px solid #ead9b4;border-radius:12px;padding:14px 18px;line-height:1.75;white-space:pre-line}
+.gapw{white-space:nowrap;letter-spacing:.05em;font-family:ui-monospace,Menlo,Consolas,monospace}
+.step{font-size:1.05rem}.merke{background:#fff8e1;border-left:4px solid #f0b400;border-radius:8px;padding:6px 14px;margin:10px 0}
+.sdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#d6d6d6;margin-left:3px}.sdot.done{background:#3a9d5d}.sdot.now{background:#2b6cb0}
 .gloss{display:inline-block;background:#f3e7f0;border-radius:20px;padding:5px 11px;font-size:.86rem;margin:10px 0}
 .tiles,.slot,.words{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
 .tile{background:#efe2ed;color:#32283b}
@@ -181,11 +184,12 @@ const CONFIG = {
   stepCap: 180,            // höchstens so viele Sekunden pro Aufgabe zählen als Lernzeit
   readingCap: 420,         // … beim Lesen eines Textes (erste Frage)
   writingCap: 360,         // … bei freien Schreibaufgaben
-  quickMs: 1500,           // Antwort schneller als 1,5 s → „Schnellklick“
+  quickMs: 2500,           // Auswahl schneller als 2,5 s → „Schnellklick“ (falsch + Schnellklick zählt nicht als erledigt)
   quickReadMs: 15000,      // erste Lesefrage nach weniger als 15 s → Text vermutlich nicht gelesen
   flagAt: 6,               // ab so vielen Schnellklicks/Unsinn-Eingaben erscheint ein Hinweis auf der Karte
-  maxReviews: 8,           // höchstens so viele Wiederholungsaufgaben pro Hausübung
-  version: '8.7'
+  maxReviews: 10,          // höchstens so viele Wiederholungsaufgaben pro Hausübung (je Fehler höchstens 2)
+  readSecPerWord: 0.25,    // Lesetext: „Gelesen“-Knopf frühestens nach so vielen Sekunden pro Wort (sehr schneller Leser)
+  version: '9.1'
 };
 /* ===================================================================== */
 const UNITS = [], LOAD_ERRORS = [];
@@ -282,7 +286,8 @@ function validateUnit(U){
   (U.normalize||[]).forEach((n,i)=>re(n[0],'normalize '+(i+1)));
   Object.entries(R).forEach(([id,r])=>{
     if(!r.text||!Array.isArray(r.questions)||!r.questions.length)P.push(`Lesetext „${id}“: text oder questions fehlt`);
-    (r.questions||[]).forEach((q,i)=>{if(q.tf==null&&(!q.right||!Array.isArray(q.wrong)||!q.wrong.length))P.push(`Lesetext „${id}“, Frage ${i+1}: right/wrong oder tf fehlt`)});
+    (r.questions||[]).forEach((q,i)=>{if(q.tf==null&&(!q.right||!Array.isArray(q.wrong)||!q.wrong.length))P.push(`Lesetext „${id}“, Frage ${i+1}: right/wrong oder tf fehlt`);if(q.ref&&!String(r.text).includes(q.ref))P.push(`Lesetext „${id}“, Frage ${i+1}: ref „${q.ref}“ steht nicht genau so im Text`)});
+    (r.gist||[]).forEach((q,i)=>{if(q.tf==null&&(!q.right||!Array.isArray(q.wrong)||!q.wrong.length))P.push(`Lesetext „${id}“, Gedächtnisfrage ${i+1}: right/wrong oder tf fehlt`)});
   });
   const tasks=[...(U.homeworks||[]).flatMap((h,hi)=>(h.tasks||[]).map((t,ti)=>[t,`HÜ ${hi+1}, Aufgabe ${ti+1}`])),...(U.extras||[]).map((t,i)=>[t,`Zusatz ${i+1}`])];
   for(const [t,where] of tasks){
@@ -292,9 +297,11 @@ function validateUnit(U){
     (t.accept||[]).forEach(r=>re(r,where));
     (t.rules||[]).forEach(r=>{if(r.re)re(r.re,where);(r.res||[]).forEach(x=>re(x,where))});
     switch(t.t){
-      case'intro':if(!t.title)P.push(`${where}: title fehlt`);break;
+      case'intro':if(!t.title)P.push(`${where}: title fehlt`);
+        (t.steps||[]).forEach((S,k)=>{if(!S.text)P.push(`${where}, Schritt ${k+1}: text fehlt`);[S.check,S.check2].forEach(C=>{if(C&&(!C.q||!C.right||!Array.isArray(C.wrong)||!C.wrong.length))P.push(`${where}, Schritt ${k+1}: Frage braucht q, right und wrong`)})});break;
       case'mc':if(!t.q||!t.right||!Array.isArray(t.wrong)||!t.wrong.length)P.push(`${where}: q/right/wrong fehlt`);else if(t.wrong.includes(t.right))P.push(`${where}: richtige Antwort steht auch bei wrong`);break;
-      case'gap':if(!t.q||!t.ans?.length)P.push(`${where}: q/ans fehlt`);break;
+      case'gap':if(!t.q||!t.ans?.length)P.push(`${where}: q/ans fehlt`);
+        if(t.w?.length&&!t.rule&&/\([^)]*[a-zäöüß][^)]*\)\s*$/i.test(t.q||''))P.push(`${where}: deutsches Wort in Klammern am Satzende – Abkürzung (man liest den Satz nicht). Besser: first: true (Anfangsbuchstabe).`);break;
       case'sent':case'pic':case'open':
         if(t.model&&t.distract&&!Array.isArray(t.distract))P.push(`${where}: distract muss eine Liste sein`);
         if(!t.q)P.push(`${where}: q fehlt`);
@@ -347,7 +354,10 @@ function prep(a,U){
   if(a.t==='mc'){if(a.right!=null){a.opts=[a.right,...a.wrong];a.ans=0;delete a.right;delete a.wrong}const idx=shuffle(a.opts.map((_,i)=>i));a.opts=idx.map(i=>a.opts[i]);a.ans=idx.indexOf(a.ans)}
   if(a.t==='order'){let p;do{p=shuffle(a.tiles.map((_,i)=>i))}while(a.tiles.length>1&&p.every((v,i)=>v===i));a.shuf=p;a.alts=a.alts||[]}
   if(a.t==='match'){a.ids=a.words;a.pairs=a.ids.map(id=>[U.words[id].en,U.words[id].de]);a.w=a.ids;a.lord=shuffle(a.pairs.map((_,i)=>i));a.rord=shuffle(a.pairs.map((_,i)=>i))}
-  if(a.t==='reading'){a.qs=U.readings[a.reading].questions.map(q=>{if(q.tf!=null)return{q:q.q,tf:!!q.tf,tip:q.tip||''};const o=[q.right,...q.wrong];const idx=shuffle(o.map((_,i)=>i));return{q:q.q,o:idx.map(i=>o[i]),ans:idx.indexOf(0),tip:q.tip||''}})}
+  if(a.t==='reading'){const R=U.readings[a.reading];
+    const mk=(q,gist)=>{if(q.tf!=null)return{q:q.q,tf:!!q.tf,tip:q.tip||'',ref:q.ref||'',gist};const o=[q.right,...q.wrong];const idx=shuffle(o.map((_,i)=>i));return{q:q.q,o:idx.map(i=>o[i]),ans:idx.indexOf(0),tip:q.tip||'',ref:q.ref||'',gist}};
+    a.qs=[...(R.gist||[]).map(q=>mk(q,true)),...R.questions.map(q=>mk(q,false))];a.gistN=(R.gist||[]).length;
+    a.minRead=Math.round(wordCount(R.text)*CONFIG.readSecPerWord);}
   if(a.t==='find'){const toks=a.sentence.split(' ');a.wrong=toks.findIndex(x=>x.includes('*'));a.tokens=toks.map(x=>x.replace(/\*/g,''));a.wrongWord=a.tokens[a.wrong].replace(/[.,!?]/g,'')}
   if(a.t==='sent'&&!a.model)a.model=(a.ans||[])[0];
   if(a.t==='open'||a.multi)a.multi=true;
@@ -414,11 +424,23 @@ function startPreview(ui,h){
   cur={u:{name:'Vorschau',klasse:'–'},unit:U,ui,h,d:newSession(),preview:true};
   buildHW(cur.d,U,h);view='task';render();window.scrollTo(0,0);
 }
+// Welche Wörter einer Aufgabe waren wirklich das Problem?
+// Wörter, die im ersten falschen Versuch schon richtig geschrieben waren, gelten nicht als unsicher.
+function wordsWithError(a){
+  const st=a.st;if(st.firstWrong==null||!a.w?.length)return null;
+  const c=canon(st.firstWrong);return a.w.filter(w=>{const W=cur.unit.words[w];return!W||!new RegExp('\\b'+canon(W.en).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test(c)});
+}
+// Texte (Sortier-Karten, Lücken-Lösungen) den Wörtern der Unit zuordnen
+function wordsInTexts(texts){
+  const U=cur.unit,out=[];texts.forEach(t=>{const c=canon(t);Object.keys(U.words).forEach(w=>{const e=canon(U.words[w].en);if((c===e||c.startsWith(e))&&!out.includes(w))out.push(w)})});return out;
+}
 function complete(a,first,errWords){
   if(view==='practice')return pAfter(a,first);
+  if(!first&&!errWords)errWords=wordsWithError(a)||undefined;
   const st=a.st;st.done=true;st.first=first;cur.d.stepSec=0;
   if(!first&&!a.control){st.errWords=errWords||a.w||[];scheduleReview(a,st.errWords)}
   else if(!first&&a.control)st.errWords=a.w||[];
+  else if(first&&a.review&&a.stage===1)scheduleReview(a,[]);
   save();
 }
 
@@ -436,33 +458,93 @@ function genMatch(d){d.matchN=(d.matchN||0)+1;const ids=[...new Set([...weakIds(
 function weakIds(d){const out=[];d.queue.forEach(a=>{if(a.st.done&&!a.st.first&&!a.control)(a.st.errWords||[]).forEach(w=>{if(cur.unit.words[w]&&!out.includes(w))out.push(w)})});return out}
 function extrasFor(){return(cur.unit.extras||[]).map((x,i)=>({x,i})).filter(({x})=>(x.minHw||1)<=cur.h&&usable(x))}
 
+/* ---------- Fehler aufarbeiten: zuerst VERSTEHEN (im Satz erkennen/auswählen), dann ANWENDEN (selbst in einen Satz schreiben) ----------
+   Je Fehler höchstens 2 Wiederholungen, insgesamt höchstens CONFIG.maxReviews. Wörter kommen in einem neuen Satz wieder –
+   aus den Zusatzaufgaben, aus früheren HÜs oder aus den Beispielsätzen des Vokabeltrainings. */
+const CTX_CHOICE=['mc','cloze','odd'],CTX_WRITE=['gap','sent'];
+function vocabFor(w){const W=cur.unit.words[w];if(!W)return null;const c=canon(W.en);return(cur.unit.vocab?.items||[]).find(x=>!x.forms&&canon(x.en)===c&&x.ex)||null}
+function ctxCandidates(w,kind,used){
+  const U=cur.unit,out=[],W=U.words[w];if(!W)return out;
+  const ok=x=>(x.w||[]).includes(w)&&(kind==='choice'?CTX_CHOICE.includes(x.t):CTX_WRITE.includes(x.t)&&(x.t!=='sent'||x.ans?.length))&&usable(x)&&!x.control;
+  extrasFor().forEach(({x,i})=>{if(ok(x)&&!used.has('x'+i))out.push({...clone(x),key:'x'+i})});
+  U.homeworks.slice(0,Math.max(0,cur.h-1)).forEach((hw,hi)=>hw.tasks.forEach((x,ti)=>{const k=`hx${hi+1}-${ti}`;if(ok(x)&&!used.has(k))out.push({...clone(x),key:k})}));
+  // Beispielsatz direkt beim Wort (words: {…, ex: 'Satz mit ___', exAns: 'Form in der Lücke', cat: 'animal'|'adj'})
+  if(W.ex&&!W.skipGen){const tgt=W.exAns||W.en;
+    if(kind==='choice'&&!used.has('we-'+w)){
+      let pool=introduced(U,cur.h).filter(x=>x!==w&&U.words[x].cat===W.cat&&U.words[x].en!==W.en);
+      if(pool.length<3)pool=introduced(U,cur.h).filter(x=>x!==w&&U.words[x].en!==W.en);
+      const plural=tgt.toLowerCase()===W.en.toLowerCase()+'s',cap=/^[A-Z]/.test(tgt)&&!/^[A-Z]/.test(W.en);
+      const form=x=>{let f=U.words[x].en+(plural?'s':'');return cap?f[0].toUpperCase()+f.slice(1):f};
+      if(pool.length>=3)out.push({t:'mc',q:W.ex,right:tgt,wrong:shuffle(pool).slice(0,3).map(form),why:`${W.en} = ${W.de}`,w:[w],key:'we-'+w,topic:'vocabulary'});}
+    if(kind==='write'&&!used.has('wx-'+w))out.push({t:'gap',q:W.ex,first:true,hintImg:imgOfWord(w),ans:[tgt,...(W.alt||[])],w:[w],key:'wx-'+w,topic:'vocabulary'});}
+  const v=vocabFor(w);
+  if(v){const tgt=v.target||v.en;
+    if(kind==='choice'&&(v.wrong||[]).length>=3&&!used.has('vc-'+w))out.push({t:'mc',q:v.ex,right:tgt,wrong:v.wrong.slice(0,3),why:`${W.en} = ${W.de}`,w:[w],key:'vc-'+w,topic:'vocabulary'});
+    if(kind==='write'&&!used.has('vw-'+w))out.push({t:'gap',q:v.ex,first:true,hintImg:v.img||imgOfWord(w),ans:[tgt,...(v.alt||[])],w:[w],key:'vw-'+w,topic:'vocabulary'});}
+  return out;
+}
+// Satz ohne die deutsche Hilfe in Klammern – um denselben Satz nicht zweimal hintereinander zu zeigen
+const baseQ=q=>canon(String(q||'').replace(/\s*\((?:[^()]|\([^()]*\))*\)\s*$/,''));
+function seenSentences(w){const S=new Set();(cur.d?.queue||[]).forEach(x=>{if((x.w||[]).includes(w)&&x.q)S.add(baseQ(x.q))});const pc=cur.d?.practice?.cur;if(pc?.q)S.add(baseQ(pc.q));return S}
+function genCtx(w,kind,used){
+  const c=ctxCandidates(w,kind,used||new Set());if(!c.length)return null;
+  const seen=seenSentences(w),fresh=c.filter(x=>!seen.has(baseQ(x.q)));   // möglichst ein Satz, den das Kind noch nicht gesehen hat
+  if(fresh.length)return shuffle(fresh)[0];
+  // alle schon gesehen → wenigstens nicht derselbe Satz wie direkt davor
+  const lastQ=view==='practice'?cur.d?.practice?.cur?.q:[...(cur.d?.queue||[])].slice(0,cur.d?.index+1||0).reverse().find(x=>(x.w||[]).includes(w))?.q;
+  const notLast=c.filter(x=>baseQ(x.q)!==baseQ(lastQ));
+  return shuffle(notLast.length?notLast:c)[0];
+}
+const deHint=de=>String(de).replace(/\s*\([^)]*\)/g,'').trim();
+/* Keine Abkürzungen: In Satz-Aufgaben steht KEIN deutsches Wort in Klammern (sonst übersetzt man nur das Wort und liest den Satz nicht).
+   Stattdessen: Anfangsbuchstabe + Anzahl der Buchstaben – das Wort ergibt sich erst aus dem Satz. */
+// Bild zu einem Wort: words.img · sonst Bild aus dem Vokabeltrainer · sonst Muster wordImg ('…/u4-{id}.jpg'); noImg: true = kein Bild
+function imgOfWord(w,U=cur.unit){const W=U.words[w];if(!W||W.noImg)return null;if(W.img)return W.img;
+  const c=canon(W.en||''),v=(U.vocab?.items||[]).find(x=>!x.forms&&canon(x.en||'')===c);
+  return v?.img||(U.wordImg?U.wordImg.replace('{id}',w):null)}
+function gapQ(a){
+  const q=esc(a.q);if(!a.first||!a.ans?.length||!q.includes('___'))return q;
+  const w=String(a.ans[0]);
+  const blanks=[...w].map((ch,i)=>i===0?`<b>${esc(ch)}</b>`:ch===' '?'&nbsp;&nbsp;':/[a-zäöüß]/i.test(ch)?'_':esc(ch)).join(' ');
+  return q.replace('___',`<span class="gapw">${blanks}</span>`);
+}
+function ruleTask(rule,kind,used){
+  const L=extrasFor().filter(({x,i})=>x.rule===rule&&!used.has('x'+i)&&!(x.model&&used.has('s:'+canon(x.model)))&&!(x.ans&&x.t==='sent'&&used.has('s:'+canon(x.ans[0]))));
+  const pick=L.filter(({x})=>kind==='choice'?(isChoiceTask(x)||x.t==='order'):!(isChoiceTask(x)||x.t==='order'));
+  const o=shuffle(pick.length?pick:L)[0];return o?{...clone(o.x),key:'x'+o.i}:null;
+}
+function makeReview(target,stage,used){
+  if(target.w){const w=target.w;
+    return stage===1?(genCtx(w,'choice',used)||genCtx(w,'write',used)||genMC(w)):(genCtx(w,'write',used)||genGap(w));}
+  if(target.rule)return ruleTask(target.rule,stage===1?'choice':'write',used)||ruleTask(target.rule,stage===1?'write':'choice',used);
+  return null;
+}
+function queueReview(t,target,stage,offset){
+  const d=cur.d;if(!t||d.reviews>=CONFIG.maxReviews)return;
+  t.review=true;t.stage=stage;t.reviewFor=target;if(d.phase==='extra')t.extra=true;d.reviews++;
+  addTask(d,t,Math.min(d.index+offset,d.queue.length));
+}
 function scheduleReview(a,words){
-  const d=cur.d;if(d.reviews>=CONFIG.maxReviews||d.seconds>=CONFIG.maxSeconds)return;
-  const used=new Set(d.usedKeys);const made=[];
-  const freeExtra=({x,i})=>!used.has('x'+i)&&!(x.model&&used.has('s:'+canon(x.model)))&&!(x.ans&&x.t==='sent'&&used.has('s:'+canon(x.ans[0])));
-  const sameRule=a.rule?extrasFor().filter(o=>o.x.rule===a.rule&&freeExtra(o)):[];
-  if(sameRule.length&&!(a.topic==='vocabulary'&&words.length)){
-    // Fehler bei einer Regel → eine andere Aufgabe zur selben Regel
-    const other=sameRule.filter(({x})=>x.t!==a.t);
-    const pick=shuffle(other.length?other:sameRule)[0];
-    made.push({...clone(pick.x),key:'x'+pick.i});
-  }else if(a.topic==='vocabulary'||(words.length&&a.topic!=='grammar')){
-    for(const w of words){
-      if(made.length>=2)break;
-      const order=(a.t==='gap'||a.t==='find')?[genMC,genGap]:[genGap,genMC];
-      for(const f of order){const c=f(w);if(c&&!used.has(c.key)){made.push(c);used.add(c.key);break}}
-    }
-  }else if(a.topic==='grammar'||a.topic==='writing'){
-    const pool=extrasFor().filter(({x,i})=>(x.topic||DEFAULT_TOPIC[x.t])==='grammar'&&!used.has('x'+i)&&!(x.model&&used.has('s:'+canon(x.model)))&&!(x.ans&&x.t==='sent'&&used.has('s:'+canon(x.ans[0]))));
-    const other=pool.filter(({x})=>x.t!==a.t);
-    const pick=shuffle(other.length?other:pool)[0];
-    if(pick)made.push({...clone(pick.x),key:'x'+pick.i});
+  const d=cur.d;if(a.control||d.seconds>=CONFIG.maxSeconds)return;
+  const used=new Set(d.usedKeys);
+  if(a.review){   // eine Wiederholung wurde gerade bearbeitet
+    if(a.stage===1&&a.reviewFor){const t=makeReview(a.reviewFor,2,used);queueReview(t,a.reviewFor,2,5)}
+    return;
   }
-  made.forEach((t,n)=>{if(d.reviews>=CONFIG.maxReviews)return;t.review=true;if(d.phase==='extra')t.extra=true;d.reviews++;addTask(d,t,Math.min(d.index+4+n*2,d.queue.length))});
+  const targets=[];
+  if((a.topic==='vocabulary'||(!a.rule&&words.length))&&words.length)words.slice(0,2).forEach(w=>targets.push({w}));
+  else if(a.rule)targets.push({rule:a.rule});
+  else if(a.topic==='grammar'||a.topic==='writing'){   // ohne Regelname: eine andere Grammatikaufgabe
+    const pool=extrasFor().filter(({x,i})=>(x.topic||DEFAULT_TOPIC[x.t])==='grammar'&&!used.has('x'+i));
+    const o=shuffle(pool.filter(({x})=>x.t!==a.t).length?pool.filter(({x})=>x.t!==a.t):pool)[0];
+    if(o)queueReview({...clone(o.x),key:'x'+o.i},{},2,4);
+    return;
+  }
+  targets.forEach((tg,n)=>{const t=makeReview(tg,1,used);if(t){used.add(t.key);queueReview(t,tg,1,3+n*2)}});
 }
 function nextExtra(d){
   const used=new Set(d.usedKeys);
-  for(const w of weakIds(d))for(const f of [genGap,genMC]){const t=f(w);if(t&&!used.has(t.key))return t}
+  for(const w of weakIds(d)){const t=genCtx(w,'write',used)||genCtx(w,'choice',used);if(t)return t;for(const f of [genGap,genMC]){const g=f(w);if(g&&!used.has(g.key))return g}}
   if(d.extraN>0&&d.extraN%5===0)return genMatch(d);
   const cands=[];
   extrasFor().forEach(({x,i})=>{const m=x.t==='sent'?(x.model||x.ans?.[0]):null;if(!used.has('x'+i)&&!(m&&used.has('s:'+canon(m))))cands.push({...clone(x),key:'x'+i})});
@@ -481,7 +563,10 @@ function addControl(d){
   const capTxt=d.capped?`Du hast schon **${Math.round(CONFIG.capSeconds/60)} Minuten** gearbeitet – das reicht für heute! Die restlichen Übungen zählen als erledigt.\n\n`:'';
   addTask(d,{t:'intro',control:true,title:`Nur noch ${n} kurze Fragen bis 100 %!`,text:capTxt+`Zum Schluss kommt die **Lernkontrolle**: ${n} kurze Aufgaben **ohne Hilfe**, je **ein** Versuch. Das dauert nur 1–2 Minuten.\n\nFehler senken deinen HÜ-Wert **nicht** – sie zeigen dir nur, was du noch üben solltest. Wenn du alle Fragen beantwortet hast, bekommst du deine Ergebniskarte mit **100 %**.`});
   const words=[...new Set([...weakIds(d),...shuffle(hwWords(U,cur.h)),...shuffle(introduced(U,cur.h))])].slice(0,plan.words);
-  words.forEach(w=>{const W=U.words[w];addTask(d,{t:'gap',control:true,q:`Wie heißt das auf Englisch? → ${W.de}`,ans:[W.en,...(W.alt||[])],w:[w],key:'ctl-w-'+w})});
+  words.forEach(w=>{const W=U.words[w];
+    const c=genCtx(w,'write',used)||genCtx(w,'write',new Set());   // möglichst ein Satz, den das Kind noch nicht hatte
+    if(c&&c.ans?.length)addTask(d,{t:c.t==='sent'?'sent':'gap',control:true,q:c.q,first:c.first,ans:c.ans,w:[w],key:'ctl-w-'+w});
+    else addTask(d,{t:'gap',control:true,q:`Wie heißt das auf Englisch? → ${W.de}`,ans:[W.en,...(W.alt||[])],w:[w],key:'ctl-w-'+w})});
   const sents=shuffle(plan.sentences.filter(s=>!used.has('s:'+canon(s.ans[0])))).concat(shuffle(plan.sentences)).filter((s,i,arr)=>arr.indexOf(s)===i).slice(0,plan.nSent);
   sents.forEach((s,i)=>addTask(d,{t:'sent',control:true,q:'Übersetze ins Englische: '+s.de,ans:s.ans,key:'ctl-s-'+i}));
 }
@@ -514,11 +599,11 @@ function advance(){
    Fehler machen den Weg zu 100 % also nicht länger. Dieser eine Wert erscheint überall
    (Balken, Pause, Abgabe-Bildschirm, Ergebniskarte). */
 function progress(d,U,h){
-  let done=0,total=0;
-  for(const a of d.queue){if(isCore(a)||(a.control&&a.t!=='intro')){total++;if(a.st?.done)done++}}
+  let done=0,total=0,lost=0;
+  for(const a of d.queue){if(isCore(a)||(a.control&&a.t!=='intro')){total++;if(a.st?.done){if(quickLost(a))lost++;else done++}}}
   if(d.phase!=='control'){const p=U?controlPlan(U,h):controlPlan();total+=p.words+p.nSent}
   total=Math.max(1,total);
-  return{done,total,left:total-done,pct:Math.round(100*done/total)};
+  return{done,total,lost,left:total-done-lost,pct:Math.round(100*done/total),max:Math.round(100*(total-lost)/total),goal:lost?Math.round(100*(total-lost)/total)+' %':'100 %'};
 }
 /* Was ist am Ende noch unsicher? Es zählt jeweils der LETZTE Versuch zu einem Wort bzw. einer Regel. */
 function weakOf(d){
@@ -545,7 +630,7 @@ function stats(d){
   }
   const P=progress(d),wk=weakOf(d);
   const lvl=!ctlTotal?'-':ctlOk/ctlTotal>=.8?'S':ctlOk/ctlTotal>=.5?'U':'B';
-  return{wert:P.pct,done:P.done,total:P.total,practice,firstPct:practice?Math.round(100*first/practice):0,ctlOk,ctlTotal,lvl,
+  return{wert:P.pct,done:P.done,total:P.total,lost:P.lost,practice,firstPct:practice?Math.round(100*first/practice):0,ctlOk,ctlTotal,lvl,
     weakIds:wk.words,weak:wk.words.map(w=>cur.unit.words[w].en),rules:wk.rules};
 }
 function sig(p){return cyrb53([CONFIG.secret,p.unit,p.h,normName(p.n),normName(p.k),p.wert,p.lvl,p.date].join('|')).toString(36).toUpperCase().slice(-5)}
@@ -553,8 +638,8 @@ function sig(p){return cyrb53([CONFIG.secret,p.unit,p.h,normName(p.n),normName(p
 function makeResult(status){
   const d=cur.d,s=stats(d),finished=status==='done';
   const p={unit:cur.unit.id,unitLabel:unitLabel(cur.unit),hwTitle:`HÜ ${cur.h}: ${cur.unit.homeworks[cur.h-1].title}`,h:cur.h,n:cur.u.name,k:cur.u.klasse,
-    wert:finished?100:Math.min(99,s.wert),sec:d.seconds,lvl:finished?s.lvl:'-',ctl:finished?`${s.ctlOk}/${s.ctlTotal}`:'',first:s.firstPct,weak:s.weak.slice(0,8),
-    weakIds:s.weakIds,rules:s.rules,done:finished?s.total:s.done,total:s.total,capped:!!d.capped,quick:d.quick,junk:d.junk,tasks:s.practice,date:dateStr(),finished,status};
+    wert:finished?s.wert:Math.min(99,s.wert),sec:d.seconds,lvl:finished?s.lvl:'-',ctl:finished?`${s.ctlOk}/${s.ctlTotal}`:'',first:s.firstPct,weak:s.weak.slice(0,8),
+    weakIds:s.weakIds,rules:s.rules,done:s.done,total:s.total,lost:s.lost,capped:!!d.capped,quick:d.quick,junk:d.junk,tasks:s.practice,date:dateStr(),finished,status};
   p.code=sig(p);return p;
 }
 function endHW(status){
@@ -572,7 +657,7 @@ const unitLabel=U=>[U.book,U.title].filter(Boolean).join(' · ');
 function capFor(a){
   if(!a)return CONFIG.stepCap;
   if(a.t==='intro')return 60;
-  if(a.t==='reading')return(a.st.qi||0)===0&&!a.st.ans?.[0]?.done?CONFIG.readingCap:CONFIG.stepCap;
+  if(a.t==='reading')return readPhase(a)==='read'?CONFIG.readingCap:CONFIG.stepCap;
   if(a.multi)return CONFIG.writingCap;
   return CONFIG.stepCap;
 }
@@ -584,7 +669,7 @@ function dlWarn(dl){
 }
 function idleFor(a){
   if(!a)return CONFIG.idleLimit;
-  if(a.t==='reading'&&(a.st.qi||0)===0&&!a.st.ans?.[0]?.done)return CONFIG.idleReading;
+  if(a.t==='reading'&&readPhase(a)==='read')return CONFIG.idleReading;
   if(['gap','find','cloze','sent','pic','open','transform','correct','listen'].includes(a.t))return CONFIG.idleWriting;
   return CONFIG.idleLimit;
 }
@@ -608,6 +693,7 @@ function tick(){
   else if(d.stepSec>=capFor(a))clockState=a&&a.st.done?'capdone':'cap';
   else{clockState='';d.seconds++;d.stepSec++;if(d.seconds%5===0)save()}
   updateClock();
+  const rb=$('#readbtn');if(rb&&rb.disabled&&a?.t==='reading'&&d.stepSec>=minReadFor(a)){rb.disabled=false;const n=$('#readnote');if(n)n.textContent=''}
 }
 function updateClock(){
   const el=$('#clock');if(!el||!cur)return;
@@ -634,15 +720,15 @@ function updateClock(){
   if(clockState==='idle'){txt='⏸ Uhr pausiert – tippe oder scrolle, um weiterzumachen.';cls+=' paused'}
   else if(clockState==='cap'){txt='⏸ Uhr angehalten – beantworte zuerst diese Aufgabe.';cls+=' paused'}
   else if(clockState==='capdone'){txt='⏸ Uhr angehalten – tippe auf „Weiter“.';cls+=' paused'}
-  else if(d.phase==='control'){txt=`✓ Lernkontrolle – ${aufg(P.left)} bis 100 %!`;cls+=' reached'}
+  else if(d.phase==='control'){txt=`✓ Lernkontrolle – ${aufg(P.left)} bis ${P.goal}!`;cls+=' reached'}
   else if(d.phase==='extra'){
-    if(tLeft<=0){txt=`✓ Geschafft! Nach dieser Aufgabe kommen ${P.left} kurze Fragen – dann hast du 100 %.`;cls+=' reached'}
-    else if(a&&a.extra&&a.t!=='intro'&&a.st.done&&a.st.first){txt=`✓ Gut gemacht! Noch ${minTxt(mLeft)} Zusatzrunde, dann ${P.left} kurze Fragen bis 100 %.`;cls+=' reached'}
-    else txt=`⏱ Zusatzrunde: noch ${minTxt(mLeft)}, dann ${P.left} kurze Fragen bis 100 %.`;
+    if(tLeft<=0){txt=`✓ Geschafft! Nach dieser Aufgabe kommen ${P.left} kurze Fragen – dann hast du ${P.goal}.`;cls+=' reached'}
+    else if(a&&a.extra&&a.t!=='intro'&&a.st.done&&a.st.first){txt=`✓ Gut gemacht! Noch ${minTxt(mLeft)} Zusatzrunde, dann ${P.left} kurze Fragen bis ${P.goal}.`;cls+=' reached'}
+    else txt=`⏱ Zusatzrunde: noch ${minTxt(mLeft)}, dann ${P.left} kurze Fragen bis ${P.goal}.`;
   }
   // Vor 15 Minuten ehrlich: 100 % gibt es erst, wenn auch die Mindestzeit erreicht ist
-  else if(tLeft>0)txt=`⏱ Lernzeit ${fmt(d.seconds)} · ${aufg(P.left)} · 100 % frühestens in ${minTxt(mLeft)}`;
-  else txt=`⏱ Lernzeit ${fmt(d.seconds)} · ${aufg(P.left)} bis 100 %`;
+  else if(tLeft>0)txt=`⏱ Lernzeit ${fmt(d.seconds)} · ${aufg(P.left)} · ${P.goal} frühestens in ${minTxt(mLeft)}`;
+  else txt=`⏱ Lernzeit ${fmt(d.seconds)} · ${aufg(P.left)} bis ${P.goal}`;
   const w=dlWarn(d.deadline);if(w&&clockState===''){txt=w+txt;cls='clock paused'}
   el.textContent=txt;el.className=cls;
 }
@@ -668,6 +754,28 @@ function render(){
   if(!a){advance();return}
   shell(taskHTML(a));
 }
+/* Erklärung in kleinen Schritten: je Schritt ein kurzer Gedanke + eine Verständnisfrage.
+   steps: [{text, img/imgs, check: {q, right, wrong:[…], why}, check2: {…}}], summary: 'Merke …'
+   Falsche Antwort → Erklärung, danach (falls vorhanden) eine zweite, ähnliche Frage. Zählt nicht zur Wertung. */
+function rSteps(a){
+  const st=a.st;st.si??=0;st.ck??=0;
+  const n=a.steps.length;
+  if(st.si>=n)return`<h2>${esc(a.title)}</h2><div class="fb good"><b>✓ Geschafft!</b> ${a.summary?'Das hast du gerade gelernt:':''}</div>${a.summary?`<div class="merke">${md(a.summary)}</div>`:''}<p><button data-act="next" id="nextbtn">Los geht’s →</button></p>`;
+  const S=a.steps[st.si],C=st.ck===1?S.check2:S.check;
+  const dots=a.steps.map((_,i)=>`<span class="sdot ${i<st.si?'done':i===st.si?'now':''}"></span>`).join('');
+  let h=`<h2>${esc(a.title)}</h2><p class="note">Schritt ${st.si+1} von ${n} ${dots}</p>${imgStrip(S)}<div class="step">${md(S.text)}</div>`;
+  if(!C)return h+`<p><button data-act="is-next" id="stepbtn">${st.si===n-1?'Fertig →':'Weiter →'}</button></p>`;
+  const k=st.si+'-'+st.ck;
+  if(!st.io||st.io.k!==k){const o=[C.right,...C.wrong];st.io={k,o:shuffle(o.map((_,i)=>i))}}
+  const opts=st.io.o.map(i=>{const t=i===0?C.right:C.wrong[i-1];let c='choice';if(st.idone){if(i===0)c+=' right';else if(i===st.isel)c+=' wrong'}else if(st.isel===i)c+=' sel';
+    return`<button class="${c}" data-act="is-sel" data-i="${i}" ${st.idone?'disabled':''}>${esc(t)}</button>`}).join('');
+  h+=`<div class="fb"><b>🤔 ${st.ck===1?'Noch eine Frage dazu:':'Hast du es verstanden?'}</b> ${esc(C.q)}</div><div class="choices">${opts}</div>`;
+  if(!st.idone)return h+`<button data-act="is-check" ${st.isel==null?'disabled':''}>Antwort bestätigen</button>`;
+  const ok=st.isel===0;
+  h+=fbox((ok?'✓ Richtig! ':'Nicht ganz. ')+(C.why||''),ok);
+  if(!ok&&st.ck===0&&S.check2)return h+`<p><button data-act="is-again" id="stepbtn">Noch eine Frage dazu →</button></p>`;
+  return h+`<p><button data-act="is-next" id="stepbtn">${st.si===n-1?'Fertig →':'Nächster Schritt →'}</button></p>`;
+}
 // Bilder zu einer Aufgabe oder einem Lesetext: img (eines) oder imgs (mehrere, z. B. zwei Tiere zum Vergleichen)
 function imgStrip(x){
   const L=x.imgs||(x.img?[x.img]:[]);if(!L.length)return'';
@@ -678,10 +786,10 @@ function taskHTML(a){
   if(!shownAt[sk])shownAt[sk]=Date.now();
   let html='';
   switch(a.t){
-    case'intro':html=`<h2>${esc(a.title)}</h2>${md(a.text)}<p><button data-act="next" id="nextbtn">Los geht’s →</button></p>`;break;
+    case'intro':html=a.steps?rSteps(a):`<h2>${esc(a.title)}</h2>${md(a.text)}<p><button data-act="next" id="nextbtn">Los geht’s →</button></p>`;break;
     case'mc':html=rMC(a);break;
     case'reading':html=rReading(a);break;
-    case'gap':html=rTyped(a,a.control?'Lernkontrolle':'Schreibe das fehlende Wort',`<p class="q">${esc(a.q)}</p>`);break;
+    case'gap':html=rTyped(a,a.control?'Lernkontrolle':'Schreibe das fehlende Wort',`<p class="q">${gapQ(a)}</p>${a.first&&!a.control?'<p class="note">Lies den ganzen Satz – er verrät dir das Wort. Der erste Buchstabe ist vorgegeben.</p>':''}${a.hintImg&&!a.img&&!a.imgs&&(a.st.level||0)>=1?imgStrip({img:a.hintImg}):''}`);break;
     case'sent':html=rTyped(a,a.control?'Lernkontrolle':'Schreibe auf Englisch',`<p class="q">${esc(a.q)}</p>`);break;
     case'pic':html=rTyped(a,'Bildaufgabe',scene(a.scene)+`<p class="q">${esc(a.q)}</p>`);break;
     case'open':html=rTyped(a,'Schreibe selbst',`<p class="q">${esc(a.q)}</p>`);break;
@@ -698,11 +806,12 @@ function taskHTML(a){
     case'correct':{const n=a.n||1;html=rTyped(a,'Verbessere den Satz',`<p class="q">${esc(a.q||`In diesem Satz ${n===1?'ist ein Fehler':'sind '+n+' Fehler'}. Schreib den ganzen Satz richtig.`)}</p><div class="srcsent">${a.st.level>=2&&a.mark?markWords(a.sentence,a.mark):esc(a.sentence)}</div>`);break}
   }
   if(a.t!=='reading'&&(a.img||a.imgs))html=html.replace('</h2>','</h2>'+imgStrip(a));
+  if(a.st?.quickWrong)html=html.replace('</h2>','</h2><div class="fb bad"><b>⚡ Zu schnell geklickt – diese Aufgabe zählt nicht.</b> Lies zuerst genau und denk nach, bevor du antwortest!</div>');
   return html;
 }
 function shell(inner){
   const d=cur.d,U=cur.unit;
-  setHeader(unitLabel(U),cur.preview?'Vorschau – nichts wird gespeichert':CONFIG.title);
+  setHeader(unitLabel(U),cur.preview?'Vorschau – ohne Mindestzeit und Zusatzrunde, nichts wird gespeichert':CONFIG.title);
   const P=progress(d),a=currentTask();
   const what=a?.review?'Wiederholung':a?.extra&&a.t!=='intro'?'Zusatzaufgabe':d.phase==='control'?'Lernkontrolle':`Aufgabe ${Math.min(P.done+(a&&isCore(a)&&a.st.done?0:1),P.total)} von ${P.total}`;
   const endBtn=cur.preview?'<button class="secondary small" data-act="next">Überspringen ⏭</button>':'<button class="secondary small" data-act="endearly" style="margin-left:auto">Vorzeitig abgeben</button>';
@@ -721,18 +830,33 @@ function rMC(a,head){
     (st.done?fbox((st.first?'✓ Richtig! ':'Nicht ganz – richtig ist: „'+a.opts[a.ans]+'“. ')+(a.why||''),st.first)+nextBtn()
             :`<button data-act="mc-check" ${st.sel==null?'disabled':''}>Antwort bestätigen</button>`);
 }
+/* Lesetext in drei Schritten: 1. nur lesen (Fragen versteckt, „Gelesen“ erst nach Mindestzeit)
+   2. Fragen aus dem Gedächtnis (gist, Text versteckt) · 3. Detailfragen mit Text – bei Fehlern wird die Stelle markiert */
+const readPhase=a=>a.st.phase||((a.st.ans||[]).some(x=>x&&x.done)?'q':'read');
+const minReadFor=a=>cur.preview?3:(a.minRead||0);
 function rReading(a){
   const R=cur.unit.readings[a.reading],st=a.st;st.qi??=0;st.ans??=[];
+  if(readPhase(a)==='read'){
+    const ready=cur.d.stepSec>=minReadFor(a);
+    return`<h2>Reading: ${esc(R.title)}</h2><p class="note">Lies den Text in Ruhe <b>ganz</b> durch. Danach kommen Fragen – die ersten ${a.gistN?'beantwortest du <b>aus dem Gedächtnis</b>, ohne Text':'beziehen sich auf den ganzen Text'}.</p>
+    ${imgStrip(R)}<div class="reading">${esc(R.text)}</div>${R.gloss?`<span class="gloss">Wort-Hilfe: ${esc(R.gloss)}</span>`:''}
+    <p><button data-act="rd-read" id="readbtn" ${ready?'':'disabled'}>Ich habe den Text gelesen →</button> <span class="note" id="readnote">${ready?'':'Lies zuerst den ganzen Text.'}</span></p>`;
+  }
   const q=a.qs[st.qi],x=st.ans[st.qi]||{};
   const labels=q.tf!=null?['True – das stimmt.','False – das stimmt nicht.']:q.o;
   const right=q.tf!=null?(q.tf?0:1):q.ans;
   const opts=labels.map((o,i)=>{let c='choice';if(x.done){if(i===right)c+=' right';else if(i===x.sel)c+=' wrong'}else if(x.sel===i)c+=' sel';return`<button class="${c}" data-act="rd-sel" data-i="${i}" ${x.done?'disabled':''}>${q.tf!=null?'':String.fromCharCode(65+i)+') '}${esc(o)}</button>`}).join('');
   const last=st.qi===a.qs.length-1;
-  return`<h2>Reading: ${esc(R.title)}</h2><p class="note">Lies zuerst den ganzen Text. Die Antworten findest du im Text.</p>
-  ${imgStrip(R)}<div class="reading">${esc(R.text)}</div>${R.gloss?`<span class="gloss">Wort-Hilfe: ${esc(R.gloss)}</span>`:''}
+  const hide=q.gist&&!x.done;
+  let txt=esc(R.text);
+  if(x.done&&q.ref&&!q.gist){const r=esc(q.ref);if(txt.includes(r))txt=txt.replace(r,`<mark id="refmark">${r}</mark>`)}
+  const textBlock=hide?`<div class="fb"><b>🧠 Aus dem Gedächtnis:</b> Beantworte diese Frage ohne Text. Danach siehst du den Text wieder.</div>`
+    :`${imgStrip(R)}<div class="reading">${txt}</div>${R.gloss?`<span class="gloss">Wort-Hilfe: ${esc(R.gloss)}</span>`:''}`;
+  return`<h2>Reading: ${esc(R.title)}</h2>${hide?'':'<p class="note">Die Antworten findest du im Text. Lies die passende Stelle genau.</p>'}
+  ${textBlock}
   <hr><p class="q">Frage ${st.qi+1} von ${a.qs.length}: ${esc(q.q)}</p>${q.tf!=null?'<p class="note">Stimmt das? (true = richtig, false = falsch)</p>':''}
   <div class="choices">${opts}</div>`+
-  (x.done?fbox((x.ok?'✓ Richtig! ':'Nicht ganz. ')+q.tip,x.ok)+`<p><button data-act="rd-next" id="nextbtn">${last?'Weiter →':'Nächste Frage →'}</button></p>`
+  (x.done?(x.quickWrong?'<div class="fb bad"><b>⚡ Zu schnell geklickt.</b> Lies die Frage und die Stelle im Text genau, bevor du antwortest.</div>':'')+fbox((x.ok?'✓ Richtig! ':(q.ref&&!q.gist?'Nicht ganz. Die markierte Stelle im Text zeigt dir die Antwort. ':'Nicht ganz. '))+q.tip,x.ok)+`<p><button data-act="rd-next" id="nextbtn">${last?'Weiter →':'Nächste Frage →'}</button></p>`
          :`<button data-act="rd-check" ${x.sel==null?'disabled':''}>Antwort bestätigen</button>`);
 }
 function solutionFor(a){return a.t==='find'?a.fix[0]:a.t==='gap'?a.ans[0]:a.model}
@@ -877,7 +1001,7 @@ function renderEndAsk(){
   const onlyCtl=d.phase==='extra'||d.phase==='control'||!d.queue.slice(d.index).some(isCore);
   app.innerHTML=`<section class="card" style="text-align:center"><h2>Wirklich jetzt abgeben?</h2>
   <div class="cmp"><div class="cmpbox orange"><span>Jetzt abgeben</span><b>${Math.min(99,P.pct)} %</b><span>Karte „nicht fertig“</span></div>
-  <div class="cmpbox pink"><span>Fertig machen</span><b>100 %</b><span>${onlyCtl?(d.phase==='control'||d.seconds>=minSec()?`nur noch ${P.left} kurze Fragen`:`noch ca. ${mins} Min. Zusatzaufgaben, dann ${P.left} kurze Fragen`):`noch ${P.left} Aufgaben · ca. ${mins} Min.`}</span></div></div>
+  <div class="cmpbox pink"><span>Fertig machen</span><b>${P.goal}</b><span>${onlyCtl?(d.phase==='control'||d.seconds>=minSec()?`nur noch ${P.left} kurze Fragen`:`noch ca. ${mins} Min. Zusatzaufgaben, dann ${P.left} kurze Fragen`):`noch ${P.left} Aufgaben · ca. ${mins} Min.`}</span></div></div>
   <p>Nach dem Abgeben kannst du <b>nicht mehr weitermachen</b>.</p>
   <p><button data-act="resume">▶ Weitermachen</button></p>
   <p><button class="secondary" data-act="endconfirm">Trotzdem jetzt mit ${Math.min(99,P.pct)} % abgeben</button></p>
@@ -915,7 +1039,8 @@ function pPick(){
 }
 function pMake(it){
   const P=pState(),S=P.items[it.key];let a;
-  if(it.key.startsWith('w:'))a=S.lvl===0?genMC(it.id):genGap(it.id);
+  if(it.key.startsWith('w:')){const used=new Set(Object.keys(P.used));const kind=S.lvl===0?'choice':'write';
+    a=genCtx(it.id,kind,used)||genCtx(it.id,kind,new Set())||(S.lvl===0?genMC(it.id):genGap(it.id));P.used[a.key]=(P.used[a.key]||0)+1;}
   else{
     const all=rulePool(it.id),mcs=all.filter(o=>isChoiceTask(o.x)),typed=all.filter(o=>!isChoiceTask(o.x));
     // Einstieg mit Auswahl, „beherrscht“ nur über selbst geschriebene/gebaute Sätze
@@ -1015,13 +1140,14 @@ function renderHWList(){
 
 /* ---------- Ergebniskarte ---------- */
 STATUS_HEAD.voc='✓ Vokabeltraining abgegeben';STATUS_HEAD.vdeadline='⏰ Frist abgelaufen – automatisch abgegeben';
+const flagText=p=>`Hinweis: ${p.quick} sehr schnelle ${p.quick===1?'Antwort':'Antworten'}, ${p.junk} ${p.junk===1?'Unsinn-Eingabe':'Unsinn-Eingaben'}`;
 const flagged=p=>(p.quick+p.junk)>=Math.max(CONFIG.flagAt,Math.round(.1*(p.tasks||0)));
 const isOrange=p=>['early','deadline','vdeadline'].includes(statusOf(p));
 function cardInfo(p){
   const min=`${Math.round(p.sec/60)} Min.`;
   if(p.kind==='voc'){const one=p.one??null;return{bigLabel:'Vokabel-Stand',tiles:[[min,'Übungszeit'],[`${p.counts[4]}/${p.N}`,'sicher (2× ohne Hilfe)'],one!=null?[`${one}/${p.N}`,'1× ohne Hilfe']:[`${p.counts[3]}/${p.N}`,'mit Hilfe schreiben']],
     line:`${one!=null?`mit Hilfe ${p.counts[3]-one} · `:''}im Satz ${p.counts[2]} · erkannt ${p.counts[1]} · noch neu ${p.counts[0]}`,none:'Alle Wörter sitzen sicher – super!'}}
-  const sub=p.total?`${p.done} von ${p.total} Aufgaben erledigt${p.capped?` · nach ${Math.round(CONFIG.capSeconds/60)} Min. verkürzt`:''}`:'';
+  const sub=p.total?`${p.done} von ${p.total} Aufgaben ${p.lost?'gezählt':'erledigt'}${p.lost?` · ${p.lost} zu schnell geklickt`:''}${p.capped?` · nach ${Math.round(CONFIG.capSeconds/60)} Min. verkürzt`:''}`:'';
   return{bigLabel:'HÜ-Wert (erledigte Aufgaben)',sub,tiles:[[min,'Lernzeit'],[p.finished?`${LS_LABEL[p.lvl].split(' ')[0]} ${p.ctl}`:'–',p.finished?LS_LABEL[p.lvl].split(' ').slice(1).join(' '):'keine Lernkontrolle'],[`${p.first} %`,'auf Anhieb richtig']],line:'',none:p.finished?'Nichts mehr offen – super!':''};
 }
 function renderCard(p){
@@ -1036,7 +1162,7 @@ function renderCard(p){
       <div class="rgrid">${I.tiles.map(t=>`<div><b>${esc(t[0])}</b><span>${esc(t[1])}</span></div>`).join('')}</div>
       ${I.line?`<div class="note" style="margin-top:8px">${esc(I.line)}</div>`:''}
       ${p.weak.length?`<div class="rwords">Noch üben: <b>${esc(p.weak.slice(0,5).join(', '))}</b>${p.weak.length>5?` <span class="note">… und ${p.weak.length-5} weitere</span>`:''}</div>`:''}${p.rules?.length?`<div class="rwords">Regel üben: <b>${esc(p.rules.join(' · '))}</b></div>`:''}${!p.weak.length&&!p.rules?.length&&I.none?`<div class="rwords">${I.none}</div>`:''}
-      ${flag?`<div class="rflag">Hinweis: ${p.quick} sehr schnelle Antworten, ${p.junk} Unsinn-Eingaben</div>`:''}
+      ${flag?`<div class="rflag">${flagText(p)}</div>`:''}
       <div class="rfoot"><span>${esc(p.date)}</span><span>Prüfzeichen <b>${esc(p.code)}</b></span></div>
     </div></div>
   <section class="card"><h3 style="margin-top:0">📸 So gibst du ab</h3>
@@ -1070,7 +1196,7 @@ function drawCard(p){
   if(p.weak.length){y=wrap('Noch üben: '+p.weak.join(', '),W/2,y,30,'#29243a','bold',W-140,40)+50}
   if(p.rules?.length){y=wrap('Regel üben: '+p.rules.join(' · '),W/2,y,28,'#29243a','bold',W-140,38)+50}
   if(!p.weak.length&&!p.rules?.length&&I.none){text(I.none,W/2,y,32,'#29243a','bold');y+=50}
-  if(flagged(p)){rr(70,y-38,W-140,60,16);g.fillStyle='#fff3e9';g.fill();text(`Hinweis: ${p.quick} sehr schnelle Antworten, ${p.junk} Unsinn-Eingaben`,W/2,y+2,26,'#8a4a0c');y+=70}
+  if(flagged(p)){rr(70,y-38,W-140,60,16);g.fillStyle='#fff3e9';g.fill();text(flagText(p),W/2,y+2,26,'#8a4a0c');y+=70}
   g.fillStyle='#f0e6ef';g.fillRect(70,1050,W-140,2);
   text(p.date,70,1105,30,'#6f6577','normal','left');
   text(`Prüfzeichen ${p.code}`,W-70,1105,30,'#29243a','bold','right');
@@ -1322,7 +1448,8 @@ function hwProfile(U,hi){
   const hw=U.homeworks[hi],T=hw.tasks.filter(x=>x.t!=='intro');
   const types={};T.forEach(x=>types[x.t]=(types[x.t]||0)+1);
   const lv=[0,0,0,0];T.forEach(x=>lv[lvlOf(x)]++);
-  const c=hw.control||{};let sec=T.reduce((a,x)=>a+(SEC_EST[x.t]||40)+(x.t==='cloze'&&/\[\[/.test(x.text||'')?25:0),0)+((c.words??4)+Math.min(c.nSentences??1,(c.sentences||[]).length))*20+30;
+  const steps=hw.tasks.reduce((n,x)=>n+(x.steps?.length||0),0);
+  const c=hw.control||{};let sec=steps*25+T.reduce((a,x)=>a+(SEC_EST[x.t]||40)+(x.t==='cloze'&&/\[\[/.test(x.text||'')?25:0),0)+((c.words??4)+Math.min(c.nSentences??1,(c.sentences||[]).length))*20+30;
   let run=1,maxRun=1;for(let i=1;i<T.length;i++){run=T[i].t===T[i-1].t?run+1:1;maxRun=Math.max(maxRun,run)}
   const warn=[];const min=Math.round(sec/60);
   if(T.length>18)warn.push(`${T.length} Aufgaben – empfohlen sind 16–18`);
@@ -1342,6 +1469,7 @@ function restoreDeadlines(){document.querySelectorAll('input.dl').forEach(inp=>{
 function unitImages(U){
   const S=new Set();const add=x=>{if(!x)return;(x.imgs||[]).forEach(p=>S.add(p));if(x.img)S.add(x.img)};
   (U.homeworks||[]).forEach(h=>(h.tasks||[]).forEach(add));(U.extras||[]).forEach(add);Object.values(U.readings||{}).forEach(add);(U.vocab?.items||[]).forEach(add);
+  Object.keys(U.words||{}).forEach(w=>{const W=U.words[w];if(!W.ex||W.skipGen)return;const p=imgOfWord(w,U);if(p)S.add(p)});
   return[...S];
 }
 function checkImages(){
@@ -1426,6 +1554,10 @@ function hintText(a,level,r){
   if(a.t==='gap'||a.t==='find'||(a.t==='listen'&&!isLadder(a))){
     const w=solutionFor(a),multi=w.includes(' ');
     const pre=r.near?'Fast! Ein Buchstabe stimmt nicht. ':(r.hint?r.hint+' ':'');
+    if(a.first){   // Anfangsbuchstabe und Länge sieht man schon – also zuerst zurück zum Satz (und Bild), dann mehr Buchstaben
+      if(level===1)return pre+(a.tip?a.tip+' ':'')+(a.hintImg&&!a.img&&!a.imgs?'Schau dir das Bild an und lies den Satz noch einmal. ':'Lies den Satz noch einmal: Welches Wort passt zur Situation? ')+`Es hat ${w.replace(/[^a-zäöüß]/gi,'').length} Buchstaben.`;
+      return pre+`Tipp: Es beginnt mit „${w.slice(0,Math.min(3,Math.max(1,w.length-1)))}…“.`;
+    }
     if(level===1)return pre+(a.tip?a.tip+' ':'')+`Tipp: Es beginnt mit „${w[0]}“`+(multi?` (${w.split(' ').length} Wörter).`:` und hat ${w.length} Buchstaben.`);
     return pre+`Tipp: Es beginnt mit „${w.slice(0,Math.min(3,Math.max(1,w.length-1)))}…“.`;
   }
@@ -1447,6 +1579,7 @@ function checkTyped(){
   // Unsinn zählt nicht als Versuch – so lässt sich die Hilfe nicht „durchklicken“
   if(!r.ok&&isJunk(raw,a.t==='find'?a.fix:(a.ans||[]))){d.junk++;st.msg='Versuch es wirklich – schreib, was du glaubst. Unsinn-Eingaben zählen nicht als Versuch.';st.msgGood=false;save();render();focusAnswer();return}
   st.tries=(st.tries||0)+1;
+  if(!r.ok&&st.firstWrong==null)st.firstWrong=raw;
   if(r.ok){
     st.final=raw;st.showSol=false;
     const first=st.tries===1&&(a.t!=='find'||st.clickOk);
@@ -1505,32 +1638,35 @@ function checkLetters(){
   render();
 }
 function checkSort(){
-  const a=currentTask(),st=a.st;if(st.done||Object.keys(st.as).length!==a.items.length)return;quick(a.key+'-0',4000);
-  const wrong=a.items.map((x,i)=>i).filter(i=>st.as[i]!==a.items[i][1]);
+  const a=currentTask(),st=a.st;if(st.done||Object.keys(st.as).length!==a.items.length)return;const qk=quick(a.key+'-0',4000);
+  const wrong=a.items.map((x,i)=>i).filter(i=>st.as[i]!==a.items[i][1]);if(qk&&wrong.length&&view!=='practice')st.quickWrong=true;
   st.msg=wrong.length?`${a.items.length-wrong.length} von ${a.items.length} richtig. Schau dir die falschen Karten genau an.`:'✓ Alles richtig sortiert!'+(a.why?' '+a.why:'');
   if(wrong.length&&a.why)st.msg+=' '+a.why;
-  complete(a,!wrong.length);render();
+  complete(a,!wrong.length,wrong.length?wordsInTexts(wrong.map(i=>a.items[i][0])):undefined);render();
 }
 /* Lückentext: Auswahl-Lücken haben EINEN Versuch (sonst könnte man im 2. Versuch einfach die andere Möglichkeit wählen).
    Falsche Auswahl → richtige Lösung + Erklärung. Nur Schreib-Lücken bekommen einen 2. Versuch (mit Anfangsbuchstaben). */
 function checkCloze(){
   const a=currentTask(),st=a.st;if(st.done)return;
   if(a.gaps.some((g,i)=>st.res?.[i]==null&&String(st.vals[i]??'').trim()===''))return void(st.msg='Fülle zuerst alle Lücken aus.',render());
-  st.ct=(st.ct||0)+1;cur.d.stepSec=0;if(st.ct===1)quick(a.key+'-0',3000);
+  st.ct=(st.ct||0)+1;cur.d.stepSec=0;const qk=st.ct===1&&quick(a.key+'-0',3000);
   st.res=a.gaps.map((g,i)=>{if(st.ct>1&&g.kind==='choice')return st.res[i];const v=String(st.vals[i]??'');return g.kind==='choice'?v===String(g.ans):g.ans.some(x=>canon(x)===canon(v))});
-  if(st.ct===1)st.firstRes=[...st.res];
+  if(st.ct===1){st.firstRes=[...st.res];if(qk&&st.res.some(x=>!x)&&view!=='practice')st.quickWrong=true}
   const n=a.gaps.length,nOk=st.res.filter(Boolean).length,n1=st.firstRes.filter(Boolean).length;
   const why=a.gaps.map((g,i)=>{if(g.kind!=='choice'||st.res[i])return null;const h=errorHint(canon(g.opts[+st.vals[i]]||''),cur.unit);return h?`„${g.right}“: ${h}`:null}).filter(Boolean);
   const whyTxt=why.length?' '+why.join(' '):(a.why&&nOk<n?' '+a.why:'');
   const typedOpen=a.gaps.some((g,i)=>g.kind==='typed'&&!st.res[i]);
-  if(nOk===n){st.msg=st.ct===1?'✓ Alles richtig!':'✓ Jetzt stimmt alles!';complete(a,n1===n)}
+  const gapWords=()=>wordsInTexts(a.gaps.map((g,i)=>st.firstRes[i]?null:(g.kind==='choice'?g.right:g.ans[0])).filter(Boolean));
+  if(nOk===n){st.msg=st.ct===1?'✓ Alles richtig!':'✓ Jetzt stimmt alles!';complete(a,n1===n,n1===n?undefined:gapWords())}
   else if(st.ct===1&&typedOpen){st.msg=`${nOk} von ${n} Lücken stimmen – gut!`+whyTxt+' Bei den orange markierten Schreib-Lücken hast du noch einen Versuch – der erste Buchstabe hilft dir.';save()}
-  else{st.msg=`${nOk} von ${n} Lücken stimmen${nOk>=n/2?' – gut!':'.'} Die richtigen Lösungen stehen jetzt daneben.`+whyTxt+' Das kommt später noch einmal.';complete(a,false)}
+  else{st.msg=`${nOk} von ${n} Lücken stimmen${nOk>=n/2?' – gut!':'.'} Die richtigen Lösungen stehen jetzt daneben.`+whyTxt+' Das kommt später noch einmal.';complete(a,false,gapWords())}
   render();
 }
 function sayIt(slow){const a=currentTask();if(!a?.say)return;try{const u=new SpeechSynthesisUtterance(a.say);u.lang='en-GB';const vo=enVoice();if(vo)u.voice=vo;u.rate=slow?.6:.9;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 function focusAnswer(){const el=$('#answer');if(el&&el.readOnly){$('#nextbtn')?.focus();return}if(el){el.focus();const n=el.value.length;try{el.setSelectionRange(n,n)}catch(e){}}}
-function quick(key,ms){if(shownAt[key]&&Date.now()-shownAt[key]<ms)cur.d.quick++}
+function quick(key,ms){if(shownAt[key]&&Date.now()-shownAt[key]<ms){cur.d.quick++;return true}return false}
+// Zählt eine erledigte Aufgabe für den HÜ-Wert? Schnell UND falsch geklickt zählt nicht.
+const quickLost=a=>!!a.st?.quickWrong||(a.t==='reading'&&(a.st?.ans||[]).filter(x=>x&&x.quickWrong).length>=2);
 
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
@@ -1576,27 +1712,34 @@ document.addEventListener('click',e=>{
   switch(act){
     case'endearly':cur.d.stepSec=0;save();view='endask';render();window.scrollTo(0,0);return;
     case'next':advance();return;
+    case'is-sel':if(!st.idone){st.isel=i;saveSoon();render()}return;
+    case'is-check':if(!st.idone&&st.isel!=null){st.idone=true;cur.d.stepSec=0;save();render()}return;
+    case'is-again':st.ck=1;st.isel=null;st.idone=false;save();render();return;
+    case'is-next':st.si=(st.si||0)+1;st.ck=0;st.isel=null;st.idone=false;cur.d.stepSec=0;save();render();window.scrollTo(0,0);return;
     case'mc-sel':if(!st.done){st.sel=i;saveSoon();render()}return;
-    case'mc-check':if(st.done||st.sel==null)return;quick(a.key+'-0',CONFIG.quickMs);complete(a,st.sel===a.ans);render();focusAnswer();return;
+    case'mc-check':{if(st.done||st.sel==null)return;const qk=quick(a.key+'-0',CONFIG.quickMs),ok=st.sel===a.ans;if(qk&&!ok&&!a.control&&view!=='practice')st.quickWrong=true;complete(a,ok);render();focusAnswer();return}
     case'rd-sel':{const x=(st.ans[st.qi]??={});if(!x.done){x.sel=i;saveSoon();render()}return}
+    case'rd-read':if(readPhase(a)==='read'&&cur.d.stepSec>=minReadFor(a)){st.phase='q';cur.d.stepSec=0;save();render();window.scrollTo(0,0)}return;
     case'rd-check':{const x=st.ans[st.qi];if(!x||x.done||x.sel==null)return;const q=a.qs[st.qi];
       x.ok=q.tf!=null?(x.sel===0)===q.tf:x.sel===q.ans;x.done=true;
-      quick(a.key+'-'+st.qi,st.qi===0?CONFIG.quickReadMs:CONFIG.quickMs);
-      cur.d.stepSec=0;if(st.ans.filter(y=>y&&y.done).length===a.qs.length){st.done=true;st.first=st.ans.every(y=>y.ok)}save();render();focusAnswer();return}
+      const qk=quick(a.key+'-'+st.qi,CONFIG.quickMs);if(qk&&!x.ok&&view!=='practice')x.quickWrong=true;
+      cur.d.stepSec=0;if(st.ans.filter(y=>y&&y.done).length===a.qs.length){st.done=true;st.first=st.ans.every(y=>y.ok)}save();render();
+      const mk=document.getElementById('refmark');if(mk&&!x.ok)mk.scrollIntoView({behavior:'smooth',block:'center'});else focusAnswer();return}
     case'rd-next':if(st.qi<a.qs.length-1){st.qi++;save();render();window.scrollTo({top:document.querySelector('hr')?.offsetTop||0,behavior:'smooth'})}else advance();return;
     case'typed-check':checkTyped();return;
     case'ord-add':if(!st.done&&!st.picked.includes(i)){st.picked.push(i);saveSoon();render()}return;
     case'ord-rem':if(!st.done){st.picked.splice(j,1);saveSoon();render()}return;
-    case'ord-check':{if(st.done||st.picked.length!==a.tiles.length)return;quick(a.key+'-0',2500);
+    case'ord-check':{if(st.done||st.picked.length!==a.tiles.length)return;const qk=quick(a.key+'-0',a.t==='dialog'?5000:2500);
       const built=st.picked.map(k=>a.tiles[k]).join(' '),ok=[a.tiles.join(' '),...a.alts].some(x=>canon(x)===canon(built));
+      if(qk&&!ok&&view!=='practice')st.quickWrong=true;
       st.msg=ok?'✓ Richtig zusammengesetzt!':a.t==='dialog'?'Nicht ganz – richtig ist: '+a.tiles.map((x,k)=>(k+1)+'. '+x).join('  ·  '):'Nicht ganz – richtig ist: „'+a.tiles.join(' ')+'.“';complete(a,ok);render();focusAnswer();return}
     case'm-left':if(st.pairs[i]!=null){delete st.pairs[i];st.active=null}else st.active=st.active===i?null:i;render();return;
     case'm-right':{const owner=Object.keys(st.pairs).find(k=>st.pairs[k]===j);
       if(st.active==null){if(owner!=null)delete st.pairs[owner]}
       else{if(owner!=null)delete st.pairs[owner];st.pairs[st.active]=j;st.active=null}
       saveSoon();render();return}
-    case'm-check':{if(st.done||Object.keys(st.pairs).length!==a.pairs.length)return;quick(a.key+'-0',6000);
-      const wrong=a.pairs.map((_,k)=>k).filter(k=>st.pairs[k]!==k);
+    case'm-check':{if(st.done||Object.keys(st.pairs).length!==a.pairs.length)return;const qk=quick(a.key+'-0',6000);
+      const wrong=a.pairs.map((_,k)=>k).filter(k=>st.pairs[k]!==k);if(qk&&wrong.length&&view!=='practice')st.quickWrong=true;
       st.msg=wrong.length?`${a.pairs.length-wrong.length} von ${a.pairs.length} richtig. Schau dir die falschen Paare genau an – sie kommen später noch einmal.`:'✓ Alles richtig zugeordnet!';
       complete(a,!wrong.length,wrong.map(k=>a.ids[k]));render();focusAnswer();return}
     case'tl-add':if(st.tl&&!st.tl.picked.includes(i)){st.tl.picked.push(i);saveSoon();render()}return;
