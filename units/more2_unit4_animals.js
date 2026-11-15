@@ -15,59 +15,61 @@ registerUnit({
   distract: ['than', 'as', 'more', 'most', 'the', 'then'],
 
   /* ---------- Wortschatz ---------- */
+  // Bild zum Wort für die Hilfe bei Schreib-Wiederholungen (erscheint erst nach dem 1. Fehler)
+  wordImg: 'units/bilder/u4-{id}.jpg',
   words: {
     // Tiere (Word File)
-    giraffe:    {en: 'giraffe', de: 'Giraffe'},
-    antelope:   {en: 'antelope', de: 'Antilope'},
-    chimpanzee: {en: 'chimpanzee', de: 'Schimpanse'},
-    bat:        {en: 'bat', de: 'Fledermaus'},
-    rhino:      {en: 'rhino', de: 'Nashorn'},
-    cheetah:    {en: 'cheetah', de: 'Gepard'},
-    dolphin:    {en: 'dolphin', de: 'Delfin'},
-    whale:      {en: 'whale', de: 'Wal'},
-    mosquito:   {en: 'mosquito', de: 'Stechmücke, Gelse'},
-    pigeon:     {en: 'pigeon', de: 'Taube'},
-    parrot:     {en: 'parrot', de: 'Papagei'},
-    ostrich:    {en: 'ostrich', de: 'Strauß (Vogel)'},
+    giraffe:    {en: 'giraffe', de: 'Giraffe', ex: 'The ___ has got a very long neck and eats leaves from tall trees.', cat: 'animal'},
+    antelope:   {en: 'antelope', de: 'Antilope', ex: 'An ___ is a fast animal with horns. Lions and cheetahs hunt it.', cat: 'animal'},
+    chimpanzee: {en: 'chimpanzee', de: 'Schimpanse', ex: 'A ___ looks a bit like a human and can use sticks as tools.', cat: 'animal'},
+    bat:        {en: 'bat', de: 'Fledermaus', ex: 'A ___ sleeps during the day and flies at night.', cat: 'animal'},
+    rhino:      {en: 'rhino', de: 'Nashorn', ex: 'The ___ is very heavy and has got a big horn on its nose.', cat: 'animal'},
+    cheetah:    {en: 'cheetah', de: 'Gepard', ex: 'The ___ has got black spots and is the fastest land animal.', cat: 'animal'},
+    dolphin:    {en: 'dolphin', de: 'Delfin', ex: 'A ___ lives in the sea, is very intelligent and loves to jump.', cat: 'animal'},
+    whale:      {en: 'whale', de: 'Wal', ex: 'The blue ___ is the biggest animal in the world.', cat: 'animal'},
+    mosquito:   {en: 'mosquito', de: 'Stechmücke, Gelse', ex: 'A ___ is a small insect. Its bite can make you sick.', cat: 'animal'},
+    pigeon:     {en: 'pigeon', de: 'Taube', ex: 'There are lots of grey ___ in the city park.', exAns: 'pigeons', cat: 'animal'},
+    parrot:     {en: 'parrot', de: 'Papagei', ex: 'My grandma has got a colourful ___ that can say “Hello”.', cat: 'animal'},
+    ostrich:    {en: 'ostrich', de: 'Strauß (Vogel)', ex: 'An ___ is a very big bird. It can’t fly, but it can run fast.', cat: 'animal'},
     anaconda:   {en: 'anaconda', de: 'Anakonda', skipGen: true},
-    crocodile:  {en: 'crocodile', de: 'Krokodil'},
+    crocodile:  {en: 'crocodile', de: 'Krokodil', ex: 'The ___ lives in rivers and has got lots of sharp teeth.', cat: 'animal'},
     // Adjektive
-    hairy:      {en: 'hairy', de: 'haarig, stark behaart'},
-    heavy:      {en: 'heavy', de: 'schwer'},
-    dangerous:  {en: 'dangerous', de: 'gefährlich'},
-    strong:     {en: 'strong', de: 'stark'},
-    clever:     {en: 'clever', de: 'klug'},
-    fast:       {en: 'fast', de: 'schnell'},
-    smart:      {en: 'smart', de: 'schlau'},
+    hairy:      {en: 'hairy', de: 'haarig, stark behaart', ex: 'Chimpanzees have got lots of dark hair. They are very ___.', cat: 'adj'},
+    heavy:      {en: 'heavy', de: 'schwer', ex: 'An elephant weighs about six tons. It is very ___.', cat: 'adj'},
+    dangerous:  {en: 'dangerous', de: 'gefährlich', ex: 'Don’t swim in this river! There are crocodiles – it’s ___.', cat: 'adj'},
+    strong:     {en: 'strong', de: 'stark', ex: 'An elephant can lift a whole tree. It is very ___.', cat: 'adj'},
+    clever:     {en: 'clever', de: 'klug', ex: 'My sister always knows the answer. She is very ___.', cat: 'adj', noImg: true},
+    fast:       {en: 'fast', de: 'schnell', ex: 'A cheetah can run 100 km/h. It is very ___.', cat: 'adj'},
+    smart:      {en: 'smart', de: 'schlau', ex: 'Our dog can open the fridge. It is really ___!', cat: 'adj'},
     intelligent:{en: 'intelligent', de: 'intelligent', skipGen: true},
-    powerful:   {en: 'powerful', de: 'mächtig, kräftig'},
-    venomous:   {en: 'venomous', de: 'giftig'},
-    incredible: {en: 'incredible', de: 'unglaublich'},
+    powerful:   {en: 'powerful', de: 'mächtig, kräftig', ex: 'A rhino is big and ___. Nobody wants to make it angry.', cat: 'adj'},
+    venomous:   {en: 'venomous', de: 'giftig', ex: 'Be careful! This snake is ___. Its bite can kill you.', cat: 'adj'},
+    incredible: {en: 'incredible', de: 'unglaublich', ex: 'A blue whale can be 30 metres long. That’s ___!', cat: 'adj'},
     // Wortliste
-    ago:        {en: 'ago', de: 'vor (zeitlich, z. B. vor zwei Tagen)'},
-    farmer:     {en: 'farmer', de: 'Bauer, Bäuerin'},
-    human:      {en: 'human', de: 'Mensch'},
-    female:     {en: 'female', de: 'weiblich; Weibchen'},
-    male:       {en: 'male', de: 'männlich; Männchen'},
-    nobody:     {en: 'nobody', de: 'niemand'},
-    scientist:  {en: 'scientist', de: 'Wissenschaftler/in'},
-    dieout:     {en: 'die out', de: 'aussterben'},
-    less:       {en: 'less', de: 'weniger'},
-    carry:      {en: 'carry', de: 'tragen'},
-    desert:     {en: 'desert', de: 'Wüste'},
-    die:        {en: 'die', de: 'sterben'},
-    mammal:     {en: 'mammal', de: 'Säugetier'},
-    weigh:      {en: 'weigh', de: 'wiegen'},
-    length:     {en: 'length', de: 'Länge'},
-    speed:      {en: 'speed', de: 'Geschwindigkeit'},
-    reason:     {en: 'reason', de: 'Grund'},
-    share:      {en: 'share', de: 'teilen'},
-    luck:       {en: 'luck', de: 'Glück (Glück haben)'},
-    forever:    {en: 'forever', de: 'für immer'},
-    protect:    {en: 'protect', de: 'beschützen, schützen'},
-    truck:      {en: 'truck', de: 'Lastwagen'},
-    ton:        {en: 'ton', de: 'Tonne (1000 kg)'},
-    climatechange: {en: 'climate change', de: 'Klimawandel'}
+    ago:        {en: 'ago', de: 'vor (zeitlich, z. B. vor zwei Tagen)', ex: 'I saw a real whale three years ___.'},
+    farmer:     {en: 'farmer', de: 'Bauer, Bäuerin', ex: 'The ___ gets up at five o’clock to feed his cows.'},
+    human:      {en: 'human', de: 'Mensch', ex: 'A ___ can talk, but an animal can’t.'},
+    female:     {en: 'female', de: 'weiblich; Weibchen', ex: 'The ___ chicken lays the eggs.'},
+    male:       {en: 'male', de: 'männlich; Männchen', ex: 'Tom is a boy, so he is ___.'},
+    nobody:     {en: 'nobody', de: 'niemand', ex: '___ was at home, so I went back to school.', exAns: 'Nobody'},
+    scientist:  {en: 'scientist', de: 'Wissenschaftler/in', ex: 'The ___ looks at the insects under a microscope.'},
+    dieout:     {en: 'die out', de: 'aussterben', ex: 'If we don’t protect them, many animals will ___.'},
+    less:       {en: 'less', de: 'weniger', ex: 'A mouse eats ___ food than a horse.'},
+    carry:      {en: 'carry', de: 'tragen', ex: 'Can you ___ my bag, please? It’s very heavy.'},
+    desert:     {en: 'desert', de: 'Wüste', ex: 'Camels can live in the ___ because they need very little water.'},
+    die:        {en: 'die', de: 'sterben', ex: 'Flowers ___ when it is too cold.'},
+    mammal:     {en: 'mammal', de: 'Säugetier', ex: 'A dolphin is not a fish – it is a ___.'},
+    weigh:      {en: 'weigh', de: 'wiegen', ex: 'How much do you ___? – About 40 kilograms.'},
+    length:     {en: 'length', de: 'Länge', ex: 'The ___ of an anaconda can be six metres.'},
+    speed:      {en: 'speed', de: 'Geschwindigkeit', ex: 'This train can reach a ___ of 300 km/h.'},
+    reason:     {en: 'reason', de: 'Grund', ex: 'What is the ___ why the dodo died out?'},
+    share:      {en: 'share', de: 'teilen', ex: 'Let’s ___ the pizza – you get half and I get half.'},
+    luck:       {en: 'luck', de: 'Glück (Glück haben)', ex: 'I found ten euros on the street. What ___!'},
+    forever:    {en: 'forever', de: 'für immer', ex: 'I will remember this wonderful day ___.'},
+    protect:    {en: 'protect', de: 'beschützen, schützen', ex: 'A helmet can ___ your head when you ride a bike.'},
+    truck:      {en: 'truck', de: 'Lastwagen', ex: 'The big ___ carries wood from the forest to the town.'},
+    ton:        {en: 'ton', de: 'Tonne (1000 kg)', ex: 'A rhino can weigh more than two ___.', exAns: 'tons'},
+    climatechange: {en: 'climate change', de: 'Klimawandel', img: 'units/bilder/u4-climate-change.jpg', ex: 'Because of ___, the ice at the North Pole is melting.', exAns: 'climate change'}
   },
 
   /* ---------- Typische Fehler → Hinweis ---------- */
@@ -89,7 +91,7 @@ registerUnit({
   readings: {
     zoo: {
       title: 'A Day at the Zoo',
-      imgs: ['units/bilder/u4-giraffe.jpg', 'units/bilder/u4-anaconda.jpg', 'units/bilder/u4-chimpanzee.jpg'],
+      imgs: ['units/bilder/u4-chimpanzee.jpg', 'units/bilder/u4-anaconda.jpg', 'units/bilder/u4-giraffe.jpg'],
       text: `Last Saturday, Emma and her grandpa went to the zoo. First, they visited the giraffes. “Look how tall they are!” said Emma. Next to the giraffes, there was a big grey rhino. It was very heavy, and Grandpa said it was also very strong.
 
 Then they went to the reptile house. Behind thick glass, there was a long green anaconda and a crocodile with sharp teeth. “Crocodiles are dangerous,” said Grandpa. “Never put your hand near the water!”
@@ -98,32 +100,38 @@ After lunch, they watched the chimpanzees. One chimpanzee was very hairy and ver
 
 At the end of the day, Emma bought a small toy parrot in the zoo shop. “That was a great day!” she said.`,
       gloss: 'tall = groß (Körpergröße) · sharp teeth = scharfe Zähne · stick = Stock · toy = Spielzeug',
+      gist: [
+        {q: 'Who went to the zoo?', right: 'Emma and her grandpa.', wrong: ['Emma and her mum.', 'Emma and her class.', 'Grandpa and a scientist.'], tip: 'Gleich im ersten Satz steht, wer in den Zoo gegangen ist.'}
+      ],
       questions: [
-        {q: 'What did Emma and her grandpa visit first?', right: 'The giraffes.', wrong: ['The crocodiles.', 'The chimpanzees.', 'The zoo shop.'], tip: 'Lies den ersten Absatz.'},
-        {q: 'The rhino was small and weak.', tf: false, tip: 'Das Nashorn war schwer (heavy) und stark (strong) – erster Absatz.'},
-        {q: 'Where did they see the anaconda?', right: 'In the reptile house.', wrong: ['Next to the giraffes.', 'In the zoo shop.', 'Near the chimpanzees.'], tip: 'Lies den zweiten Absatz.'},
-        {q: 'How did the chimpanzee get the fruit?', right: 'It opened a box with a stick.', wrong: ['A scientist gave it the fruit.', 'It took the fruit from Emma.', 'It found the fruit in the water.'], tip: 'Lies den dritten Absatz.'},
-        {q: 'Emma bought a toy parrot.', tf: true, tip: 'Das steht im letzten Absatz.'}
+        {q: 'Which animals did Emma and Grandpa see at the beginning?', right: 'The giraffes.', wrong: ['The rhinos.', 'The crocodiles.', 'The chimpanzees.'], tip: 'Lies den ersten Absatz: Was haben sie zuerst besucht?', ref: 'First, they visited the giraffes.'},
+        {q: 'What did Grandpa say about the rhino?', right: 'It is very strong.', wrong: ['It is very dangerous.', 'It is very clever.', 'It is very tall.'], tip: 'Gefährlich (dangerous) hat Grandpa über die Krokodile gesagt – über das Nashorn sagt er etwas anderes.', ref: 'It was very heavy, and Grandpa said it was also very strong.'},
+        {q: 'Grandpa told Emma that chimpanzees are very intelligent.', tf: false, tip: 'Das hat nicht Grandpa gesagt, sondern ein Wissenschaftler (a scientist).', ref: 'A scientist told them that chimpanzees are very intelligent animals.'},
+        {q: 'How did the chimpanzee get its food?', right: 'It used a stick to open a box.', wrong: ['A scientist gave it the food.', 'It took the food from Emma.', 'It found the food behind the glass.'], tip: 'Lies den dritten Absatz.', ref: 'It opened a box with a stick and found some fruit inside.'},
+        {q: 'What did Emma take home from the zoo?', right: 'A small toy parrot.', wrong: ['A small toy rhino.', 'A picture of a giraffe.', 'A box of fruit.'], tip: 'Lies den letzten Absatz: Was hat Emma im Zoo-Shop gekauft?', ref: 'Emma bought a small toy parrot in the zoo shop.'}
       ]
     },
     olympics: {
       title: 'The Animal Olympics',
       text: `Every year, the animals in the forest have their own Olympics. This year, Cheetah, Ostrich, Elephant and Chimpanzee took part.
 
-The first event was a race. Ostrich was fast, but Cheetah was faster. “Nobody is faster than me!” Cheetah shouted. Elephant was much slower than the others, but he didn’t care.
+The first event was a race around the lake. Cheetah was much faster than the others at the start. “Nobody is faster than me!” he shouted. But after one minute, he was tired and had to stop. Ostrich was slower, but she didn’t stop. In the end, Ostrich won the race. Elephant was much slower than the others, but he didn’t care.
 
 The second event was weightlifting. Chimpanzee lifted a big piece of wood, but Elephant lifted a whole tree! He was much stronger than the others. Cheetah was weaker than Chimpanzee and couldn’t lift anything.
 
 The last event was a puzzle. The animals had to open a box with a banana inside. Cheetah and Ostrich tried for twenty minutes, but they couldn’t open it. Chimpanzee opened the box in two minutes. “Chimpanzees are more intelligent than cheetahs,” he laughed.
 
 In the end, everybody got a medal. “Who is the winner?” asked Ostrich. “All of us,” said Elephant. “We are all good at different things.”`,
-      gloss: 'take part = teilnehmen · race = Wettrennen · weightlifting = Gewichtheben · whole = ganz · weak = schwach',
+      gloss: 'take part = teilnehmen · race = Wettrennen · lake = See · weightlifting = Gewichtheben · whole = ganz · weak = schwach',
+      gist: [
+        {q: 'Which event was NOT part of the Animal Olympics?', right: 'Swimming.', wrong: ['A race.', 'Weightlifting.', 'A puzzle.'], tip: 'Im Text gab es drei Wettbewerbe: ein Rennen, Gewichtheben und ein Rätsel.'}
+      ],
       questions: [
-        {q: 'Who won the race?', right: 'Cheetah.', wrong: ['Ostrich.', 'Elephant.', 'Chimpanzee.'], tip: 'Zweiter Absatz: Wer war schneller als Ostrich?'},
-        {q: 'Elephant was stronger than Chimpanzee.', tf: true, tip: 'Dritter Absatz: Elephant lifted a whole tree.'},
-        {q: 'Cheetah was stronger than Chimpanzee.', tf: false, tip: 'Dritter Absatz: Cheetah was weaker than Chimpanzee.'},
-        {q: 'How long did Chimpanzee need to open the box?', right: 'Two minutes.', wrong: ['Twenty minutes.', 'Ten minutes.', 'One hour.'], tip: 'Lies den vierten Absatz.'},
-        {q: 'What does Elephant say at the end?', right: 'All animals are good at different things.', wrong: ['Elephant is the winner.', 'Cheetah is the winner.', 'Nobody got a medal.'], tip: 'Lies den letzten Absatz.'}
+        {q: 'Who won the race?', right: 'Ostrich.', wrong: ['Cheetah.', 'Elephant.', 'Chimpanzee.'], tip: 'Achtung: Cheetah war am Anfang am schnellsten, musste aber stehen bleiben. Lies den zweiten Absatz bis zum Ende.', ref: 'In the end, Ostrich won the race.'},
+        {q: 'Why didn’t Cheetah win the race?', right: 'He got tired after one minute.', wrong: ['He was slower than Elephant.', 'He didn’t want to run.', 'He fell into the lake.'], tip: 'Lies den zweiten Absatz: Was passierte nach einer Minute?', ref: 'But after one minute, he was tired and had to stop.'},
+        {q: 'What did Chimpanzee lift?', right: 'A big piece of wood.', wrong: ['A whole tree.', 'The box with the banana.', 'Nothing.'], tip: 'Den ganzen Baum hat Elephant gehoben. Lies den dritten Absatz.', ref: 'Chimpanzee lifted a big piece of wood'},
+        {q: 'How long did Cheetah and Ostrich try to open the box?', right: 'For twenty minutes.', wrong: ['For two minutes.', 'For one minute.', 'For one hour.'], tip: 'Zwei Minuten hat Chimpanzee gebraucht. Lies den vierten Absatz genau.', ref: 'Cheetah and Ostrich tried for twenty minutes'},
+        {q: 'Who is the winner, says Elephant?', right: 'All the animals.', wrong: ['Chimpanzee.', 'Ostrich.', 'Elephant himself.'], tip: 'Lies den letzten Absatz: „All of us“ – alle zusammen.', ref: '“All of us,” said Elephant.'}
       ]
     },
     records: {
@@ -141,12 +149,15 @@ And the most dangerous animal? It isn’t the crocodile or the shark. It is the 
 
 The ostrich is the biggest bird in the world, but it can’t fly. It also lays the biggest eggs of all birds.`,
       gloss: 'amazing = erstaunlich · record = Rekord · land animal = Landtier · lay eggs = Eier legen',
+      gist: [
+        {q: 'Which animal is NOT in the text?', right: 'The dolphin.', wrong: ['The mosquito.', 'The ostrich.', 'The antelope.'], tip: 'Im Text kommen Blauwal, Gepard, Antilope, Giraffe, Stechmücke und Strauß vor – kein Delfin.'}
+      ],
       questions: [
-        {q: 'How heavy can a blue whale be?', right: 'Up to 150 tons.', wrong: ['Up to 30 tons.', 'Up to 20 tons.', 'Up to 100 kilograms.'], tip: 'Lies den zweiten Absatz.'},
-        {q: 'An antelope is as fast as a cheetah.', tf: false, tip: 'Dritter Absatz: An antelope is not as fast as a cheetah.'},
-        {q: 'A cheetah can run fast for a long time.', tf: false, tip: 'Dritter Absatz: … but only for a short time.'},
-        {q: 'Which animal is the most dangerous?', right: 'The mosquito.', wrong: ['The crocodile.', 'The shark.', 'The cheetah.'], tip: 'Lies den fünften Absatz.'},
-        {q: 'What is special about the ostrich?', right: 'It is the biggest bird, but it can’t fly.', wrong: ['It is the fastest animal in the world.', 'It is the smallest bird.', 'It can fly very high.'], tip: 'Lies den letzten Absatz.'}
+        {q: 'A blue whale is heavier than how many elephants?', right: '20.', wrong: ['30.', '150.', '100.'], tip: '30 ist die Länge in Metern, 150 das Gewicht in Tonnen. Lies den zweiten Absatz genau.', ref: 'that is heavier than 20 elephants'},
+        {q: 'Which animal can run for a longer time than a cheetah?', right: 'The antelope.', wrong: ['The giraffe.', 'The ostrich.', 'The blue whale.'], tip: 'Lies den dritten Absatz: Wer ist langsamer, kann aber länger laufen?', ref: 'An antelope is not as fast as a cheetah, but it can run for much longer.'},
+        {q: 'How tall are some giraffes?', right: 'Almost six metres.', wrong: ['About 30 metres.', 'About one metre.', 'More than 100 metres.'], tip: '30 Meter lang ist der Blauwal. Lies den vierten Absatz.', ref: 'Some giraffes are almost six metres tall.'},
+        {q: 'Why are mosquitoes so dangerous?', right: 'They carry an illness.', wrong: ['They are bigger than crocodiles.', 'They attack sharks.', 'They eat birds’ eggs.'], tip: 'Lies den fünften Absatz: Mosquitoes carry malaria – Malaria ist eine Krankheit.', ref: 'Mosquitoes carry malaria'},
+        {q: 'What else is special about the ostrich?', right: 'It lays the biggest eggs of all birds.', wrong: ['It can run more than 100 km/h.', 'It is almost six metres tall.', 'It can weigh up to 150 tons.'], tip: 'Die anderen Antworten gehören zu Gepard, Giraffe und Blauwal. Lies den letzten Absatz.', ref: 'It also lays the biggest eggs of all birds.'}
       ]
     },
     friendship: {
@@ -162,12 +173,15 @@ Today, Bahati weighs more than two tons. She is much bigger and stronger than Jo
 
 “Bahati is my best friend,” he says. “We will be friends forever.”`,
       gloss: 'baby rhino = Nashornbaby · barn = Stall · gentle = sanft · horn = Horn',
+      gist: [
+        {q: 'Who are Joseph and Bahati?', right: 'A farmer and a rhino.', wrong: ['A farmer and his dog.', 'A scientist and a rhino.', 'Two brothers from Kenya.'], tip: 'Joseph ist der Bauer, Bahati ist das Nashorn.'}
+      ],
       questions: [
-        {q: 'When did Joseph find the baby rhino?', right: 'Eight years ago.', wrong: ['Two years ago.', 'Last week.', 'Eighteen years ago.'], tip: 'Die Antwort steht im ersten Satz.'},
-        {q: 'Joseph left the baby rhino near the field.', tf: false, tip: 'Zweiter Absatz: He carried the baby rhino to his house.'},
-        {q: 'What does the name Bahati mean?', right: 'Luck.', wrong: ['Friend.', 'Strong.', 'Forever.'], tip: 'Lies das Ende des zweiten Absatzes.'},
-        {q: 'Today Bahati is bigger than Joseph.', tf: true, tip: 'Dritter Absatz: much bigger and stronger than Joseph.'},
-        {q: 'Why are rhinos in danger?', right: 'Some people kill them for their horns.', wrong: ['They have no food.', 'Farmers don’t like them.', 'It is too hot in Kenya.'], tip: 'Lies den vierten Absatz.'}
+        {q: 'How long have Joseph and Bahati known each other?', right: 'For eight years.', wrong: ['For two years.', 'For three years.', 'For eighteen years.'], tip: 'Die Antwort steht im ersten Satz.', ref: 'Eight years ago'},
+        {q: 'How often did Joseph give the baby rhino milk?', right: 'Every three hours.', wrong: ['Every eight hours.', 'Every morning.', 'Twice a day.'], tip: 'Lies den zweiten Absatz.', ref: 'gave it milk every three hours'},
+        {q: 'What does the rhino’s name mean in English?', right: 'Luck.', wrong: ['Friend.', 'Strong.', 'Forever.'], tip: 'Lies das Ende des zweiten Absatzes.', ref: 'that means “luck” in Swahili'},
+        {q: 'What do Joseph and Bahati do every morning?', right: 'They walk around the farm.', wrong: ['They sleep in the barn.', 'They drink milk together.', 'They look for other rhinos.'], tip: 'Lies den dritten Absatz.', ref: 'Every morning, they walk around the farm together.'},
+        {q: 'Joseph says that Bahati is dangerous.', tf: false, tip: 'Joseph sagt: Die Leute glauben, Nashörner sind gefährlich – aber Bahati ist sanft (gentle).', ref: 'But Bahati is gentle.'}
       ]
     },
     dodo: {
@@ -182,12 +196,15 @@ About 80 years later, the last dodo died. Nobody knows exactly when. Today, scie
 
 The dodo is a famous example of an animal that died out. Its story shows us that humans must protect animals – before it is too late.`,
       gloss: 'island = Insel · enemy = Feind · sailor = Seemann · hunt = jagen · bones = Knochen',
+      gist: [
+        {q: 'What is the text mainly about?', right: 'How a bird disappeared from an island.', wrong: ['How sailors found a new island.', 'Why birds build their nests on the ground.', 'How scientists look for old bones.'], tip: 'Denk an den ganzen Text: Es geht um den Dodo und warum es ihn nicht mehr gibt.'}
+      ],
       questions: [
-        {q: 'Where did the dodo live?', right: 'On a small island in the Indian Ocean.', wrong: ['In a desert in Africa.', 'In a forest in Europe.', 'In the sea near Australia.'], tip: 'Lies den ersten Absatz.'},
-        {q: 'Dodos could fly very well.', tf: false, tip: 'Zweiter Absatz: Dodos couldn’t fly.'},
-        {q: 'What did the animals from the ships do?', right: 'They caught the dodos and ate their eggs.', wrong: ['They protected the dodos.', 'They built nests for the dodos.', 'They brought food for the dodos.'], tip: 'Lies den dritten Absatz.'},
-        {q: 'Scientists know the exact year when the last dodo died.', tf: false, tip: 'Vierter Absatz: Nobody knows exactly when.'},
-        {q: 'What does the dodo’s story show us?', right: 'Humans must protect animals.', wrong: ['Dodos were dangerous.', 'Sailors were good friends of the dodos.', 'All birds can fly.'], tip: 'Lies den letzten Satz.'}
+        {q: 'Where was the dodo’s home?', right: 'On an island in the Indian Ocean.', wrong: ['On an island near Europe.', 'In a forest in Africa.', 'On a ship from Europe.'], tip: 'Lies den ersten Absatz.', ref: 'a small island in the Indian Ocean'},
+        {q: 'Why weren’t the dodos afraid of anything?', right: 'For a long time, they had no enemies.', wrong: ['They were bigger than the sailors.', 'They could run very fast.', 'Their nests were high in the trees.'], tip: 'Lies den zweiten Absatz.', ref: 'For a long time, they had no enemies'},
+        {q: 'What happened to the dodos’ eggs?', right: 'Animals from the ships ate them.', wrong: ['The sailors took them to Europe.', 'Scientists put them in a museum.', 'The dodos left them in the trees.'], tip: 'Lies den dritten Absatz.', ref: 'These animals caught the dodos and ate their eggs.'},
+        {q: 'We know the exact date when the last dodo died.', tf: false, tip: 'Vierter Absatz: Niemand weiß genau, wann.', ref: 'Nobody knows exactly when.'},
+        {q: 'How do scientists learn about dodos today?', right: 'From old pictures and bones.', wrong: ['From dodos in zoos.', 'From old dodo eggs.', 'From sailors on Mauritius.'], tip: 'Lies den vierten Absatz.', ref: 'old pictures and bones'}
       ]
     }
   },
@@ -222,9 +239,9 @@ The dodo is a famous example of an animal that died out. Its story shows us that
          rules: [{type: 'count', res: ["\\bgiraffes?\\b", "\\belephants?\\b", "\\brhinos?\\b", "\\bcrocodiles?\\b", "\\bsnakes?\\b|\\banacondas?\\b"], n: 3, hint: 'Du hast {found} passende Tiere. Du brauchst drei – achte auch auf die Rechtschreibung.'}],
          hint2: 'Schau auch ganz unten ins Bild – dort liegen zwei Tiere am Boden.'},
         {t: 'reading', reading: 'zoo'},
-        {t: 'gap', img: 'units/bilder/u4-ostrich.jpg', q: 'An ___ is a big bird, but it cannot fly. (Strauß)', ans: ['ostrich'], w: ['ostrich']},
-        {t: 'gap', q: 'Be careful! Crocodiles are very ___. (gefährlich)', ans: ['dangerous'], w: ['dangerous']},
-        {t: 'gap', q: 'My dog has got lots of fur. It is very ___. (haarig)', ans: ['hairy'], w: ['hairy']},
+        {t: 'gap', img: 'units/bilder/u4-ostrich.jpg', q: 'An ___ is a big bird, but it cannot fly.', first: true, ans: ['ostrich'], w: ['ostrich']},
+        {t: 'gap', q: 'Be careful! Crocodiles can kill people. They are very ___.', first: true, ans: ['dangerous'], w: ['dangerous']},
+        {t: 'gap', q: 'My dog has got lots of fur. It is very ___.', first: true, ans: ['hairy'], w: ['hairy']},
         {t: 'listen', say: 'chimpanzee', de: 'Schimpanse', w: ['chimpanzee']},
         {t: 'cloze', title: 'Lückentext: Tier-Steckbriefe',
          text: 'Dolphins can learn tricks. They are very [intelligent|hairy|venomous] animals.\nA rhino weighs more than two tons. It is very [heavy|smart|female].\nSome snakes can kill other animals with poison. They are [venomous|hairy|intelligent].\nA [bat|pigeon|parrot] is a mammal, but it can fly.',
@@ -253,25 +270,50 @@ The dodo is a famous example of an animal that died out. Its story shows us that
         {de: 'Heute ist das Wetter schlechter als gestern.', ans: ['Today the weather is worse than yesterday.', 'The weather is worse today than yesterday.', 'Today the weather is worse than it was yesterday.']}
       ]},
       tasks: [
-        {t: 'intro', title: 'Komparativ – zwei Dinge vergleichen', text: 'Wenn du zwei Dinge vergleichst, verwendest du den **Komparativ** und **than** (= als).\n\n- Kurze Adjektive: **-er** anhängen – *fast → faster*: A cheetah is **faster than** an ostrich.\n- Achtung Schreibweise: *big → bigger, hot → hotter* (Buchstabe verdoppeln) · *heavy → heavier* (y wird zu i)\n- Lange Adjektive: **more** davor – *dangerous → more dangerous*\n- Ausnahmen: *good → better, bad → worse*\n\nNie beides: ✘ ~~more bigger~~ · und nach dem Vergleich steht **than**, nicht ~~as~~ oder ~~then~~.'},
+        {t: 'intro', title: 'Zwei Tiere vergleichen', steps: [
+          {imgs: ['units/bilder/u4-cheetah.jpg', 'units/bilder/u4-ostrich.jpg'], text: 'Schau dir die zwei Tiere an:\n\n**A cheetah is faster than an ostrich.**\n= Ein Gepard ist schneller als ein Strauß.',
+           check: {q: 'Welches Wort bedeutet „als“?', right: 'than', wrong: ['then', 'as', 'that'], why: 'than = als. Merk dir: than mit a – then (mit e) heißt „dann“.'},
+           check2: {q: 'Welcher Satz ist richtig?', right: 'A dog is faster than a cat.', wrong: ['A dog is faster then a cat.', 'A dog is faster as a cat.'], why: 'Nach dem Vergleich steht than (= als).'}},
+          {text: 'Bei **kurzen** Adjektiven hängst du **-er** an:\n\n- fast → fast**er**\n- small → small**er**\n- strong → strong**er**',
+           check: {q: 'tall → ?', right: 'taller', wrong: ['more tall', 'tallest', 'talller'], why: 'tall ist kurz: einfach -er anhängen.'},
+           check2: {q: 'long → ?', right: 'longer', wrong: ['more long', 'longest', 'longger'], why: 'long ist kurz: einfach -er anhängen.'}}],
+         summary: 'Kurzes Adjektiv + **-er** + **than**:\n*A cheetah is fast**er than** an ostrich.*'},
+        {t: 'gap', imgs: ['units/bilder/u4-cheetah.jpg', 'units/bilder/u4-antelope.jpg'], rule: 'Steigerung: -er/-est oder more/most', topic: 'grammar', q: 'A cheetah is ___ than an antelope. (fast)', ans: ['faster'], tip: 'Kurzes Adjektiv: -er anhängen.'},
+        {t: 'intro', title: 'Achtung Schreibweise', steps: [
+          {text: 'Kurze Wörter mit **einem** Selbstlaut und **einem** Mitlaut am Ende: Den Mitlaut **verdoppeln**.\n\n- bi**g** → bi**gg**er\n- ho**t** → ho**tt**er',
+           check: {q: 'fat → ?', right: 'fatter', wrong: ['fater', 'more fat', 'fatest'], why: 'fat: ein Selbstlaut (a) und t am Ende → t verdoppeln: fatter.'},
+           check2: {q: 'thin → ?', right: 'thinner', wrong: ['thiner', 'more thin', 'thinnest'], why: 'thin: ein Selbstlaut (i) und n am Ende → n verdoppeln: thinner.'}},
+          {text: 'Wörter mit **-y** am Ende: Das y wird zu **i**.\n\n- heav**y** → heav**ier**\n- happ**y** → happ**ier**',
+           check: {q: 'funny → ?', right: 'funnier', wrong: ['funnyer', 'more funny', 'funnyier'], why: 'funny endet auf -y: y wird zu i → funnier.'},
+           check2: {q: 'hungry → ?', right: 'hungrier', wrong: ['hungryer', 'more hungry', 'hungryier'], why: 'hungry endet auf -y: y wird zu i → hungrier.'}}],
+         summary: 'big → bi**gg**er · hot → ho**tt**er · heavy → heav**ier**'},
         {t: 'mc', rule: 'Steigerung: -er/-est oder more/most', topic: 'grammar', q: 'A whale is ___ than a dolphin.', right: 'bigger', wrong: ['biger', 'more big', 'big'], why: 'big → bigger: Der letzte Buchstabe wird verdoppelt.'},
+        {t: 'gap', imgs: ['units/bilder/u4-rhino.jpg', 'units/bilder/u4-chimpanzee.jpg'], rule: 'Schreibweise: bigger, heavier, the biggest', topic: 'grammar', q: 'A rhino is ___ than a chimpanzee. (heavy)', ans: ['heavier'], tip: 'Achte auf das y am Ende.'},
+        {t: 'gap', rule: 'Schreibweise: bigger, heavier, the biggest', topic: 'grammar', q: 'In Africa, it is ___ than in Austria. (hot)', ans: ['hotter'], tip: 'Kurzes Wort mit einem Selbstlaut: Buchstabe verdoppeln.'},
+        {t: 'intro', title: 'Lange Adjektive', steps: [
+          {text: 'Bei **langen** Adjektiven schreibst du **more** davor:\n\n- dangerous → **more** dangerous\n- intelligent → **more** intelligent\n\n*A crocodile is **more dangerous than** a parrot.*',
+           check: {q: 'intelligent → ?', right: 'more intelligent', wrong: ['intelligenter', 'more intelligenter', 'most intelligent'], why: 'intelligent ist lang: more davor, das Wort bleibt gleich.'},
+           check2: {q: 'powerful → ?', right: 'more powerful', wrong: ['powerfuler', 'more powerfuler', 'most powerful'], why: 'powerful ist lang: more davor, das Wort bleibt gleich.'}},
+          {text: '**Nie beides!** Entweder -er **oder** more.\n\n- ✘ more bigger → ✔ bigger\n- ✘ more dangerouser → ✔ more dangerous',
+           check: {q: 'Welche Form ist richtig?', right: 'stronger', wrong: ['more stronger', 'more strong', 'strongger'], why: 'strong ist kurz: nur -er, kein more.'},
+           check2: {q: 'Welche Form ist richtig?', right: 'more interesting', wrong: ['interestinger', 'more interestinger', 'most interesting'], why: 'interesting ist lang: nur more, kein -er.'}}],
+         summary: 'kurz: fast**er** · lang: **more** dangerous · nie beides'},
         {t: 'sort', rule: 'Steigerung: -er/-est oder more/most', topic: 'grammar', q: 'Wie wird das Adjektiv gesteigert?', groups: ['mit -er', 'mit more'],
          items: [['fast', 0], ['heavy', 0], ['small', 0], ['strong', 0], ['dangerous', 1], ['intelligent', 1], ['powerful', 1], ['interesting', 1]],
          why: 'Kurze Adjektive (eine Silbe oder -y am Ende) bekommen -er, lange Adjektive more.'},
-        {t: 'mc', rule: 'Schreibweise: bigger, heavier, the biggest', topic: 'grammar', q: 'An ostrich is ___ than a pigeon.', right: 'heavier', wrong: ['heavyer', 'more heavy', 'heavyier'], why: 'heavy → heavier: Das y wird zu i.'},
-        {t: 'gap', imgs: ['units/bilder/u4-cheetah.jpg', 'units/bilder/u4-antelope.jpg'], rule: 'Steigerung: -er/-est oder more/most', topic: 'grammar', q: 'A cheetah is ___ than an antelope. (fast)', ans: ['faster'], tip: 'Kurzes Adjektiv: -er anhängen.'},
-        {t: 'gap', imgs: ['units/bilder/u4-rhino.jpg', 'units/bilder/u4-chimpanzee.jpg'], rule: 'Schreibweise: bigger, heavier, the biggest', topic: 'grammar', q: 'A rhino is ___ than a chimpanzee. (heavy)', ans: ['heavier'], tip: 'Achte auf das y am Ende.'},
-        {t: 'gap', rule: 'Schreibweise: bigger, heavier, the biggest', topic: 'grammar', q: 'In Africa, it is ___ than in Austria. (hot)', ans: ['hotter'], tip: 'Kurzes Wort mit einem Selbstlaut: Buchstabe verdoppeln.'},
         {t: 'order', rule: 'Steigerung: -er/-est oder more/most', tiles: ['A crocodile', 'is', 'more dangerous', 'than', 'a parrot']},
-        {t: 'find', rule: 'Schreibweise: bigger, heavier, the biggest', sentence: 'An elephant is *heavyer* than a rhino.', fix: ['heavier'], why: 'heavy → heavier: Das y wird zu i.'},
         {t: 'reading', reading: 'olympics'},
+        {t: 'intro', title: 'Zwei Ausnahmen: good und bad', steps: [
+          {text: 'good und bad sind **Ausnahmen** – sie bekommen ein ganz neues Wort:\n\n- good → **better**\n- bad → **worse**\n\n*My English is good, but your English is **better**.*',
+           check: {q: 'bad → ?', right: 'worse', wrong: ['badder', 'more bad', 'worst'], why: 'Ausnahme: bad → worse.'},
+           check2: {q: 'good → ?', right: 'better', wrong: ['gooder', 'more good', 'best'], why: 'Ausnahme: good → better.'}}],
+         summary: '- kurz: fast**er** than\n- Schreibweise: bi**gg**er, heav**ier**\n- lang: **more** dangerous than\n- Ausnahmen: good → **better**, bad → **worse**'},
+        {t: 'mc', rule: 'good – better – best / bad – worse – worst', topic: 'grammar', q: 'My English is good, but Lisa’s English is even ___.', right: 'better', wrong: ['gooder', 'more good', 'best'], why: 'Ausnahme: good → better.'},
+        {t: 'gap', rule: 'good – better – best / bad – worse – worst', topic: 'grammar', q: 'The weather today is bad, but yesterday it was even ___. (bad)', ans: ['worse'], tip: 'Ausnahme – ein ganz neues Wort.'},
         {t: 'cloze', rule: 'Steigerung: -er/-est oder more/most', title: 'Lückentext: Mein Haustier ist …',
          text: 'Ben: My dog is [bigger|more big|biger] than your cat.\nLisa: Yes, but my cat is [cleverer|more clever as|clever] than your dog!\nBen: No way! My dog is [more intelligent|intelligenter|more intelligenter] than all the cats in the street.\nLisa: OK, but my parrot can talk. It’s [better|gooder|more good] than both of them!',
          why: 'Kurz: -er · lang: more · Ausnahme: good → better.'},
-        {t: 'mc', rule: 'good – better – best / bad – worse – worst', topic: 'grammar', q: 'My English is good, but Lisa’s English is even ___.', right: 'better', wrong: ['gooder', 'more good', 'best'], why: 'Ausnahme: good → better.'},
-        {t: 'gap', rule: 'good – better – best / bad – worse – worst', topic: 'grammar', q: 'The weather today is bad, but yesterday it was even ___. (bad)', ans: ['worse'], tip: 'Ausnahme – ein ganz neues Wort.'},
         {t: 'transform', rule: 'Steigerung: -er/-est oder more/most', q: 'Mach aus den zwei Sätzen EINEN Satz mit einem Vergleich (… than …).', from: 'A dolphin is fast. A whale is not so fast.', imgs: ['units/bilder/u4-dolphin.jpg', 'units/bilder/u4-whale.jpg'], ans: ['A dolphin is faster than a whale.', 'A whale is slower than a dolphin.'], model: 'A dolphin is faster than a whale.'},
-        {t: 'transform', rule: 'Steigerung: -er/-est oder more/most', q: 'Mach aus den zwei Sätzen EINEN Satz mit einem Vergleich (… than …).', from: 'A mosquito is dangerous. A pigeon is not very dangerous.', imgs: ['units/bilder/u4-mosquito.jpg', 'units/bilder/u4-pigeon.jpg'], ans: ['A mosquito is more dangerous than a pigeon.', 'A pigeon is less dangerous than a mosquito.'], model: 'A mosquito is more dangerous than a pigeon.'},
         {t: 'correct', rule: 'Steigerung: -er/-est oder more/most', sentence: 'An elephant is more heavy as a rhino.', n: 2, mark: ['more', 'heavy', 'as'], ans: ['An elephant is heavier than a rhino.']},
         {t: 'sent', rule: 'Steigerung: -er/-est oder more/most', q: 'Übersetze ins Englische: Ein Gepard ist schneller als ein Strauß.', ans: ['A cheetah is faster than an ostrich.', 'The cheetah is faster than the ostrich.'], w: ['cheetah', 'ostrich']},
         {t: 'open',
@@ -294,7 +336,17 @@ The dodo is a famous example of an animal that died out. Its story shows us that
         {de: 'Eine Taube ist nicht so schnell wie ein Gepard.', ans: ['A pigeon is not as fast as a cheetah.']}
       ]},
       tasks: [
-        {t: 'intro', title: 'Superlativ und as … as', text: 'Mit dem **Superlativ** sagst du, wer am größten, schnellsten … ist. Davor steht immer **the**.\n\n- Kurze Adjektive: **the …-est** – *the fastest, the biggest, the heaviest*\n- Lange Adjektive: **the most** – *the most dangerous*\n- Ausnahmen: *the best, the worst*\n\nMit **as … as** sagst du, dass zwei gleich sind: *A dolphin is **as** intelligent **as** a chimpanzee.*\nMit **not as … as** sagst du, dass sie nicht gleich sind: *A pigeon is **not as** fast **as** a cheetah.*'},
+        {t: 'intro', title: 'Der Superlativ – am …sten', steps: [
+          {img: 'units/bilder/u4-whale.jpg', text: 'Mit dem **Superlativ** sagst du: Das ist **am** größten, **am** schnellsten … von **allen**.\n\n**The blue whale is the biggest animal in the world.**\n= Der Blauwal ist das größte Tier der Welt.',
+           check: {q: 'Welches Wort steht immer vor dem Superlativ?', right: 'the', wrong: ['a', 'than', 'as'], why: 'Beim Superlativ steht immer the davor: the biggest.'},
+           check2: {q: 'Welcher Satz ist richtig?', right: 'It is the fastest animal.', wrong: ['It is fastest animal.', 'It is a fastest animal.'], why: 'Vor dem Superlativ steht the.'}},
+          {text: 'Kurze Adjektive: **the …-est**\n\n- fast → the fast**est**\n- big → the bi**gg**est\n- heavy → the heav**iest**\n\nDie Schreibweise ist wie beim Komparativ.',
+           check: {q: 'tall → ?', right: 'the tallest', wrong: ['the most tall', 'the taller', 'tallest the'], why: 'tall ist kurz: the + tall + est.'},
+           check2: {q: 'hot → ?', right: 'the hottest', wrong: ['the hotest', 'the most hot', 'the hotter'], why: 'hot: t verdoppeln wie bei hotter → the hottest.'}},
+          {text: 'Lange Adjektive: **the most** …\n\n- dangerous → **the most** dangerous\n\nAusnahmen: good → **the best**, bad → **the worst**',
+           check: {q: 'good → ?', right: 'the best', wrong: ['the goodest', 'the most good', 'the better'], why: 'Ausnahme: good → better → the best.'},
+           check2: {q: 'intelligent → ?', right: 'the most intelligent', wrong: ['the intelligentest', 'the more intelligent', 'the most intelligentest'], why: 'intelligent ist lang: the most davor.'}}],
+         summary: 'the fast**est** · the bi**gg**est · the **most** dangerous · the **best** · the **worst**'},
         {t: 'mc', rule: 'Schreibweise: bigger, heavier, the biggest', topic: 'grammar', q: 'The blue whale is ___ animal in the world.', right: 'the biggest', wrong: ['the bigest', 'the most big', 'bigger'], why: 'big → the biggest: the + verdoppelter Buchstabe + -est.'},
         {t: 'odd', rule: 'Steigerung: -er/-est oder more/most', topic: 'grammar', q: 'Welche Form passt nicht zu den anderen?', items: ['bigger', 'faster', 'the strongest', 'heavier'], odd: 'the strongest', why: 'bigger, faster und heavier sind Komparative (zwei vergleichen) – the strongest ist ein Superlativ.'},
         {t: 'sort', rule: 'Steigerung: -er/-est oder more/most', topic: 'grammar', q: 'Komparativ oder Superlativ?', groups: ['Komparativ', 'Superlativ'],
@@ -302,7 +354,14 @@ The dodo is a famous example of an animal that died out. Its story shows us that
          why: 'Komparativ = zwei vergleichen (than) · Superlativ = der/die/das …ste (the).'},
         {t: 'gap', img: 'units/bilder/u4-cheetah.jpg', rule: 'Steigerung: -er/-est oder more/most', topic: 'grammar', q: 'The cheetah is ___ land animal in the world. (fast)', ans: ['the fastest'], tip: 'Superlativ: the + Adjektiv + -est.'},
         {t: 'gap', rule: 'Steigerung: -er/-est oder more/most', topic: 'grammar', q: 'The mosquito is ___ animal in the world. (dangerous)', ans: ['the most dangerous'], tip: 'Langes Adjektiv: the most + Adjektiv.'},
-        {t: 'mc', rule: 'good – better – best / bad – worse – worst', topic: 'grammar', q: 'Lisa scores a lot of goals. She is ___ player in our team.', right: 'the best', wrong: ['the goodest', 'the most good', 'the better'], why: 'Ausnahme: good → better → the best.'},
+        {t: 'intro', title: 'as … as – gleich oder nicht gleich?', steps: [
+          {imgs: ['units/bilder/u4-dolphin.jpg', 'units/bilder/u4-chimpanzee.jpg'], text: 'Mit **as … as** sagst du: Die zwei sind **gleich**.\n\n**A dolphin is as intelligent as a chimpanzee.**\n= Ein Delfin ist so klug wie ein Schimpanse.\n\nZwischen as und as steht die **Grundform** – kein -er!',
+           check: {q: 'Welcher Satz ist richtig?', right: 'A cat is as fast as a dog.', wrong: ['A cat is as faster as a dog.', 'A cat is as fast than a dog.', 'A cat is fast as a dog.'], why: 'as + Grundform + as: as fast as.'},
+           check2: {q: 'A rhino is as ___ as a car.', right: 'heavy', wrong: ['heavier', 'the heaviest', 'more heavy'], why: 'Zwischen as und as steht die Grundform: as heavy as.'}},
+          {imgs: ['units/bilder/u4-pigeon.jpg', 'units/bilder/u4-cheetah.jpg'], text: 'Mit **not as … as** sagst du: Die zwei sind **nicht** gleich.\n\n**A pigeon is not as fast as a cheetah.**\n= Eine Taube ist nicht so schnell wie ein Gepard.',
+           check: {q: '„A pigeon is not as fast as a cheetah.“ Was bedeutet das?', right: 'The cheetah is faster.', wrong: ['The pigeon is faster.', 'Both are equally fast.'], why: 'not as fast as = nicht so schnell wie → der Gepard ist schneller.'},
+           check2: {q: '„A mouse is not as big as a cat.“ Was bedeutet das?', right: 'The cat is bigger.', wrong: ['The mouse is bigger.', 'Both are the same size.'], why: 'not as big as = nicht so groß wie → die Katze ist größer.'}}],
+         summary: '**as** fast **as** = so schnell wie · **not as** fast **as** = nicht so schnell wie'},
         {t: 'cloze', rule: 'as … as / not as … as', title: 'Lückentext: Gleich oder nicht gleich?',
          text: 'An antelope is fast, but it is not [as fast as|faster as|as fast than] a cheetah.\nA dolphin is [as intelligent as|as intelligent than|intelligenter as] a chimpanzee – both are very clever.\nA pigeon is not [as heavy as|heavier as|as heavier as] an ostrich.',
          why: 'as + Grundform + as – nie than und nie -er dazwischen.'},
@@ -310,8 +369,6 @@ The dodo is a famous example of an animal that died out. Its story shows us that
         {t: 'reading', reading: 'records'},
         {t: 'listen', rule: 'Steigerung: -er/-est oder more/most', say: 'The giraffe is the tallest animal in the world.', de: 'Die Giraffe ist das größte Tier der Welt.'},
         {t: 'transform', rule: 'as … as / not as … as', q: 'Sag mit as … as, dass beide gleich sind. Schreibe EINEN Satz.', from: 'A dolphin is intelligent. A chimpanzee is intelligent, too.', imgs: ['units/bilder/u4-dolphin.jpg', 'units/bilder/u4-chimpanzee.jpg'], ans: ['A dolphin is as intelligent as a chimpanzee.', 'A chimpanzee is as intelligent as a dolphin.'], model: 'A dolphin is as intelligent as a chimpanzee.'},
-        {t: 'transform', rule: 'as … as / not as … as', q: 'Sag mit not as … as, dass die beiden nicht gleich sind. Schreibe EINEN Satz.', from: 'A pigeon is small. An ostrich is much bigger.', imgs: ['units/bilder/u4-pigeon.jpg', 'units/bilder/u4-ostrich.jpg'], ans: ['A pigeon is not as big as an ostrich.', 'An ostrich is not as small as a pigeon.', 'A pigeon is not as heavy as an ostrich.'], model: 'A pigeon is not as big as an ostrich.'},
-        {t: 'find', rule: 'good – better – best / bad – worse – worst', sentence: 'Monday was the *baddest* day of my week.', fix: ['worst'], why: 'Ausnahme: bad → worse → the worst.'},
         {t: 'correct', rule: 'Steigerung: -er/-est oder more/most', sentence: 'The blue whale is the most heavy animal of the world.', n: 2, mark: ['most', 'heavy', 'of'], ans: ['The blue whale is the heaviest animal in the world.']},
         {t: 'sent', img: 'units/bilder/u4-whale.jpg', rule: 'Schreibweise: bigger, heavier, the biggest', q: 'Übersetze ins Englische: Der Wal ist das schwerste Tier der Welt.', ans: ['The whale is the heaviest animal in the world.', 'The blue whale is the heaviest animal in the world.'], w: ['whale']},
         {t: 'cloze', rule: 'Steigerung: -er/-est oder more/most', title: 'Lückentext zum Schreiben',
@@ -389,23 +446,23 @@ The dodo is a famous example of an animal that died out. Its story shows us that
     {t: 'gap', img: 'units/bilder/u4-giraffe.jpg', q: 'Wie heißt dieses Tier auf Englisch?', ans: ['giraffe'], w: ['giraffe']},
     {t: 'mc', img: 'units/bilder/u4-venomous.jpg', q: 'This snake can kill other animals with poison. It is ___.', right: 'venomous', wrong: ['hairy', 'female', 'smart'], why: 'venomous = giftig.', w: ['venomous']},
     {t: 'mc', img: 'units/bilder/u4-mammal.jpg', q: 'A lion mother feeds her baby with milk. Lions are ___.', right: 'mammals', wrong: ['reptiles', 'birds', 'insects'], why: 'Tiere, die ihre Babys mit Milch füttern, sind Säugetiere (mammals).', w: ['mammal']},
-    {t: 'gap', img: 'units/bilder/u4-desert.jpg', q: 'There is very little water in the ___. (Wüste)', ans: ['desert'], w: ['desert']},
+    {t: 'gap', img: 'units/bilder/u4-desert.jpg', q: 'There is very little water in the ___.', first: true, ans: ['desert'], w: ['desert']},
     {t: 'letters', word: 'heavy', de: 'schwer', w: ['heavy']},
     {t: 'mc', q: 'This bird lives in cities and you can often see it in parks. It is a ___.', right: 'pigeon', wrong: ['ostrich', 'bat', 'whale'], why: 'pigeon = Taube.', w: ['pigeon']},
     {t: 'mc', q: 'This animal can fly, but it is a mammal. It sleeps during the day. It is a ___.', right: 'bat', wrong: ['parrot', 'pigeon', 'mosquito'], why: 'bat = Fledermaus.', w: ['bat']},
-    {t: 'gap', q: 'A ___ is a very big animal that lives in the sea. (Wal)', ans: ['whale'], w: ['whale']},
-    {t: 'gap', q: 'The ___ is a very long snake. (Anakonda)', ans: ['anaconda'], w: ['anaconda']},
-    {t: 'gap', q: 'He can lift 100 kg. He is very ___. (stark)', ans: ['strong'], w: ['strong']},
-    {t: 'gap', q: 'A ___ can learn to say words. (Papagei)', ans: ['parrot'], w: ['parrot']},
-    {t: 'gap', minHw: 4, img: 'units/bilder/u4-farmer.jpg', q: 'The ___ has got cows, pigs and a big field. (Bauer)', ans: ['farmer'], w: ['farmer']},
-    {t: 'gap', minHw: 4, img: 'units/bilder/u4-protect.jpg', q: 'We must ___ animals that are in danger. (beschützen)', ans: ['protect'], w: ['protect']},
-    {t: 'gap', minHw: 4, img: 'units/bilder/u4-luck.jpg', q: 'Good ___ with your test tomorrow! (Glück)', ans: ['luck'], w: ['luck']},
+    {t: 'gap', q: 'A ___ is a very big animal that lives in the sea.', first: true, ans: ['whale'], w: ['whale']},
+    {t: 'gap', q: 'The ___ is a very long snake.', first: true, ans: ['anaconda'], w: ['anaconda']},
+    {t: 'gap', q: 'He can lift 100 kg. He is very ___.', first: true, ans: ['strong'], w: ['strong']},
+    {t: 'gap', q: 'A ___ can learn to say words.', first: true, ans: ['parrot'], w: ['parrot']},
+    {t: 'gap', minHw: 4, img: 'units/bilder/u4-farmer.jpg', q: 'The ___ has got cows, pigs and a big field.', first: true, ans: ['farmer'], w: ['farmer']},
+    {t: 'gap', minHw: 4, img: 'units/bilder/u4-protect.jpg', q: 'Some animals are in danger. We must ___ them.', first: true, ans: ['protect'], w: ['protect']},
+    {t: 'gap', minHw: 4, img: 'units/bilder/u4-luck.jpg', q: 'Good ___ with your test tomorrow!', first: true, ans: ['luck'], w: ['luck']},
     {t: 'mc', minHw: 4, img: 'units/bilder/u4-climate-change.jpg', q: 'Many animals are in danger because of ___.', right: 'climate change', wrong: ['luck', 'speed', 'length'], why: 'climate change = Klimawandel.', w: ['climatechange']},
     {t: 'listen', say: 'crocodile', de: 'Krokodil', w: ['crocodile']},
     {t: 'listen', say: 'giraffe', de: 'Giraffe', w: ['giraffe']},
 
     // --- Komparativ (ab HÜ 2) ---
-    {t: 'gap', minHw: 2, img: 'units/bilder/u4-weigh.jpg', q: 'This melon ___ three kilograms. (wiegt)', ans: ['weighs'], w: ['weigh']},
+    {t: 'gap', minHw: 2, img: 'units/bilder/u4-weigh.jpg', q: 'Put the melon on the scales. It ___ three kilograms.', first: true, ans: ['weighs'], w: ['weigh']},
     {t: 'mc', minHw: 2, img: 'units/bilder/u4-ton.jpg', q: 'This big stone weighs 1000 kg. That is one ___.', right: 'ton', wrong: ['centimetre', 'speed', 'length'], why: 'ton = Tonne (1000 kg).', w: ['ton']},
     {t: 'mc', minHw: 2, imgs: ['units/bilder/u4-crocodile.jpg', 'units/bilder/u4-dolphin.jpg'], rule: 'Steigerung: -er/-est oder more/most', topic: 'grammar', q: 'A crocodile is ___ than a dolphin.', right: 'more dangerous', wrong: ['dangerouser', 'more dangerouser', 'dangerous'], why: 'Langes Adjektiv: more + Adjektiv.'},
     {t: 'mc', minHw: 2, rule: 'Steigerung: -er/-est oder more/most', topic: 'grammar', q: 'Which sentence is correct?', right: 'A rhino is stronger than a dog.', wrong: ['A rhino is more stronger than a dog.', 'A rhino is stronger as a dog.', 'A rhino is strong than a dog.'], why: 'strong → stronger + than.'},
@@ -428,6 +485,9 @@ The dodo is a famous example of an animal that died out. Its story shows us that
     {t: 'correct', minHw: 2, rule: 'Steigerung: -er/-est oder more/most', sentence: 'A crocodile is dangerouser then a parrot.', n: 2, mark: ['dangerouser', 'then'], ans: ['A crocodile is more dangerous than a parrot.']},
     {t: 'cloze', minHw: 2, rule: 'Steigerung: -er/-est oder more/most', text: 'An ostrich is [bigger|more big|biger] than a pigeon. But a pigeon can fly, so for me it is [more interesting|interestinger|more interestinger].'},
 
+    {minHw: 2, t: 'transform', rule: 'Steigerung: -er/-est oder more/most', q: 'Mach aus den zwei Sätzen EINEN Satz mit einem Vergleich (… than …).', from: 'A mosquito is dangerous. A pigeon is not very dangerous.', imgs: ['units/bilder/u4-mosquito.jpg', 'units/bilder/u4-pigeon.jpg'], ans: ['A mosquito is more dangerous than a pigeon.', 'A pigeon is less dangerous than a mosquito.'], model: 'A mosquito is more dangerous than a pigeon.'},
+    {minHw: 2, t: 'find', rule: 'Schreibweise: bigger, heavier, the biggest', sentence: 'An elephant is *heavyer* than a rhino.', fix: ['heavier'], why: 'heavy → heavier: Das y wird zu i.'},
+    {minHw: 2, t: 'mc', rule: 'Schreibweise: bigger, heavier, the biggest', topic: 'grammar', q: 'An ostrich is ___ than a pigeon.', right: 'heavier', wrong: ['heavyer', 'more heavy', 'heavyier'], why: 'heavy → heavier: Das y wird zu i.'},
     // --- Superlativ und as … as (ab HÜ 3) ---
     {t: 'mc', minHw: 3, rule: 'Steigerung: -er/-est oder more/most', topic: 'grammar', q: 'The mosquito is ___ animal in the world.', right: 'the most dangerous', wrong: ['the dangerousest', 'most dangerous', 'the more dangerous'], why: 'Langes Adjektiv: the most + Adjektiv.'},
     {t: 'mc', minHw: 3, rule: 'as … as / not as … as', topic: 'grammar', q: 'Which sentence is correct?', right: 'A dog is not as big as a horse.', wrong: ['A dog is not as big than a horse.', 'A dog is not as bigger as a horse.', 'A dog is not so bigger than a horse.'], why: 'not as + Grundform + as.'},
@@ -448,6 +508,9 @@ The dodo is a famous example of an animal that died out. Its story shows us that
     {t: 'transform', minHw: 3, rule: 'Steigerung: -er/-est oder more/most', q: 'Schreib einen Satz mit dem Superlativ (the …-est).', from: 'The cheetah is faster than all other land animals.', ans: ['The cheetah is the fastest land animal.', 'The cheetah is the fastest of all land animals.', 'The cheetah is the fastest animal on land.'], model: 'The cheetah is the fastest land animal.'},
     {t: 'correct', minHw: 3, rule: 'Steigerung: -er/-est oder more/most', sentence: 'The ostrich is biggest bird of the world.', n: 2, mark: ['biggest', 'of'], ans: ['The ostrich is the biggest bird in the world.']},
 
+    {minHw: 3, t: 'transform', rule: 'as … as / not as … as', q: 'Sag mit not as … as, dass die beiden nicht gleich sind. Schreibe EINEN Satz.', from: 'A pigeon is small. An ostrich is much bigger.', imgs: ['units/bilder/u4-pigeon.jpg', 'units/bilder/u4-ostrich.jpg'], ans: ['A pigeon is not as big as an ostrich.', 'An ostrich is not as small as a pigeon.', 'A pigeon is not as heavy as an ostrich.'], model: 'A pigeon is not as big as an ostrich.'},
+    {minHw: 3, t: 'find', rule: 'good – better – best / bad – worse – worst', sentence: 'Monday was the *baddest* day of my week.', fix: ['worst'], why: 'Ausnahme: bad → worse → the worst.'},
+    {minHw: 3, t: 'mc', rule: 'good – better – best / bad – worse – worst', topic: 'grammar', q: 'Lisa scores a lot of goals. She is ___ player in our team.', right: 'the best', wrong: ['the goodest', 'the most good', 'the better'], why: 'Ausnahme: good → better → the best.'},
     // --- Unregelmäßige Verben (ab HÜ 4) ---
     {minHw: 4, t: 'match', words: ['farmer', 'human', 'protect', 'carry', 'luck', 'forever']},
     {minHw: 4, t: 'gap', rule: 'unregelmäßige Verben (Past Simple)', topic: 'grammar', q: 'Our cat ___ a mouse last night. (catch)', ans: ['caught'], tip: 'catch – ? – ? (unregelmäßig)'},
