@@ -195,7 +195,7 @@ const CONFIG = {
   flagAt: 6,               // ab so vielen Schnellklicks/Unsinn-Eingaben erscheint ein Hinweis auf der Karte
   maxReviews: 10,          // höchstens so viele Wiederholungsaufgaben pro Hausübung (je Fehler höchstens 2)
   readSecPerWord: 0.25,    // Lesetext: „Gelesen“-Knopf frühestens nach so vielen Sekunden pro Wort (sehr schneller Leser)
-  version: '9.4'
+  version: '9.5'
 };
 /* ===================================================================== */
 const UNITS = [], LOAD_ERRORS = [];
@@ -375,6 +375,8 @@ function prep(a,U){
     a.qs=[...(R.gist||[]).map(q=>mk(q,true)),...R.questions.map(q=>mk(q,false))];a.gistN=(R.gist||[]).length;
     a.minRead=Math.round(wordCount(R.text)*CONFIG.readSecPerWord);}
   if(a.t==='find'){const toks=a.sentence.split(' ');a.wrong=toks.findIndex(x=>x.includes('*'));a.tokens=toks.map(x=>x.replace(/\*/g,''));a.wrongWord=a.tokens[a.wrong].replace(/[.,!?]/g,'')}
+  // „(fast or slow?)“: Reihenfolge der zwei Angaben zufällig – die richtige steht nicht immer vorne
+  if(a.t==='gap'&&!a.orDone){a.orDone=true;if(Math.random()<.5)a.q=a.q.replace(/\(([^()]+?) or ([^()]+?)\?\)\s*$/,'($2 or $1?)')}
   if(a.t==='sent'&&!a.model)a.model=(a.ans||[])[0];
   if(a.t==='open'||a.multi)a.multi=true;
   // ---- neue Typen ----
