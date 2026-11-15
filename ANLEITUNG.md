@@ -273,6 +273,19 @@ In einem Satz, in dem ein Wort fehlt, steht **kein deutsches Wort in Klammern** 
 
 **Freies Schreiben (`open`):** Immer eine Inhalts-Regel dazugeben (z. B. `{type: 'count', res: U4_ANIMALS, n: 2, hint: 'Vergleiche echte Tiere …'}`), sonst erfüllt „A a is bigger than a a.“ die Aufgabe. Buchstabensalat und Fantasiewörter erkennt das Programm zusätzlich selbst; sie zählen nicht als Versuch.
 
+**Schreib-Plan (`plan`) – Hilfe vor dem Schreiben:** Jede `open`-Aufgabe bekommt einen Plan. Das Kind sieht zuerst ein Beispiel mit **anderem Thema** (nicht abschreibbar), tippt dann die Wörter für seinen ersten Satz an und schreibt danach selbst – die gewählten Wörter stehen als Notiz daneben, die Form (bigger, the fastest) bildet es selbst. Starke Schreiber können den Plan überspringen.
+```js
+plan: {example: 'A plane is faster than a car. Football is more interesting than golf.', about: 'Du vergleichst gleich Tiere.',
+       s1: 'Satz 1: Welche zwei Tiere vergleichst du – und mit welchem Adjektiv?',
+       slots: [{name: 'Tier 1', from: ['whale', 'cheetah', …]}, {name: 'Adjektiv', from: ['big', 'fast', …]}, {name: 'Tier 2', from: […], not: 0}],
+       frame: '{A0} is ____ than {a2}.', frame2: '… is ____ than …',
+       bank: {label: 'Für Satz 2: andere Tiere und ein anderes Adjektiv', words: ['ostrich', 'tall', …]}}
+```
+- `slots`: was das Kind antippt (Grundformen, nie die fertige Lösung). `not: 0` = darf nicht dasselbe Wort sein wie in Slot 0.
+- `frame`: Satzgerüst mit den **eigenen** Wörtern, erscheint erst als 2. Hilfe nach Fehlern. `{0}` = gewähltes Wort, `{a0}` = mit a/an, `{A0}` = mit A/An. `frame2` = Gerüst für den zweiten Satz.
+- `bank`: Ideen für den zweiten Satz.
+- Die Rückmeldung nennt bei mehreren Sätzen, welcher schon passt („Satz 1 passt ✓ …“). Auf der Lehrerseite rechnet ein Plan mit ca. 40 Sekunden.
+
 Ausnahmen: Bei Übersetzungs-Aufgaben (`sent`, Buchstabensalat, Vokabeltrainer) ist das deutsche Wort die Aufgabe selbst. Bei Grammatik-Lücken darf die **englische Grundform** in Klammern stehen („(fast)“), weil das Bilden der Form die eigentliche Arbeit ist. Ab der HÜ, in der Komparativ und Superlativ gemischt vorkommen, muss das Kind den Satz lesen, um die richtige Form zu wählen.
 
 ### Erklärungen in kleinen Schritten

@@ -53,6 +53,8 @@ label{display:block;font-size:.9rem;font-weight:600}
 .clock.paused{color:#b4621b;font-weight:600}
 .clock.reached{color:var(--good);font-weight:600}
 .reading{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;background:#fffaf0;border:1px solid #ead9b4;border-radius:12px;padding:14px 18px;line-height:1.75;white-space:pre-line}
+.plan{background:#f3f8ee;border:1px solid #cfe3bd;border-radius:10px;padding:9px 13px;margin:10px 0;font-size:.95rem;line-height:1.6}
+button.small{min-height:32px;padding:4px 10px;font-size:.85rem;margin-top:6px}
 .gapw{white-space:nowrap;letter-spacing:.05em;font-family:ui-monospace,Menlo,Consolas,monospace}
 .step{font-size:1.05rem}.merke{background:#fff8e1;border-left:4px solid #f0b400;border-radius:8px;padding:6px 14px;margin:10px 0}
 .sdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#d6d6d6;margin-left:3px}.sdot.done{background:#3a9d5d}.sdot.now{background:#2b6cb0}
@@ -192,7 +194,7 @@ const CONFIG = {
   flagAt: 6,               // ab so vielen Schnellklicks/Unsinn-Eingaben erscheint ein Hinweis auf der Karte
   maxReviews: 10,          // höchstens so viele Wiederholungsaufgaben pro Hausübung (je Fehler höchstens 2)
   readSecPerWord: 0.25,    // Lesetext: „Gelesen“-Knopf frühestens nach so vielen Sekunden pro Wort (sehr schneller Leser)
-  version: '9.2'
+  version: '9.3'
 };
 /* ===================================================================== */
 const UNITS = [], LOAD_ERRORS = [];
@@ -314,6 +316,9 @@ function validateUnit(U){
         if(!t.q)P.push(`${where}: q fehlt`);
         if(!(t.ans?.length||t.accept?.length||t.rules?.length))P.push(`${where}: ans, accept oder rules nötig`);
         if(t.t!=='sent'&&!t.model)P.push(`${where}: model fehlt`);
+        if(t.plan){const pl=t.plan;if(!pl.example)P.push(`${where}: plan.example fehlt`);else if(canon(pl.example)===canon(t.model||''))P.push(`${where}: plan.example darf nicht die Musterlösung sein`);
+          if(!Array.isArray(pl.slots)||!pl.slots.length||pl.slots.some(sl=>!sl.name||!Array.isArray(sl.from)||sl.from.length<2))P.push(`${where}: plan.slots braucht name und from (mind. 2 Wörter)`);
+          else (pl.frame||'').replace(/\{(?:a|A)?(\d)\}/g,(m,k)=>{if(!pl.slots[+k])P.push(`${where}: plan.frame verweist auf {${k}}, das es nicht gibt`);return m})}
         if(t.t==='pic'&&!SC[t.scene])P.push(`${where}: Bild „${t.scene}“ fehlt in scenes`);break;
       case'order':if(!Array.isArray(t.tiles)||t.tiles.length<2)P.push(`${where}: tiles fehlt`);break;
       case'match':if(!Array.isArray(t.words)||t.words.length<3)P.push(`${where}: words (mind. 3) fehlt`);else t.words.forEach(w=>{if(!W[w])P.push(`${where}: Wort „${w}“ fehlt in words`)});break;
@@ -770,6 +775,35 @@ function render(){
   if(!a){advance();return}
   shell(taskHTML(a));
 }
+/* Schreib-Plan für freies Schreiben: Hilfe VOR dem Schreiben statt erst nach Fehlern.
+   1 Beispiel mit anderem Thema ansehen · 2 eigene Wörter für Satz 1 antippen · 3 selbst schreiben (Wörter als Notiz daneben).
+   plan: {example, about, s1, slots: [{name, from: […], not: 0}], frame: '{A0} is ____ than {a2}.', bank: {label, words: […]}}
+   In frame: {0} = gewähltes Wort · {a0} = mit a/an · {A0} = mit A/An. Starke Schreiber können den Plan überspringen. */
+const withArt=(w,cap)=>(/^[aeiou]/i.test(w)?(cap?'An ':'an '):(cap?'A ':'a '))+w;
+const planPicks=a=>a.plan&&a.st.picks&&a.plan.slots.every((_,k)=>a.st.picks[k]!=null)?a.plan.slots.map((sl,k)=>sl.from[a.st.picks[k]]):null;
+function ownFrame(a){
+  const P=planPicks(a);if(!P||!a.plan.frame)return null;
+  return a.plan.frame.replace(/\{(a|A)?(\d)\}/g,(m,art,k)=>art?withArt(P[+k],art==='A'):P[+k])+(a.plan.frame2?' '+a.plan.frame2:'');
+}
+function rPlan(a){
+  const st=a.st,pl=a.plan;st.picks??={};
+  if(!st.pp)return`<h2>Schreibe selbst</h2><p class="q">${esc(a.q)}</p>
+    <div class="fb"><b>💡 So kann das aussehen</b> – ein Beispiel mit einem anderen Thema:</div><div class="frame" style="font-weight:400">${esc(pl.example)}</div>
+    <p class="note">${esc(pl.about||'Du schreibst gleich deine eigenen Sätze.')}</p>
+    <p><button data-act="pl-go" id="stepbtn">Wörter für meinen Satz aussuchen →</button> <button class="secondary" data-act="pl-skip">Ich schreibe gleich selbst</button></p>`;
+  const all=pl.slots.every((_,k)=>st.picks[k]!=null);
+  const rows=pl.slots.map((sl,k)=>`<p style="margin:12px 0 4px"><b>${esc(sl.name)}</b></p><div class="sortbtns">${sl.from.map((w,j)=>{
+    const taken=sl.not!=null&&st.picks[sl.not]!=null&&pl.slots[sl.not].from[st.picks[sl.not]]===w;
+    return`<button class="chip ${st.picks[k]===j?'sel':''}" data-act="pl-pick" data-i="${k}" data-j="${j}" ${taken?'disabled':''}>${esc(w)}</button>`}).join('')}</div>`).join('');
+  return`<h2>Dein Schreib-Plan</h2><p class="q">${esc(pl.s1||'Worüber schreibst du in Satz 1? Tippe an.')}</p>${rows}
+    <p style="margin-top:16px"><button data-act="pl-done" id="stepbtn" ${all?'':'disabled'}>Jetzt schreiben →</button></p>`;
+}
+function planNotes(a){
+  if(!a.plan||a.st.done)return'';
+  const P=planPicks(a),b=a.plan.bank;
+  return`<div class="plan">${P?`<b>Deine Wörter für Satz 1:</b> ${P.map(esc).join(' · ')}<br>`:''}${b?`<b>${esc(b.label||'Ideen für Satz 2')}:</b> ${b.words.map(esc).join(' · ')}`:''}
+    ${P?'':`<br><button class="secondary small" data-act="pl-back">Wörter aussuchen (Hilfe)</button>`}</div>`;
+}
 /* Erklärung in kleinen Schritten: je Schritt ein kurzer Gedanke + eine Verständnisfrage.
    steps: [{text, img/imgs, check: {q, right, wrong:[…], why}, check2: {…}}], summary: 'Merke …'
    Falsche Antwort → Erklärung, danach (falls vorhanden) eine zweite, ähnliche Frage. Zählt nicht zur Wertung. */
@@ -816,7 +850,7 @@ function taskHTML(a){
     case'gap':html=rTyped(a,a.control?'Lernkontrolle':'Schreibe das fehlende Wort',`<p class="q">${gapQ(a)}</p>${a.first&&!a.control?'<p class="note">Lies den ganzen Satz – er verrät dir das Wort. Der erste Buchstabe ist vorgegeben.</p>':''}${a.hintImg&&!a.img&&!a.imgs&&(a.st.level||0)>=1?imgStrip({img:a.hintImg}):''}`);break;
     case'sent':html=rTyped(a,a.control?'Lernkontrolle':'Schreibe auf Englisch',`<p class="q">${esc(a.q)}</p>`);break;
     case'pic':html=rTyped(a,'Bildaufgabe',scene(a.scene)+`<p class="q">${esc(a.q)}</p>`);break;
-    case'open':html=rTyped(a,'Schreibe selbst',`<p class="q">${esc(a.q)}</p>`);break;
+    case'open':html=a.plan&&!a.st.done&&(a.st.pp||0)<2?rPlan(a):rTyped(a,'Schreibe selbst',`<p class="q">${esc(a.q)}</p>${planNotes(a)}`);break;
     case'order':html=rOrder(a);break;
     case'match':html=rMatch(a);break;
     case'find':html=rFind(a);break;
@@ -932,7 +966,7 @@ function typedBlock(a){
   const st=a.st;
   const sol=st.showSol&&!st.done?`<div class="sol" id="sol">${esc(solutionFor(a))}</div>`:'';
   if(st.tl&&!st.done)return fbox(st.msg,st.msgGood)+rTiles(a);
-  const frame=st.frame&&!st.done&&!(a.t==='correct'&&a.mark)?`<div class="frame"><span class="note">Satzgerüst:</span><br>${esc(a.scaffold||frameOf(a.model,a.t==='transform'?1:2))}</div>`:'';
+  const frame=st.frame&&!st.done&&!(a.t==='correct'&&a.mark)?`<div class="frame"><span class="note">Satzgerüst:</span><br>${esc(a.scaffold||ownFrame(a)||frameOf(a.model,a.t==='transform'?1:2))}</div>`:'';
   return fbox(st.msg,st.msgGood)+sol+frame+typedField(a)+(st.done?nextBtn():`<p><button data-act="typed-check">Prüfen</button></p>`);
 }
 /* ---------- Hilfe-Treppe für Sätze ---------- */
@@ -1512,7 +1546,7 @@ function hwProfile(U,hi){
   const types={};T.forEach(x=>types[x.t]=(types[x.t]||0)+1);
   const lv=[0,0,0,0];T.forEach(x=>lv[lvlOf(x)]++);
   const steps=hw.tasks.reduce((n,x)=>n+(x.steps?.length||0),0);
-  const c=hw.control||{};let sec=steps*25+T.reduce((a,x)=>a+(SEC_EST[x.t]||40)+(x.t==='cloze'&&/\[\[/.test(x.text||'')?25:0),0)+((c.words??4)+Math.min(c.nSentences??1,(c.sentences||[]).length))*20+30;
+  const c=hw.control||{};let sec=steps*25+T.filter(x=>x.plan).length*40+T.reduce((a,x)=>a+(SEC_EST[x.t]||40)+(x.t==='cloze'&&/\[\[/.test(x.text||'')?25:0),0)+((c.words??4)+Math.min(c.nSentences??1,(c.sentences||[]).length))*20+30;
   let run=1,maxRun=1;for(let i=1;i<T.length;i++){run=T[i].t===T[i-1].t?run+1:1;maxRun=Math.max(maxRun,run)}
   const warn=[];const min=Math.round(sec/60);
   if(T.length>18)warn.push(`${T.length} Aufgaben – empfohlen sind 16–18`);
@@ -1590,19 +1624,23 @@ function rulesHint(rules,raw,U){
   const S=splitSentences(raw),cs=S.map(s=>canon(s,U)),C=canon(raw,U);
   if(gibberish(C))return'Schreibe echte englische Sätze mit richtigen Wörtern.';
   for(const r of rules){
-    let pass=true,found='';
+    let pass=true,found='',per=null;
     switch(r.type){
       case'match':pass=RX(r.re).test(C);break;
       case'notMatch':pass=!RX(r.re).test(C);break;
       case'count':found=r.res.filter(x=>RX(x).test(C)).length;pass=found>=r.n;break;
       case'sentences':pass=S.length>=r.min;break;
       case'words':pass=C.split(' ').filter(Boolean).length>=r.min;break;
-      case'wordsPerSentence':pass=cs.length>0&&cs.every(s=>s.split(' ').length>=r.min);break;
-      case'eachSentence':pass=cs.length>0&&cs.every(s=>RX(r.re).test(s));break;
+      case'wordsPerSentence':per=cs.map(s=>s.split(' ').length>=r.min);pass=cs.length>0&&per.every(Boolean);break;
+      case'eachSentence':per=cs.map(s=>RX(r.re).test(s));pass=cs.length>0&&per.every(Boolean);break;
       case'someSentence':pass=cs.some(s=>RX(r.re).test(s));break;
       case'differentStarts':{const st=cs.map(s=>s.split(' ').slice(0,r.words||2).join(' '));pass=new Set(st).size===st.length;break}
     }
-    if(!pass)return(r.hint||'Lies die Aufgabe noch einmal genau.').replace('{found}',found);
+    if(!pass){const h=(r.hint||'Lies die Aufgabe noch einmal genau.').replace('{found}',found);
+      // Satz für Satz: zeigen, was schon gelungen ist
+      if(per&&per.length>1&&per.some(Boolean)){const ok=per.map((x,i)=>x?i+1:0).filter(Boolean),bad=per.map((x,i)=>x?0:i+1).filter(Boolean);
+        return`Satz ${ok.join(' und ')} passt ✓. Schau dir Satz ${bad.join(' und ')} noch einmal an: ${h}`}
+      return h}
   }
   return null;
 }
@@ -1796,6 +1834,11 @@ document.addEventListener('click',e=>{
   switch(act){
     case'endearly':cur.d.stepSec=0;save();view='endask';render();window.scrollTo(0,0);return;
     case'next':advance();return;
+    case'pl-go':st.pp=1;cur.d.stepSec=0;save();render();return;
+    case'pl-skip':st.pp=2;cur.d.stepSec=0;save();render();focusAnswer();return;
+    case'pl-back':st.pp=1;save();render();return;
+    case'pl-pick':st.picks??={};st.picks[i]=j;a.plan.slots.forEach((sl,k)=>{if(sl.not===i&&st.picks[k]!=null&&sl.from[st.picks[k]]===a.plan.slots[i].from[j])delete st.picks[k]});saveSoon();render();return;
+    case'pl-done':if(planPicks(a)){st.pp=2;cur.d.stepSec=0;save();render();focusAnswer();window.scrollTo(0,0)}return;
     case'is-sel':if(!st.idone){st.isel=i;saveSoon();render()}return;
     case'is-check':if(!st.idone&&st.isel!=null){
       if(st.isel!==0&&Date.now()-(st.stepAt||0)<3500&&!st.fastOnce){st.fastOnce=true;st.isel=null;st.imsg='⚡ Nicht raten – lies zuerst die Erklärung oben. Dann wähle noch einmal.';render();return}
