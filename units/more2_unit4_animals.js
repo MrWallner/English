@@ -19,6 +19,8 @@ registerUnit({
 
   /* ---------- Wortschatz ---------- */
   // Bild zum Wort für die Hilfe bei Schreib-Wiederholungen (erscheint erst nach dem 1. Fehler)
+  // Die HÜs dieser Unit heißen HÜ 4 bis HÜ 7 (Unit 3 war HÜ 1 bis 3)
+  hwStart: 4,
   wordImg: 'units/bilder/u4-{id}.jpg',
   words: {
     // Tiere (Word File)
@@ -227,7 +229,7 @@ The dodo is a famous example of an animal that died out. Its story shows us that
 
   /* ---------- Hausübungen ---------- */
   homeworks: [
-    /* ===== HÜ 1 – Wortschatz ===== */
+    /* ===== HÜ 4 (1. HÜ dieser Unit) – Wortschatz ===== */
     {
       title: 'Animals and Adjectives',
       control: {words: 5},
@@ -281,7 +283,7 @@ The dodo is a famous example of an animal that died out. Its story shows us that
       ]
     },
 
-    /* ===== HÜ 2 – Komparativ ===== */
+    /* ===== HÜ 5 (2.) – Komparativ ===== */
     {
       title: 'Bigger, Faster, Stronger',
       control: {words: 3, nSentences: 2, sentences: [
@@ -359,7 +361,7 @@ The dodo is a famous example of an animal that died out. Its story shows us that
       ]
     },
 
-    /* ===== HÜ 3 – Superlativ und as … as ===== */
+    /* ===== HÜ 6 (3.) – Superlativ und as … as ===== */
     {
       title: 'The Biggest and the Best',
       control: {words: 3, nSentences: 2, sentences: [
@@ -426,7 +428,7 @@ The dodo is a famous example of an animal that died out. Its story shows us that
       ]
     },
 
-    /* ===== HÜ 4 – Lesen, Schreiben, Anwenden ===== */
+    /* ===== HÜ 7 (4.) – Lesen, Schreiben, Anwenden ===== */
     {
       title: 'Animal Stories',
       control: {words: 4, nSentences: 1, sentences: [
