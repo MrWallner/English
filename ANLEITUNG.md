@@ -273,6 +273,19 @@ In einem Satz, in dem ein Wort fehlt, steht **kein deutsches Wort in Klammern** 
 
 **Freies Schreiben (`open`):** Immer eine Inhalts-Regel dazugeben (z. B. `{type: 'count', res: U4_ANIMALS, n: 2, hint: 'Vergleiche echte Tiere …'}`), sonst erfüllt „A a is bigger than a a.“ die Aufgabe. Buchstabensalat und Fantasiewörter erkennt das Programm zusätzlich selbst; sie zählen nicht als Versuch.
 
+**Schreibtreppe – so wird freies Schreiben Schritt für Schritt aufgebaut:** Direkt vor jeder `open`-Aufgabe stehen 2–3 Stufen mit **genau einer Lösung** (Typ `sent` mit `stair: true`). Auf jeder Stufe fällt eine Hilfe weg:
+```js
+{t: 'sent', stair: true, lvl: 1, rule: '…', head: 'Schreibtreppe · Stufe 1 von 4', q: 'Schreib den Satz noch einmal – aber mit shark statt dolphin.', from: 'A whale is bigger than a dolphin.', ans: ['A whale is bigger than a shark.']},
+{t: 'sent', stair: true, lvl: 2, rule: '…', head: 'Schreibtreppe · Stufe 2 von 4', q: 'Schreib einen ganzen Satz mit diesen Wörtern.', keys: ['giraffe', 'tall', 'horse'], show: 'A ___ is ___ than a ___.', ans: ['A giraffe is taller than a horse.', …]},
+{t: 'sent', stair: true, lvl: 2, rule: '…', head: 'Schreibtreppe · Stufe 3 von 4', q: '… diesmal ohne Gerüst.', keys: ['mosquito', 'dangerous', 'pigeon'], ans: […]},
+{t: 'open', head: 'Schreibtreppe · Stufe 4 von 4: deine eigenen Sätze', q: '…', plan: {…}, easy: {q: '… in EINEM Satz …', model: '…', rules: […]}, model: '…', rules: […]}
+```
+- Stufe 1 **Abschauen** (`from` = Mustersatz, ein Wort austauschen) · Stufe 2 **Stichwörter mit Gerüst** (`keys` + `show`) · Stufe 3 **Stichwörter ohne Gerüst** (`keys`) · letzte Stufe **eigene Wörter** (`open` mit `plan`).
+- Stichwörter immer in der **Grundform** (tall, nicht taller). In `ans` alle sinnvollen Varianten (A/The, Mehrzahl). Fehlt ein Stichwort, sagt das Programm welches.
+- `easy`: leichtere Form der freien Aufgabe (EIN Satz). Sie gilt automatisch für Kinder, die auf einer Stufe Hilfe gebraucht haben – das Gerüst mit den eigenen Wörtern steht dann sofort da. Wer alle Stufen auf Anhieb schafft, schreibt zwei Sätze.
+- Stufen lösen keine Wiederholungen aus, und Wiederholungen werden nie mitten in die Treppe geschoben. Auf der Lehrerseite rechnet eine Stufe mit ca. 40 Sekunden.
+- Die Stufen ersetzen Umform- und Übersetzungsaufgaben vor dem freien Schreiben (die wandern in `extras`).
+
 **Schreib-Plan (`plan`) – Hilfe vor dem Schreiben:** Jede `open`-Aufgabe bekommt einen Plan. Das Kind sieht zuerst ein Beispiel mit **anderem Thema** (nicht abschreibbar), tippt dann die Wörter für seinen ersten Satz an und schreibt danach selbst – die gewählten Wörter stehen als Notiz daneben, die Form (bigger, the fastest) bildet es selbst. Starke Schreiber können den Plan überspringen.
 ```js
 plan: {example: 'A plane is faster than a car. Football is more interesting than golf.', about: 'Du vergleichst gleich Tiere.',
