@@ -109,6 +109,8 @@ words: {
   wild:    {en: 'wild', de: 'wild', skipGen: true}             // skipGen: nicht automatisch abfragen (z. B. gleich auf Deutsch)
 }
 ```
+Optional: `img` (Bild zum Wort) oder unit-weit `wordImg: 'units/bilder/u4-{id}.jpg'`; `noImg: true`, wenn es kein Bild gibt. Das Bild erscheint bei Schreib-Wiederholungen erst nach dem 1. Fehler als Hilfe.
+
 Wörter, die in Aufgaben vorkommen, werden über `w: ['costume']` verknüpft. Das steuert Wiederholungen, Zusatzaufgaben und die Lernkontrolle. Abgefragt werden automatisch nur Wörter, die in dieser oder einer früheren HÜ schon vorkamen.
 
 ### errors – typische Fehler der Grammatik dieser Unit
@@ -151,9 +153,9 @@ Jede Regel braucht mindestens 4 Aufgaben vom Typ `gap`, `find`, `order` oder `se
 
 | Typ | Felder | Hinweis |
 |---|---|---|
-| `intro` | `title`, `text` | Text: **fett**, *kursiv*, ~~durchgestrichen~~, Listen mit „- “, Leerzeile = Absatz |
+| `intro` | `title`, `text` – oder `steps` (siehe „Erklärungen in kleinen Schritten“) | Text: **fett**, *kursiv*, ~~durchgestrichen~~, Listen mit „- “, Leerzeile = Absatz |
 | `mc` | `q`, `right`, `wrong` (3), `why` | ein Versuch; Reihenfolge wird gemischt |
-| `gap` | `q` (mit ___ und deutschem Wort in Klammern), `ans` (Liste), `tip` | Hilfen in Stufen |
+| `gap` | `q` (mit ___), `ans` (Liste), `tip`; bei Wörtern `first: true` statt deutschem Wort in Klammern; bei Grammatik darf die Grundform in Klammern stehen, z. B. „(fast)“ | Hilfen in Stufen |
 | `match` | `words` (4–6 Wort-ids) | Englisch ↔ Deutsch zuordnen |
 | `order` | `tiles` (richtige Reihenfolge) | wird gemischt; ein Versuch |
 | `find` | `sentence` mit genau einem `*falschen*` Wort, `fix` (Liste), `why` | Fehler antippen, dann richtig schreiben |
@@ -216,6 +218,47 @@ vocab: {
 - Wertung je Wort: erkennen 25 % · im Satz 50 % · mit Hilfe schreiben 75 % · zweimal ohne Hilfe (mit anderen Wörtern dazwischen) 100 %. Fehler werfen höchstens eine Stufe zurück.
 - Auf der Lehrerseite: eigener Link mit Frist, **Vorschau Vokabeln** und **Wortliste ansehen** zum Korrekturlesen.
 
+### Fehler werden aufgearbeitet – verstehen, dann anwenden
+- Nach einem Fehler kommen **zwei** Wiederholungen: zuerst **verstehen** (das Wort/die Regel im Satz erkennen, Auswahl), später **anwenden** (selbst in einen Satz schreiben). Je Fehler höchstens 2, pro HÜ höchstens 10.
+- Wörter kommen dabei **in einem neuen Satz** wieder – aus den Zusatzaufgaben, aus früheren HÜs, aus den Beispielsätzen des Vokabeltrainings und aus dem Beispielsatz beim Wort selbst (siehe unten). Das gilt auch für die Lernkontrolle und das Nachüben.
+- **Darum bekommt jedes Wort in `words` einen eigenen Beispielsatz:** `ostrich: {en: 'ostrich', de: 'Strauß', ex: 'An ___ is a very big bird. It can’t fly, but it can run fast.', cat: 'animal'}`. Steht in der Lücke eine andere Form als `en`, dann `exAns: 'pigeons'`. `cat` ('animal', 'adj' …) sorgt dafür, dass die falschen Auswahlmöglichkeiten zur selben Wortart passen. Der Beispielsatz soll sich von den Sätzen in den HÜs und im Vokabeltraining unterscheiden.
+
+### Schnellklick-Regel
+Wird eine Auswahlaufgabe **schneller als lesbar** beantwortet (Auswahl unter 2,5 s, Zuordnen unter 6 s, Sortieren unter 4 s, Lückentext unter 3 s, Dialog unter 5 s) **und** ist die Antwort falsch, zählt sie **nicht** als erledigt. Das Kind sieht sofort „⚡ Zu schnell geklickt – diese Aufgabe zählt nicht“. Schnell und richtig zählt normal, langsam und falsch auch. Auf der Karte steht dann z. B. „21 von 23 Aufgaben gezählt · 2 zu schnell geklickt“, und der HÜ-Wert ist entsprechend niedriger.
+
+### Lesetexte: erst lesen, dann suchen
+1. Zuerst nur der Text; der Knopf „Ich habe den Text gelesen“ wird erst nach 0,25 Sekunden pro Wort aktiv (so schnell liest nur ein sehr schneller Leser).
+2. Dann Fragen **aus dem Gedächtnis**, ohne Text (`gist` beim Lesetext, meist eine Frage: „Worum geht es?“ / „Welcher Titel passt?“).
+3. Dann Detailfragen mit Text. Bei einer falschen Antwort wird die Stelle markiert (`ref` = genau der Satzteil aus dem Text).
+```js
+readings: { zoo: { title: '…', text: `…`, gloss: '…',
+  gist: [{q: 'What is the text about?', right: '…', wrong: ['…','…','…'], tip: '…'}],
+  questions: [{q: '…', right: '…', wrong: [...], tip: 'Lies den ersten Absatz.', ref: 'First, they visited the giraffes.'}] } }
+```
+Detailfragen **mit anderen Worten** formulieren als der Text, damit die Suche nach einem Stichwort allein nicht reicht. Die Lehrerseite prüft, ob jedes `ref` genau so im Text steht.
+
+**Keine Frage darf ohne den Text lösbar sein.** Die Kinder suchen sich den kürzesten Weg. Darum:
+- Nichts fragen, was man aus dem **Allgemeinwissen** weiß („Ein Nashorn ist schwer“, „Ein Strauß kann nicht fliegen“). Gefragt wird, was **nur in diesem Text** steht: Namen, Zahlen, wer was gesagt hat, was zuerst passiert ist.
+- Am besten Geschichten, in denen etwas **anders** kommt als erwartet (z. B. gewinnt der Strauß das Rennen, weil der Gepard müde wird). Dann führt Raten aus dem Allgemeinwissen sicher zur falschen Antwort.
+- **Ablenker aus dem Text nehmen:** andere Zahlen, Tiere, Adjektive oder Personen, die im Text vorkommen, aber nicht zur Frage passen. Keine offensichtlich unsinnigen Antworten („Sie flogen nach Europa“), keine Moral-Fragen, deren Antwort man errät („Wir müssen Tiere schützen“).
+- Gedächtnisfragen (`gist`) so stellen, dass die Überschrift sie nicht verrät, z. B. „Welches Tier kommt im Text NICHT vor?“ oder „Wer ist in den Zoo gegangen?“.
+
+### Keine Abkürzungen in Satz-Aufgaben
+In einem Satz, in dem ein Wort fehlt, steht **kein deutsches Wort in Klammern** – sonst übersetzt das Kind nur das Wort und liest den Satz gar nicht. Stattdessen `first: true`: Das Kind sieht den Anfangsbuchstaben und für jeden weiteren Buchstaben einen Strich (z. B. „d _ _ _ _ _ _ _ _“). Welches Wort es ist, ergibt sich erst aus dem Satz. Darum muss der Satz das Wort **eindeutig** machen (z. B. „Crocodiles can kill people. They are very d…“). Die Lehrerseite meldet Lücken mit deutschem Wort in Klammern. Die Hilfe-Stufen sind dann: 1. zurück zum Satz (und Bild, falls vorhanden) · 2. die ersten Buchstaben · 3. Lösung. Die automatischen Wiederholungen arbeiten genauso.
+
+Ausnahmen: Bei Übersetzungs-Aufgaben (`sent`, Buchstabensalat, Vokabeltrainer) ist das deutsche Wort die Aufgabe selbst. Bei Grammatik-Lücken darf die **englische Grundform** in Klammern stehen („(fast)“), weil das Bilden der Form die eigentliche Arbeit ist. Ab der HÜ, in der Komparativ und Superlativ gemischt vorkommen, muss das Kind den Satz lesen, um die richtige Form zu wählen.
+
+### Erklärungen in kleinen Schritten
+Grammatik wird **nicht** als lange Textseite erklärt, sondern in kleinen Schritten, jeweils direkt vor den Aufgaben, die sie brauchen (z. B. HÜ 2: zuerst -er + than, später Schreibweise, dann lange Adjektive, zuletzt good/bad). Jeder Schritt: ein kurzer Gedanke mit Beispiel, dann eine Verständnisfrage. Ist sie falsch, kommt eine Erklärung und eine zweite, ähnliche Frage. Am Ende eine kurze „Merke“-Box. Die Schritte zählen nicht zur Wertung.
+```js
+{t: 'intro', title: 'Zwei Tiere vergleichen', steps: [
+  {imgs: ['…cheetah.jpg', '…ostrich.jpg'], text: '**A cheetah is faster than an ostrich.**\n= Ein Gepard ist schneller als ein Strauß.',
+   check:  {q: 'Welches Wort bedeutet „als“?', right: 'than', wrong: ['then', 'as', 'that'], why: 'than = als.'},
+   check2: {q: 'Welcher Satz ist richtig?', right: 'A dog is faster than a cat.', wrong: ['A dog is faster then a cat.', 'A dog is faster as a cat.'], why: '…'}}],
+ summary: 'Kurzes Adjektiv + **-er** + **than**'}
+```
+Pro Schritt höchstens 3–4 Zeilen. In `check`/`why` keine Sternchen-Formatierung (wird dort nicht umgewandelt).
+
 ### Grundregel: Kein Durchkommen durch Probieren – aber auch kein Steckenbleiben
 - **Nach einem Fehler wird nie dieselbe Aufgabe mit weniger Möglichkeiten wiederholt.** Auswahlaufgaben (mc, odd, sort, dialog, order, match, Lückentext mit Auswahl) haben **einen** Versuch. Danach gibt es die Lösung mit Erklärung, und später kommt eine **neue** Aufgabe zur selben Regel bzw. zum selben Wort.
 - Zweite Versuche gibt es nur, wo man selbst etwas bilden muss (Wörter oder Sätze schreiben, Buchstabensalat, Schreib-Lücken). Die Hilfen geben dort nur Hinweise zum Inhalt (Regel, Anfangsbuchstabe, Satzgerüst), nie „die ersten 3 Wörter stimmen“.
@@ -224,11 +267,11 @@ vocab: {
 - Deshalb gilt für Unit-Dateien: Auswahl-Lücken und Auswahlaufgaben mit **3–4 plausiblen** Möglichkeiten (nicht 2), damit Raten selten zum Ziel führt. Zu jeder Regel genug Aufgaben in `extras`, damit die Wiederholung eine **neue** Aufgabe ist.
 
 ### Qualitätsregeln
-1. **Aufbau jeder HÜ:** von leicht nach schwer – Intro → Erkennen (mc, match, odd, letters) → Lesen/Ordnen (reading, sort, dialog, cloze mit Auswahl) → selbst Schreiben (gap, find, listen, sent, cloze zum Schreiben) → Anwenden (transform, correct, pic, open). **Mindestens 6 verschiedene Aufgabentypen pro HÜ**, nie mehr als 3 Aufgaben gleichen Typs hintereinander. **16–18 Aufgaben**, damit ein durchschnittliches Kind in ca. 15 Minuten fertig ist (Erfahrung Unit 3: 21 Aufgaben dauerten 16–23 Minuten).
+1. **Aufbau jeder HÜ:** von leicht nach schwer – Intro → Erkennen (mc, match, odd, letters) → Lesen/Ordnen (reading, sort, dialog, cloze mit Auswahl) → selbst Schreiben (gap, find, listen, sent, cloze zum Schreiben) → Anwenden (transform, correct, pic, open). **Mindestens 6 verschiedene Aufgabentypen pro HÜ**, nie mehr als 3 Aufgaben gleichen Typs hintereinander. **16–18 Aufgaben**, damit ein durchschnittliches Kind in ca. 15 Minuten fertig ist (Erfahrung Unit 3: 21 Aufgaben dauerten 16–23 Minuten). Mit Erklär-Schritten entsprechend weniger (ca. 25 Sekunden pro Schritt) – maßgeblich ist die geschätzte Dauer auf der Lehrerseite (höchstens 18 Minuten).
 2. **HÜ 1** Wortschatz, **HÜ 2** Grammatik einführen, **HÜ 3** Grammatik vertiefen und mit dem Wortschatz mischen, **HÜ 4** Lesen/Schreiben/Anwenden. Keine Aufgabe wortgleich in zwei HÜs.
 3. **Ablenker (wrong)** müssen grammatisch passen und plausibel sein, aber eindeutig falsch. Keine Ablenker, die auch richtig sein könnten.
 4. **Lesetexte selbst neu schreiben** (ca. 150–200 Wörter, Niveau der Unit). **Keine Texte aus dem Buch abschreiben** – die Seite ist öffentlich im Internet.
-5. Jede Lesefrage hat einen `tip`, der sagt, *wo* im Text die Antwort steht.
+5. Jede Lesefrage hat einen `tip`, der sagt, *wo* im Text die Antwort steht. Keine Frage darf ohne den Text lösbar sein (siehe „Lesetexte“).
 6. Schreibaufgaben: alle sinnvollen richtigen Varianten in `ans`/`accept` aufnehmen. `model` muss die eigene Prüfung bestehen.
 7. Hinweise immer auf Deutsch, freundlich, ohne die Lösung direkt zu verraten.
 8. Nur Wortschatz und Grammatik verwenden, die bis zu dieser Unit im Buch vorkommt.
