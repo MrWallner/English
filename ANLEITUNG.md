@@ -101,6 +101,9 @@ registerUnit({
 
 Eingebaut (muss nicht angegeben werden): Groß-/Kleinschreibung, Satzzeichen am Ende, iPad-Apostroph (’) und Kurzformen wie *should not = shouldn't, do not = don't, cannot = can't* werden automatisch gleich behandelt.
 
+### hwStart – HÜ-Nummern weiterzählen
+`hwStart: 4` im Grundgerüst der Unit: Die HÜs dieser Unit heißen dann HÜ 4, HÜ 5, HÜ 6 … (überall: Startseite, Kopfzeile, Ergebniskarte, Lehrerseite). Ohne `hwStart` beginnt die Zählung bei 1. In der Unit-Datei selbst bleibt alles gleich (`minHw: 2` heißt weiterhin „ab der 2. HÜ dieser Unit“), und bereits verschickte Links funktionieren weiter.
+
 ### words – Wortschatz der Unit
 ```js
 words: {

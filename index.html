@@ -195,7 +195,7 @@ const CONFIG = {
   flagAt: 6,               // ab so vielen Schnellklicks/Unsinn-Eingaben erscheint ein Hinweis auf der Karte
   maxReviews: 10,          // höchstens so viele Wiederholungsaufgaben pro Hausübung (je Fehler höchstens 2)
   readSecPerWord: 0.25,    // Lesetext: „Gelesen“-Knopf frühestens nach so vielen Sekunden pro Wort (sehr schneller Leser)
-  version: '9.5'
+  version: '9.6'
 };
 /* ===================================================================== */
 const UNITS = [], LOAD_ERRORS = [];
@@ -297,7 +297,7 @@ function validateUnit(U){
       if(Object.values(W).some(x=>String(x.en).toLowerCase()===k.toLowerCase()))P.push(`Lesetext „${id}“: „${k}“ ist ein Unit-Wort – nicht übersetzen (Lernziel)`)});
     (r.gist||[]).forEach((q,i)=>{if(q.tf==null&&(!q.right||!Array.isArray(q.wrong)||!q.wrong.length))P.push(`Lesetext „${id}“, Gedächtnisfrage ${i+1}: right/wrong oder tf fehlt`)});
   });
-  const tasks=[...(U.homeworks||[]).flatMap((h,hi)=>(h.tasks||[]).map((t,ti)=>[t,`HÜ ${hi+1}, Aufgabe ${ti+1}`])),...(U.extras||[]).map((t,i)=>[t,`Zusatz ${i+1}`])];
+  const tasks=[...(U.homeworks||[]).flatMap((h,hi)=>(h.tasks||[]).map((t,ti)=>[t,`HÜ ${hwNo(U,hi+1)}, Aufgabe ${ti+1}`])),...(U.extras||[]).map((t,i)=>[t,`Zusatz ${i+1}`])];
   for(const [t,where] of tasks){
     if(!DEFAULT_TOPIC[t.t]&&t.t!=='intro'){P.push(`${where}: unbekannter Typ „${t.t}“`);continue}
     (t.w||[]).forEach(w=>{if(!W[w])P.push(`${where}: Wort „${w}“ fehlt in words`)});
@@ -338,12 +338,12 @@ function validateUnit(U){
   }
   const rulesUsed=new Set(tasks.map(([t])=>t.rule).filter(Boolean));
   rulesUsed.forEach(r=>{if(!tasks.some(([t])=>t.rule===r&&PTYPES.includes(t.t)))P.push(`Regel „${r}“: keine Aufgabe vom Typ mc, gap, find, order oder sent – so kann sie nicht nachgeübt werden`)});
-  (U.homeworks||[]).forEach((h,hi)=>(h.control?.sentences||[]).forEach((s,i)=>{if(!s.de||!s.ans?.length)P.push(`HÜ ${hi+1}, Lernkontrolle Satz ${i+1}: de/ans fehlt`)}));
+  (U.homeworks||[]).forEach((h,hi)=>(h.control?.sentences||[]).forEach((s,i)=>{if(!s.de||!s.ans?.length)P.push(`HÜ ${hwNo(U,hi+1)}, Lernkontrolle Satz ${i+1}: de/ans fehlt`)}));
   return P;
 }
 function selfTest(U){
   const P=[];let n=0;
-  const tasks=[...U.homeworks.flatMap((h,hi)=>h.tasks.map((t,ti)=>[t,`HÜ ${hi+1}, Aufgabe ${ti+1}`])),...(U.extras||[]).map((t,i)=>[t,`Zusatz ${i+1}`])];
+  const tasks=[...U.homeworks.flatMap((h,hi)=>h.tasks.map((t,ti)=>[t,`HÜ ${hwNo(U,hi+1)}, Aufgabe ${ti+1}`])),...(U.extras||[]).map((t,i)=>[t,`Zusatz ${i+1}`])];
   for(const [t0,where] of tasks){
     if(!['gap','sent','pic','open','find','listen','transform','correct'].includes(t0.t))continue;
     const t=prep(clone(t0),U);n++;
@@ -670,7 +670,7 @@ function sig(p){return cyrb53([CONFIG.secret,p.unit,p.h,normName(p.n),normName(p
 // status: 'done' = vollständig · 'early' = vom Kind vorzeitig beendet · 'deadline' = bei Fristende nicht fertig
 function makeResult(status){
   const d=cur.d,s=stats(d),finished=status==='done';
-  const p={unit:cur.unit.id,unitLabel:unitLabel(cur.unit),hwTitle:`HÜ ${cur.h}: ${cur.unit.homeworks[cur.h-1].title}`,h:cur.h,n:cur.u.name,k:cur.u.klasse,
+  const p={unit:cur.unit.id,unitLabel:unitLabel(cur.unit),hwTitle:`HÜ ${hwNo(cur.unit,cur.h)}: ${cur.unit.homeworks[cur.h-1].title}`,h:cur.h,n:cur.u.name,k:cur.u.klasse,
     wert:finished?s.wert:Math.min(99,s.wert),sec:d.seconds,lvl:finished?s.lvl:'-',ctl:finished?`${s.ctlOk}/${s.ctlTotal}`:'',first:s.firstPct,weak:s.weak.slice(0,8),
     weakIds:s.weakIds,rules:s.rules,done:s.done,total:s.total,lost:s.lost,capped:!!d.capped,quick:d.quick,junk:d.junk,tasks:s.practice,date:dateStr(),finished,status};
   p.code=sig(p);return p;
@@ -684,6 +684,8 @@ const finishHW=()=>endHW('done');
 const STATUS_HEAD={done:'✓ Hausübung erledigt',early:'⏹ Vorzeitig beendet – nicht fertig',deadline:'⏰ Frist abgelaufen – nicht fertig'};
 const statusOf=p=>p.status||(p.finished?'done':'early');
 function fmtDeadline(ms){return new Date(ms).toLocaleString('de-AT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+// Angezeigte HÜ-Nummer: Unit-Dateien können mit hwStart weiterzählen (z. B. hwStart: 4 → HÜ 4, 5, 6 …). Links und Speicherstand bleiben bei 1, 2, 3 …
+const hwNo=(U,h)=>(U?.hwStart||1)+h-1;
 const unitLabel=U=>[U.book,U.title].filter(Boolean).join(' · ');
 
 /* ---------- Uhr ---------- */
@@ -896,7 +898,7 @@ function shell(inner){
   const P=progress(d),a=currentTask();
   const what=a?.review?'Wiederholung':a?.extra&&a.t!=='intro'?'Zusatzaufgabe':d.phase==='control'?'Lernkontrolle':`Aufgabe ${Math.min(P.done+(a&&isCore(a)&&a.st.done?0:1),P.total)} von ${P.total}`;
   const endBtn=cur.preview?'<button class="secondary small" data-act="next">Überspringen ⏭</button>':'<button class="secondary small" data-act="endearly" style="margin-left:auto">Vorzeitig abgeben</button>';
-  app.innerHTML=`<section class="card compact"><div class="row"><strong>HÜ ${cur.h} – ${esc(U.homeworks[cur.h-1].title)}</strong><span class="note" id="plabel">${what} · Stand <b>${P.pct} %</b></span></div><div class="progress"><div id="pbar" style="width:${P.pct}%"></div></div><div id="clock" class="clock"></div></section>
+  app.innerHTML=`<section class="card compact"><div class="row"><strong>HÜ ${hwNo(cur.unit,cur.h)} – ${esc(U.homeworks[cur.h-1].title)}</strong><span class="note" id="plabel">${what} · Stand <b>${P.pct} %</b></span></div><div class="progress"><div id="pbar" style="width:${P.pct}%"></div></div><div id="clock" class="clock"></div></section>
   <section class="card" id="task">${inner}</section>
   <div class="nav"><button class="secondary small" data-act="${cur.preview?'teacher':'pause'}">${cur.preview?'← Zur Lehrerseite':'⏸ Pause'}</button>${endBtn}</div>`;
   updateClock();
@@ -1106,7 +1108,7 @@ function renderPaused(){
   const d=cur.d,P=progress(d);
   const dl=d.deadline?`<p>📅 Abgabefrist: <b>${esc(fmtDeadline(d.deadline))}</b></p>`:'';
   app.innerHTML=`<div class="rcard"><div class="rtop paused"><b>⏸ Pause – noch NICHT abgegeben</b><span>${esc(unitLabel(cur.unit))}</span></div>
-  <div class="rbody"><div class="rname">${esc(cur.u.name)} · ${esc(cur.u.klasse)}</div><div class="rhw">HÜ ${cur.h}: ${esc(cur.unit.homeworks[cur.h-1].title)}</div>
+  <div class="rbody"><div class="rname">${esc(cur.u.name)} · ${esc(cur.u.klasse)}</div><div class="rhw">HÜ ${hwNo(cur.unit,cur.h)}: ${esc(cur.unit.homeworks[cur.h-1].title)}</div>
   <div class="rbig paused">${P.pct} %</div><div class="rbiglabel">dein Stand jetzt · ${P.done} von ${P.total} Aufgaben · ${fmt(d.seconds)} Lernzeit</div>
   <div class="fb bad" style="text-align:left"><b>Das ist keine Ergebniskarte!</b> Ein Foto von diesem Bildschirm zählt nicht als Abgabe.<br>So gibst du ab: Mach die Hausübung fertig (dann bekommst du <b>100 %</b>) oder tippe auf <b>„Vorzeitig abgeben“</b>. Erst dann erscheint deine Ergebniskarte.</div>
   ${dl}<p><button data-act="resume">▶ Weitermachen</button></p>
@@ -1196,7 +1198,7 @@ function practiceTeaser(){
 function renderPractice(){
   setHeader(unitLabel(cur.unit),'Nachüben');
   const P=pState(),L=pItems(),c=pCount(),a=P.cur;
-  const head=`<section class="card compact"><div class="row"><strong>🎯 Nachüben – HÜ ${cur.h}</strong><span class="note"><b>${c.ok} von ${c.n}</b> beherrscht</span></div><div class="progress"><div style="width:${Math.round(100*c.ok/Math.max(1,c.n))}%"></div></div></section>`;
+  const head=`<section class="card compact"><div class="row"><strong>🎯 Nachüben – HÜ ${hwNo(cur.unit,cur.h)}</strong><span class="note"><b>${c.ok} von ${c.n}</b> beherrscht</span></div><div class="progress"><div style="width:${Math.round(100*c.ok/Math.max(1,c.n))}%"></div></div></section>`;
   if(cur.pList||!a){
     const all=c.ok===c.n;
     app.innerHTML=head+`<section class="card"><h2>${all?'🎉 Alles beherrscht!':'Was du nachübst'}</h2>
@@ -1252,7 +1254,7 @@ function renderHWList(){
     const d=u?.units?.[U.id]?.[i+1],over=FOCUS?.deadline&&Date.now()>FOCUS.deadline;let status=over?'Nicht begonnen':'Noch nicht begonnen – starten',cls='hwbtn';
     if(d?.finished){const st=statusOf(d.result);status=(st==='done'?`✓ Erledigt · 100 % · Lernstand ${LS_LABEL[d.result.lvl]}`:`${STATUS_HEAD[st].split(' – ')[0]} · ${d.result.wert} %`)+' – Ergebniskarte anzeigen';cls+=' done'}
     else if(d)status=over?'Frist abgelaufen – Ergebniskarte anzeigen':`Begonnen · Stand ${progress(d,U,i+1).pct} % · ${fmt(d.seconds)} Lernzeit – weitermachen (noch nicht abgegeben)`;
-    return`<div class="hwrow"><button class="${cls}" data-act="start" data-u="${ui}" data-h="${i+1}" ${over&&!d?'disabled':''}><b>HÜ ${i+1} – ${esc(hw.title)}</b><span class="note">${status}</span></button></div>`;
+    return`<div class="hwrow"><button class="${cls}" data-act="start" data-u="${ui}" data-h="${i+1}" ${over&&!d?'disabled':''}><b>HÜ ${hwNo(U,i+1)} – ${esc(hw.title)}</b><span class="note">${status}</span></button></div>`;
   }).join('')}</div>`).join('');
 }
 
@@ -1579,7 +1581,7 @@ function hwProfile(U,hi){
 }
 function profileHTML(U){
   return`<table style="margin:8px 0"><tr><th>HÜ</th><th>Aufgaben</th><th>leicht / mittel / schwer</th><th>Dauer*</th><th>Typen</th></tr>${U.homeworks.map((h,i)=>{const P=hwProfile(U,i);
-    return`<tr><td><b>${i+1}</b></td><td>${P.n}</td><td>${P.lv[1]} / ${P.lv[2]} / ${P.lv[3]}</td><td>ca. ${P.min} Min.</td><td class="note">${Object.entries(P.types).map(([t,n])=>esc(TYPE_NAME[t]||t)+(n>1?' ×'+n:'')).join(', ')}${P.warn.length?`<br><span class="err">⚠ ${P.warn.map(esc).join(' · ')}</span>`:''}</td></tr>`}).join('')}</table>
+    return`<tr><td><b>${hwNo(U,i+1)}</b></td><td>${P.n}</td><td>${P.lv[1]} / ${P.lv[2]} / ${P.lv[3]}</td><td>ca. ${P.min} Min.</td><td class="note">${Object.entries(P.types).map(([t,n])=>esc(TYPE_NAME[t]||t)+(n>1?' ×'+n:'')).join(', ')}${P.warn.length?`<br><span class="err">⚠ ${P.warn.map(esc).join(' · ')}</span>`:''}</td></tr>`}).join('')}</table>
   <p class="note">* grobe Schätzung für Kinder mit wenigen Fehlern, ohne Zusatzrunde. Unter 15 Min. ist normal – die Zusatzrunde füllt bis 15 Minuten auf.</p>`;
 }
 const TKEY_DL=CONFIG.storeKey+'-lehrer-frist:';
@@ -1598,13 +1600,13 @@ function checkImages(){
 }
 function renderTeacher(){
   view='teacher';cur=null;setHeader('Lehrkraft',CONFIG.title+' – Lehrerseite');
-  const unitOpts=UNITS.flatMap((U,ui)=>U.demo?[]:[...U.homeworks.map((h,i)=>`<option value="${ui}:${i+1}">${esc(unitLabel(U))} – HÜ ${i+1}</option>`),...(U.vocab?[`<option value="${ui}:V">${esc(unitLabel(U))} – ${esc(vTitle(U))}</option>`]:[])]).join('');
+  const unitOpts=UNITS.flatMap((U,ui)=>U.demo?[]:[...U.homeworks.map((h,i)=>`<option value="${ui}:${i+1}">${esc(unitLabel(U))} – HÜ ${hwNo(U,i+1)}</option>`),...(U.vocab?[`<option value="${ui}:V">${esc(unitLabel(U))} – ${esc(vTitle(U))}</option>`]:[])]).join('');
   const checks=UNITS.map((U,ui)=>{const P=[...validateUnit(U),...validateVocab(U)];const T=P.length?{n:0,P:[]}:selfTest(U);const all=[...P,...T.P];
     return`<div class="unit"><h3>${esc(unitLabel(U))}${U.demo?' <span class="note">(nur Vorschau)</span>':''}</h3>${all.length?`<p class="err">⚠ ${all.length} Problem(e):</p><ul>${all.map(x=>`<li class="note">${esc(x)}</li>`).join('')}</ul>`:`<p class="ok">✓ Datei in Ordnung · ${T.n} Schreibaufgaben geprüft – alle Musterlösungen werden akzeptiert.${U.vocab?` · ${vItems(U).length} Vokabeln.`:''}</p>`}
     ${all.length?'':profileHTML(U)}<div id="imgchk-${ui}"></div>
-    <div class="nav">${U.homeworks.map((h,i)=>`<button class="secondary small" data-act="preview" data-u="${ui}" data-h="${i+1}">Vorschau HÜ ${i+1}</button>`).join('')}${U.vocab?`<button class="secondary small" data-act="vpreview" data-u="${ui}">Vorschau Vokabeln</button><button class="secondary small" data-act="vlist" data-u="${ui}">Wortliste ansehen</button>`:''}</div></div>`}).join('');
+    <div class="nav">${U.homeworks.map((h,i)=>`<button class="secondary small" data-act="preview" data-u="${ui}" data-h="${i+1}">Vorschau HÜ ${hwNo(U,i+1)}</button>`).join('')}${U.vocab?`<button class="secondary small" data-act="vpreview" data-u="${ui}">Vorschau Vokabeln</button><button class="secondary small" data-act="vlist" data-u="${ui}">Wortliste ansehen</button>`:''}</div></div>`}).join('');
   const firstReal=UNITS.findIndex(U=>!U.demo);
-  const links=UNITS.map((U,ui)=>U.demo?'':`<details class="unit" ${ui===firstReal?'open':''}><summary><h3 style="display:inline">${esc(unitLabel(U))}</h3>${ui===firstReal?'':' <span class="note">(ältere Unit – antippen zum Aufklappen)</span>'}</summary>${U.homeworks.map((h,i)=>{const l=hwLink(U,i+1,'');return`<div class="linkbox"><b>HÜ ${i+1} – ${esc(h.title)}</b>
+  const links=UNITS.map((U,ui)=>U.demo?'':`<details class="unit" ${ui===firstReal?'open':''}><summary><h3 style="display:inline">${esc(unitLabel(U))}</h3>${ui===firstReal?'':' <span class="note">(ältere Unit – antippen zum Aufklappen)</span>'}</summary>${U.homeworks.map((h,i)=>{const l=hwLink(U,i+1,'');return`<div class="linkbox"><b>HÜ ${hwNo(U,i+1)} – ${esc(h.title)}</b>
     <label class="note" style="font-weight:400">Abgabefrist (leer lassen = keine Frist)<input type="datetime-local" class="input dl" data-u="${ui}" data-h="${i+1}"></label>
     <div class="hwrow" style="margin:0"><input class="input linkout" readonly value="${esc(l)}" style="font-size:.8rem;margin:0"><button class="secondary small" data-act="copylink" data-link="${esc(l)}" style="align-self:center">Kopieren</button></div></div>`}).join('')}${U.vocab?(()=>{const l=hwLink(U,'V','');return`<div class="linkbox"><b>📚 ${esc(vTitle(U))}</b>
     <label class="note" style="font-weight:400">Abgabefrist (leer lassen = keine Frist)<input type="datetime-local" class="input dl" data-u="${ui}" data-h="V"></label>
