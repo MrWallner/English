@@ -1,7 +1,8 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" translate="no" class="notranslate">
 <head>
 <meta charset="utf-8">
+<meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Englisch-Lerntrainer</title>
 <style>
@@ -51,10 +52,12 @@ label{display:block;font-size:.9rem;font-weight:600}
 .clock{font-size:.88rem;color:var(--muted)}
 .clock.paused{color:#b4621b;font-weight:600}
 .clock.reached{color:var(--good);font-weight:600}
-.reading{background:#fffaf0;border:1px solid #ead9b4;border-radius:12px;padding:14px 18px;line-height:1.75;white-space:pre-line}
+.reading{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;background:#fffaf0;border:1px solid #ead9b4;border-radius:12px;padding:14px 18px;line-height:1.75;white-space:pre-line}
 .gapw{white-space:nowrap;letter-spacing:.05em;font-family:ui-monospace,Menlo,Consolas,monospace}
 .step{font-size:1.05rem}.merke{background:#fff8e1;border-left:4px solid #f0b400;border-radius:8px;padding:6px 14px;margin:10px 0}
 .sdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#d6d6d6;margin-left:3px}.sdot.done{background:#3a9d5d}.sdot.now{background:#2b6cb0}
+.gl{border-bottom:2px dotted #a77bbf;cursor:pointer;border-radius:3px}.gl.on{background:#f3e7f0}
+#glbox{position:absolute;z-index:50;display:none;max-width:260px;background:#3b1f4a;color:#fff;padding:7px 11px;border-radius:10px;font-size:.95rem;line-height:1.3;box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:none}
 .gloss{display:inline-block;background:#f3e7f0;border-radius:20px;padding:5px 11px;font-size:.86rem;margin:10px 0}
 .tiles,.slot,.words{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
 .tile{background:#efe2ed;color:#32283b}
@@ -189,7 +192,7 @@ const CONFIG = {
   flagAt: 6,               // ab so vielen Schnellklicks/Unsinn-Eingaben erscheint ein Hinweis auf der Karte
   maxReviews: 10,          // höchstens so viele Wiederholungsaufgaben pro Hausübung (je Fehler höchstens 2)
   readSecPerWord: 0.25,    // Lesetext: „Gelesen“-Knopf frühestens nach so vielen Sekunden pro Wort (sehr schneller Leser)
-  version: '9.1'
+  version: '9.2'
 };
 /* ===================================================================== */
 const UNITS = [], LOAD_ERRORS = [];
@@ -287,6 +290,8 @@ function validateUnit(U){
   Object.entries(R).forEach(([id,r])=>{
     if(!r.text||!Array.isArray(r.questions)||!r.questions.length)P.push(`Lesetext „${id}“: text oder questions fehlt`);
     (r.questions||[]).forEach((q,i)=>{if(q.tf==null&&(!q.right||!Array.isArray(q.wrong)||!q.wrong.length))P.push(`Lesetext „${id}“, Frage ${i+1}: right/wrong oder tf fehlt`);if(q.ref&&!String(r.text).includes(q.ref))P.push(`Lesetext „${id}“, Frage ${i+1}: ref „${q.ref}“ steht nicht genau so im Text`)});
+    Object.keys(r.glosses||{}).forEach(k=>{if(!new RegExp(`(^|[^A-Za-z])${k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?![A-Za-z])`,'i').test(r.text||''))P.push(`Lesetext „${id}“: Wort-Hilfe „${k}“ kommt im Text nicht vor`);
+      if(Object.values(W).some(x=>String(x.en).toLowerCase()===k.toLowerCase()))P.push(`Lesetext „${id}“: „${k}“ ist ein Unit-Wort – nicht übersetzen (Lernziel)`)});
     (r.gist||[]).forEach((q,i)=>{if(q.tf==null&&(!q.right||!Array.isArray(q.wrong)||!q.wrong.length))P.push(`Lesetext „${id}“, Gedächtnisfrage ${i+1}: right/wrong oder tf fehlt`)});
   });
   const tasks=[...(U.homeworks||[]).flatMap((h,hi)=>(h.tasks||[]).map((t,ti)=>[t,`HÜ ${hi+1}, Aufgabe ${ti+1}`])),...(U.extras||[]).map((t,i)=>[t,`Zusatz ${i+1}`])];
@@ -301,6 +306,8 @@ function validateUnit(U){
         (t.steps||[]).forEach((S,k)=>{if(!S.text)P.push(`${where}, Schritt ${k+1}: text fehlt`);[S.check,S.check2].forEach(C=>{if(C&&(!C.q||!C.right||!Array.isArray(C.wrong)||!C.wrong.length))P.push(`${where}, Schritt ${k+1}: Frage braucht q, right und wrong`)})});break;
       case'mc':if(!t.q||!t.right||!Array.isArray(t.wrong)||!t.wrong.length)P.push(`${where}: q/right/wrong fehlt`);else if(t.wrong.includes(t.right))P.push(`${where}: richtige Antwort steht auch bei wrong`);break;
       case'gap':if(!t.q||!t.ans?.length)P.push(`${where}: q/ans fehlt`);
+        {const m=/\(([^)]+)\)\s*$/.exec(t.q||''),inner=(m?.[1]||'').toLowerCase(),isDe=m&&(/[äöüß]/.test(inner)||Object.values(W).some(x=>String(x.de).toLowerCase().split(/[,;(]/).map(y=>y.trim()).includes(inner)));
+        if(isDe&&t.rule)P.push(`${where}: deutsches Wort „${m[1]}“ in Klammern – Abkürzung. Besser: first: true (Anfangsbuchstabe).`)}
         if(t.w?.length&&!t.rule&&/\([^)]*[a-zäöüß][^)]*\)\s*$/i.test(t.q||''))P.push(`${where}: deutsches Wort in Klammern am Satzende – Abkürzung (man liest den Satz nicht). Besser: first: true (Anfangsbuchstabe).`);break;
       case'sent':case'pic':case'open':
         if(t.model&&t.distract&&!Array.isArray(t.distract))P.push(`${where}: distract muss eine Liste sein`);
@@ -447,7 +454,7 @@ function complete(a,first,errWords){
 /* ---------- Wortschatz-Generator ---------- */
 function introduced(U,h){const s=new Set();U.homeworks.slice(0,h).forEach(hw=>hw.tasks.forEach(t=>(t.w||t.words||[]).forEach(w=>s.add(w))));return[...s].filter(w=>U.words[w]&&!U.words[w].skipGen)}
 function hwWords(U,h){const s=new Set();U.homeworks[h-1].tasks.forEach(t=>(t.w||t.words||[]).forEach(w=>s.add(w)));return[...s].filter(w=>U.words[w]&&!U.words[w].skipGen)}
-function genGap(w){const W=cur.unit.words[w];if(!W||W.skipGen)return null;return{t:'gap',q:`Wie heißt das auf Englisch? → ${W.de}`,ans:[W.en,...(W.alt||[])],w:[w],key:'g-gap-'+w}}
+function genGap(w){const W=cur.unit.words[w];if(!W||W.skipGen)return null;const img=imgOfWord(w);return{t:'gap',q:`Wie heißt das auf Englisch? → ${W.de}`,...(img?{img}:{}),ans:[W.en,...(W.alt||[])],w:[w],key:'g-gap-'+w}}
 function genMC(w){
   const U=cur.unit,W=U.words[w];if(!W||W.skipGen)return null;
   let pool=introduced(U,cur.h).filter(x=>x!==w&&U.words[x].de!==W.de);
@@ -469,14 +476,18 @@ function ctxCandidates(w,kind,used){
   extrasFor().forEach(({x,i})=>{if(ok(x)&&!used.has('x'+i))out.push({...clone(x),key:'x'+i})});
   U.homeworks.slice(0,Math.max(0,cur.h-1)).forEach((hw,hi)=>hw.tasks.forEach((x,ti)=>{const k=`hx${hi+1}-${ti}`;if(ok(x)&&!used.has(k))out.push({...clone(x),key:k})}));
   // Beispielsatz direkt beim Wort (words: {…, ex: 'Satz mit ___', exAns: 'Form in der Lücke', cat: 'animal'|'adj'})
-  if(W.ex&&!W.skipGen){const tgt=W.exAns||W.en;
-    if(kind==='choice'&&!used.has('we-'+w)){
-      let pool=introduced(U,cur.h).filter(x=>x!==w&&U.words[x].cat===W.cat&&U.words[x].en!==W.en);
-      if(pool.length<3)pool=introduced(U,cur.h).filter(x=>x!==w&&U.words[x].en!==W.en);
-      const plural=tgt.toLowerCase()===W.en.toLowerCase()+'s',cap=/^[A-Z]/.test(tgt)&&!/^[A-Z]/.test(W.en);
-      const form=x=>{let f=U.words[x].en+(plural?'s':'');return cap?f[0].toUpperCase()+f.slice(1):f};
-      if(pool.length>=3)out.push({t:'mc',q:W.ex,right:tgt,wrong:shuffle(pool).slice(0,3).map(form),why:`${W.en} = ${W.de}`,w:[w],key:'we-'+w,topic:'vocabulary'});}
-    if(kind==='write'&&!used.has('wx-'+w))out.push({t:'gap',q:W.ex,first:true,hintImg:imgOfWord(w),ans:[tgt,...(W.alt||[])],w:[w],key:'wx-'+w,topic:'vocabulary'});}
+  if(W.ex&&!W.skipGen)[].concat(W.ex).forEach((ex,k)=>{const tgt=(Array.isArray(W.exAns)?W.exAns[k]:W.exAns)||W.en,sfx=k?'-'+k:'';
+    if(kind==='choice'&&!used.has('we-'+w+sfx)){
+      // Ablenker nur aus derselben Wortgruppe (cat) – sonst erkennt man die Lösung schon an der Wortart. Ohne cat keine Auswahlaufgabe.
+      const free=x=>x!==w&&!U.words[x].skipGen&&U.words[x].cat===W.cat&&U.words[x].en!==W.en&&!(W.avoid||[]).includes(x)&&!(U.words[x].avoid||[]).includes(w);   // avoid: Wörter, die im Satz auch passen würden
+      const plural=tgt.toLowerCase()!==W.en.toLowerCase()&&/s$/.test(tgt),cap=/^[A-Z]/.test(tgt)&&!/^[A-Z]/.test(W.en);
+      const pl=e=>/(s|x|ch|sh|o)$/.test(e)?e+'es':/[^aeiou]y$/.test(e)?e.slice(0,-1)+'ies':e+'s';
+      const fits=x=>free(x)&&!(plural&&U.words[x].noPl);
+      let pool=W.cat?introduced(U,cur.h).filter(fits):[];
+      if(W.cat&&pool.length<3)pool=Object.keys(U.words).filter(fits);
+      const form=x=>{let f=plural?(U.words[x].pl||pl(U.words[x].en)):U.words[x].en;return cap?f[0].toUpperCase()+f.slice(1):f};
+      if(pool.length>=3)out.push({t:'mc',q:ex,right:tgt,wrong:shuffle(pool).slice(0,3).map(form),why:`${W.en} = ${W.de}`,w:[w],key:'we-'+w+sfx,topic:'vocabulary'});}
+    if(kind==='write'&&!used.has('wx-'+w+sfx))out.push({t:'gap',q:ex,first:true,hintImg:imgOfWord(w),ans:[tgt,...(W.alt||[])],w:[w],key:'wx-'+w+sfx,topic:'vocabulary'});});
   const v=vocabFor(w);
   if(v){const tgt=v.target||v.en;
     if(kind==='choice'&&(v.wrong||[]).length>=3&&!used.has('vc-'+w))out.push({t:'mc',q:v.ex,right:tgt,wrong:v.wrong.slice(0,3),why:`${W.en} = ${W.de}`,w:[w],key:'vc-'+w,topic:'vocabulary'});
@@ -515,7 +526,9 @@ function ruleTask(rule,kind,used){
 }
 function makeReview(target,stage,used){
   if(target.w){const w=target.w;
-    return stage===1?(genCtx(w,'choice',used)||genCtx(w,'write',used)||genMC(w)):(genCtx(w,'write',used)||genGap(w));}
+    // lieber ein schon bekannter Satz noch einmal als eine nackte Wortfrage ohne Zusammenhang
+    const again=k=>{const t=genCtx(w,k,new Set());if(t)t.key+='~'+(cur.d.reviews||0);return t};
+    return stage===1?(genCtx(w,'choice',used)||genCtx(w,'write',used)||again('choice')||again('write')||genMC(w)):(genCtx(w,'write',used)||again('write')||genGap(w));}
   if(target.rule)return ruleTask(target.rule,stage===1?'choice':'write',used)||ruleTask(target.rule,stage===1?'write':'choice',used);
   return null;
 }
@@ -544,11 +557,13 @@ function scheduleReview(a,words){
 }
 function nextExtra(d){
   const used=new Set(d.usedKeys);
-  for(const w of weakIds(d)){const t=genCtx(w,'write',used)||genCtx(w,'choice',used);if(t)return t;for(const f of [genGap,genMC]){const g=f(w);if(g&&!used.has(g.key))return g}}
+  for(const w of weakIds(d)){const t=genCtx(w,'write',used)||genCtx(w,'choice',used);if(t&&!used.has(t.key))return t;if(!ctxCandidates(w,'write',new Set()).length)for(const f of [genGap,genMC]){const g=f(w);if(g&&!used.has(g.key))return g}}
   if(d.extraN>0&&d.extraN%5===0)return genMatch(d);
   const cands=[];
   extrasFor().forEach(({x,i})=>{const m=x.t==='sent'?(x.model||x.ans?.[0]):null;if(!used.has('x'+i)&&!(m&&used.has('s:'+canon(m))))cands.push({...clone(x),key:'x'+i})});
-  introduced(cur.unit,cur.h).forEach(w=>{for(const f of [genGap,genMC]){const t=f(w);if(t&&!used.has(t.key))cands.push(t)}});
+  // Wörter immer im Satz (Beispielsätze, frühere Aufgaben) – nackte Wortfragen nur, wenn es zu einem Wort gar keinen Satz gibt
+  introduced(cur.unit,cur.h).forEach(w=>{let n=0;for(const k of ['choice','write']){const t=genCtx(w,k,used);if(t&&!used.has(t.key)&&!cands.some(c=>c.key===t.key)){cands.push(t);n++}}
+    if(!n&&!ctxCandidates(w,'choice',new Set()).length&&!ctxCandidates(w,'write',new Set()).length)for(const f of [genGap,genMC]){const t=f(w);if(t&&!used.has(t.key))cands.push(t)}});
   if(!cands.length)return genMatch(d);
   const recent=d.queue.slice(-3).map(x=>x.t);
   // Schwierigkeit passend zum Kind: viele Treffer → eher schwer, viele Fehler → eher leicht
@@ -740,6 +755,7 @@ window.addEventListener('scroll',()=>{lastActivity=Date.now()},{passive:true,cap
    ===================================================================== */
 function setHeader(pill,title){$('#pill').textContent=pill;$('#htitle').textContent=title}
 function render(){
+  try{glHide()}catch(e){}
   $('#hdr').style.display=view==='card'?'none':'';   // auf der Ergebniskarte kein Kopf → Karte passt auf einen Screenshot
   if(view==='teacher')return renderTeacher();
   if(view==='vlist')return renderVList(cardData);
@@ -766,11 +782,11 @@ function rSteps(a){
   let h=`<h2>${esc(a.title)}</h2><p class="note">Schritt ${st.si+1} von ${n} ${dots}</p>${imgStrip(S)}<div class="step">${md(S.text)}</div>`;
   if(!C)return h+`<p><button data-act="is-next" id="stepbtn">${st.si===n-1?'Fertig →':'Weiter →'}</button></p>`;
   const k=st.si+'-'+st.ck;
-  if(!st.io||st.io.k!==k){const o=[C.right,...C.wrong];st.io={k,o:shuffle(o.map((_,i)=>i))}}
+  if(!st.io||st.io.k!==k){const o=[C.right,...C.wrong];st.io={k,o:shuffle(o.map((_,i)=>i))};st.stepAt=Date.now();st.fastOnce=false;st.imsg=''}
   const opts=st.io.o.map(i=>{const t=i===0?C.right:C.wrong[i-1];let c='choice';if(st.idone){if(i===0)c+=' right';else if(i===st.isel)c+=' wrong'}else if(st.isel===i)c+=' sel';
     return`<button class="${c}" data-act="is-sel" data-i="${i}" ${st.idone?'disabled':''}>${esc(t)}</button>`}).join('');
   h+=`<div class="fb"><b>🤔 ${st.ck===1?'Noch eine Frage dazu:':'Hast du es verstanden?'}</b> ${esc(C.q)}</div><div class="choices">${opts}</div>`;
-  if(!st.idone)return h+`<button data-act="is-check" ${st.isel==null?'disabled':''}>Antwort bestätigen</button>`;
+  if(!st.idone)return h+(st.imsg?fbox(st.imsg,false):'')+`<button data-act="is-check" ${st.isel==null?'disabled':''}>Antwort bestätigen</button>`;
   const ok=st.isel===0;
   h+=fbox((ok?'✓ Richtig! ':'Nicht ganz. ')+(C.why||''),ok);
   if(!ok&&st.ck===0&&S.check2)return h+`<p><button data-act="is-again" id="stepbtn">Noch eine Frage dazu →</button></p>`;
@@ -779,7 +795,15 @@ function rSteps(a){
 // Bilder zu einer Aufgabe oder einem Lesetext: img (eines) oder imgs (mehrere, z. B. zwei Tiere zum Vergleichen)
 function imgStrip(x){
   const L=x.imgs||(x.img?[x.img]:[]);if(!L.length)return'';
-  return`<div class="timgs ${L.length===1?'one':L.length>2?'three':''}">${L.map(p=>`<img src="${esc(imgSrc(p))}" alt="" onerror="this.remove()">`).join('')}</div>`;
+  const need=x.t&&needsImg(x)?'imgMissing(this)':'this.remove()';
+  return`<div class="timgs ${L.length===1?'one':L.length>2?'three':''}">${L.map(p=>`<img src="${esc(imgSrc(p))}" alt="" onerror="${need}">`).join('')}</div>`;
+}
+/* Aufgaben, die ohne Bild nicht lösbar sind („Welches Tier ist das?“). Fehlt das Bild (noch nicht hochgeladen, schlechtes Netz),
+   wird die Aufgabe übersprungen statt unlösbar dazustehen – sie zählt nicht gegen das Kind. */
+const needsImg=a=>!!(a.img||a.imgs)&&(a.pic===true||/(welches tier ist das|dieses tier|was ist das|auf dem bild|siehst du)/i.test(a.q||''));
+function imgMissing(el){
+  el.remove();const a=currentTask();if(!a||a.st.done||!needsImg(a))return;
+  a.st.done=true;a.st.skipped=true;a.st.noImg=true;save();render();
 }
 function taskHTML(a){
   const sk=a.key+'-'+(a.t==='reading'?(a.st.qi||0):0);
@@ -805,6 +829,7 @@ function taskHTML(a){
     case'transform':html=rTyped(a,'Forme den Satz um',`<p class="q">${esc(a.q)}</p><div class="srcsent">${esc(a.from)}</div>`);break;
     case'correct':{const n=a.n||1;html=rTyped(a,'Verbessere den Satz',`<p class="q">${esc(a.q||`In diesem Satz ${n===1?'ist ein Fehler':'sind '+n+' Fehler'}. Schreib den ganzen Satz richtig.`)}</p><div class="srcsent">${a.st.level>=2&&a.mark?markWords(a.sentence,a.mark):esc(a.sentence)}</div>`);break}
   }
+  if(a.st?.noImg)return`<h2>Bild fehlt</h2>${fbox('Das Bild zu dieser Aufgabe konnte nicht geladen werden. Die Aufgabe wird übersprungen und zählt nicht gegen dich.',null)}<p><button data-act="next" id="nextbtn">Weiter →</button></p>`;
   if(a.t!=='reading'&&(a.img||a.imgs))html=html.replace('</h2>','</h2>'+imgStrip(a));
   if(a.st?.quickWrong)html=html.replace('</h2>','</h2><div class="fb bad"><b>⚡ Zu schnell geklickt – diese Aufgabe zählt nicht.</b> Lies zuerst genau und denk nach, bevor du antwortest!</div>');
   return html;
@@ -834,12 +859,49 @@ function rMC(a,head){
    2. Fragen aus dem Gedächtnis (gist, Text versteckt) · 3. Detailfragen mit Text – bei Fehlern wird die Stelle markiert */
 const readPhase=a=>a.st.phase||((a.st.ans||[]).some(x=>x&&x.done)?'q':'read');
 const minReadFor=a=>cur.preview?3:(a.minRead||0);
+/* Wort-Hilfe im Text: glosses = {'took part': 'nahmen teil', …} – Übersetzung im Zusammenhang, nicht Wort für Wort.
+   Antippen (Handy/Tablet) oder Maus darüber (Computer) zeigt die Übersetzung. Unit-Wörter bewusst NICHT übersetzen (die sind das Lernziel).
+   Ältere Units mit gloss: 'tall = groß · …' funktionieren weiter: Was im Text vorkommt, wird antippbar, der Rest steht darunter. */
+function glossMap(R){
+  const M={...(R.glosses||{})},rest=[];
+  String(R.gloss||'').split('·').map(x=>x.trim()).filter(Boolean).forEach(it=>{const k=it.indexOf(' = ');if(k<0){rest.push(it);return}
+    const en=it.slice(0,k).trim(),de=it.slice(k+3).trim();
+    if(new RegExp(`(^|[^A-Za-z])${en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?![A-Za-z])`,'i').test(R.text)){if(!M[en])M[en]=de}else rest.push(it)});
+  return{M,rest};
+}
+function readingHTML(R,html){
+  const{M,rest}=glossMap(R),keys=Object.keys(M).sort((a,b)=>b.length-a.length);
+  let out=html;
+  if(keys.length){
+    const lower={};keys.forEach(k=>lower[esc(k).toLowerCase()]=M[k]);
+    const re=new RegExp(`(^|[^A-Za-z])(${keys.map(k=>esc(k).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')})(?![A-Za-z])`,'gi');
+    out=html.split(/(<[^>]+>)/).map(part=>part.startsWith('<')?part:part.replace(re,(m,pre,w)=>`${pre}<span class="gl" tabindex="0" data-de="${esc(lower[w.toLowerCase()]||'')}">${w}</span>`)).join('');
+  }
+  return`<div class="reading">${out}</div>`+(keys.length?'<p class="note">💡 Unbekanntes Wort? Gepunktete Wörter antippen'+(window.matchMedia?.('(hover:hover)').matches?' oder mit der Maus darauf zeigen':'')+' – dann siehst du die Übersetzung.</p>':'')
+    +(rest.length?`<span class="gloss">Wort-Hilfe: ${esc(rest.join(' · '))}</span>`:'');
+}
+// eine Sprechblase für alle Wort-Hilfen (liegt außerhalb der App, wird beim Neuzeichnen nicht gelöscht)
+let glBox=null,glOn=null;
+function glShow(el){
+  if(!glBox){glBox=document.createElement('div');glBox.id='glbox';document.body.appendChild(glBox)}
+  glOn=el;glBox.textContent=el.dataset.de;glBox.style.display='block';
+  const r=el.getBoundingClientRect(),bw=glBox.offsetWidth,bh=glBox.offsetHeight;
+  let x=r.left+r.width/2-bw/2;x=Math.max(8,Math.min(x,innerWidth-bw-8));
+  let y=r.top-bh-8;if(y<8)y=r.bottom+8;
+  glBox.style.left=(x+scrollX)+'px';glBox.style.top=(y+scrollY)+'px';
+  document.querySelectorAll('.gl.on').forEach(x=>x.classList.remove('on'));el.classList.add('on');
+}
+function glHide(){if(glBox)glBox.style.display='none';glOn=null;document.querySelectorAll('.gl.on').forEach(x=>x.classList.remove('on'))}
+document.addEventListener('click',e=>{const g=e.target.closest?.('.gl');if(g){if(glOn===g)glHide();else glShow(g)}else if(glOn)glHide()});
+document.addEventListener('mouseover',e=>{const g=e.target.closest?.('.gl');if(g&&window.matchMedia?.('(hover:hover)').matches)glShow(g)});
+document.addEventListener('mouseout',e=>{const g=e.target.closest?.('.gl');if(g&&window.matchMedia?.('(hover:hover)').matches&&!g.contains(e.relatedTarget))glHide()});
+document.addEventListener('keydown',e=>{const g=e.target.closest?.('.gl');if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();glOn===g?glHide():glShow(g)}else if(e.key==='Escape')glHide()});
 function rReading(a){
   const R=cur.unit.readings[a.reading],st=a.st;st.qi??=0;st.ans??=[];
   if(readPhase(a)==='read'){
     const ready=cur.d.stepSec>=minReadFor(a);
     return`<h2>Reading: ${esc(R.title)}</h2><p class="note">Lies den Text in Ruhe <b>ganz</b> durch. Danach kommen Fragen – die ersten ${a.gistN?'beantwortest du <b>aus dem Gedächtnis</b>, ohne Text':'beziehen sich auf den ganzen Text'}.</p>
-    ${imgStrip(R)}<div class="reading">${esc(R.text)}</div>${R.gloss?`<span class="gloss">Wort-Hilfe: ${esc(R.gloss)}</span>`:''}
+    ${imgStrip(R)}${readingHTML(R,esc(R.text))}
     <p><button data-act="rd-read" id="readbtn" ${ready?'':'disabled'}>Ich habe den Text gelesen →</button> <span class="note" id="readnote">${ready?'':'Lies zuerst den ganzen Text.'}</span></p>`;
   }
   const q=a.qs[st.qi],x=st.ans[st.qi]||{};
@@ -851,7 +913,7 @@ function rReading(a){
   let txt=esc(R.text);
   if(x.done&&q.ref&&!q.gist){const r=esc(q.ref);if(txt.includes(r))txt=txt.replace(r,`<mark id="refmark">${r}</mark>`)}
   const textBlock=hide?`<div class="fb"><b>🧠 Aus dem Gedächtnis:</b> Beantworte diese Frage ohne Text. Danach siehst du den Text wieder.</div>`
-    :`${imgStrip(R)}<div class="reading">${txt}</div>${R.gloss?`<span class="gloss">Wort-Hilfe: ${esc(R.gloss)}</span>`:''}`;
+    :`${imgStrip(R)}${readingHTML(R,txt)}`;
   return`<h2>Reading: ${esc(R.title)}</h2>${hide?'':'<p class="note">Die Antworten findest du im Text. Lies die passende Stelle genau.</p>'}
   ${textBlock}
   <hr><p class="q">Frage ${st.qi+1} von ${a.qs.length}: ${esc(q.q)}</p>${q.tf!=null?'<p class="note">Stimmt das? (true = richtig, false = falsch)</p>':''}
@@ -1337,6 +1399,7 @@ function vCheckWrite(){
   const c=canonV(raw,U),answers=[it.en,...(it.alt||[])].map(x=>canonV(x,U));
   v.stepSec=0;
   if(!answers.includes(c)&&isJunk(raw,[it.en,...(it.alt||[])])){v.junk++;st.msgGood=false;st.msg='Versuch es wirklich – tippe, was du glaubst. Unsinn-Eingaben zählen nicht als Versuch.';save();render();focusAnswer();return}
+  if(!answers.includes(c)){const soft=softReject(st,c);if(soft){st.msg=soft;st.msgGood=false;save();render();focusAnswer();return}}
   st.tries=(st.tries||0)+1;
   if(answers.includes(c)){
     const help=st.sawSol?'sol':st.tries>1;st.done=true;st.msgGood=true;st.showSol=false;
@@ -1345,7 +1408,7 @@ function vCheckWrite(){
     st.msg=help==='sol'?`✓ Richtig abgeschrieben. „${it.show}“ kommt gleich noch einmal – dann schaffst du es selbst.`:help?`✓ Richtig – diesmal mit Hilfe. „${it.show}“ kommt bald noch einmal.`:S.lvl===4?`✓ Richtig! „${it.show}“ sitzt jetzt sicher. ⭐`:'✓ Richtig, ohne Hilfe! Noch einmal so, dann sitzt das Wort sicher.';
   }else{
     st.level=Math.min(3,(st.level||0)+1);st.msgGood=false;if(st.level>=3)st.sawSol=true;
-    st.msg=vHint(it,c,st.level,U);
+    st.msg=vHint(it,c,st.level,U);st.hintAt=Date.now();st.lastHint=st.msg;
     if(st.level>=3){st.showSol=true;st.val=''}
     save();
   }
@@ -1393,7 +1456,7 @@ function renderVocab(){
     const fbText=st.done?(st.ok?'✓ Richtig! ':`Nicht ganz – richtig ist: „${t.opts[t.ans]}“. `)+(t.type==='rec'?`${it.show} = ${it.de}`:''):'';
     h=q+`<div class="choices">${opts}</div>`+(st.done?fbox(fbText,st.ok)+nextBtn():`<button data-act="v-check" ${st.sel==null?'disabled':''}>Antwort bestätigen</button>`);
   }else{
-    h=(t.mode==='pic'?`<h2>Was ist das? Schreibe das englische Wort.</h2><img class="vimg" src="${esc(imgSrc(it.img))}" alt="Bild">`:`<h2>Schreibe auf Englisch</h2><p class="q vbig">${esc(it.de)}</p>`)+`${it.verb?'<p class="note">Schreibe alle drei Formen hintereinander, mit Leerzeichen dazwischen.</p>':''}`+typedBlock({t:'gap',st,ans:[it.show]});
+    h=(t.mode==='pic'?`<h2>Was ist das? Schreibe das englische Wort.</h2><img class="vimg" src="${esc(imgSrc(it.img))}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><p class="q vbig" style="display:none">${esc(it.de)}</p>`:`<h2>Schreibe auf Englisch</h2><p class="q vbig">${esc(it.de)}</p>`)+`${it.verb?'<p class="note">Schreibe alle drei Formen hintereinander, mit Leerzeichen dazwischen.</p>':''}`+typedBlock({t:'gap',st,ans:[it.show]});
   }
   shellV(h);
 }
@@ -1513,8 +1576,19 @@ function verify(){
    EINGABEN
    ===================================================================== */
 function errorHint(c,U){for(const e of U?.errors||[]){if(RX(e.re).test(c))return e.hint}return null}
+// Freies Schreiben: „A a is bigger than a a.“ oder Buchstabensalat erfüllt keine Aufgabe
+function gibberish(C){
+  const t=C.split(' ').map(x=>x.replace(/[.,!?;:]/g,'')).filter(Boolean);
+  if(t.some((x,i)=>i>0&&x===t[i-1]&&x!=='very'&&x!=='ha'))return true;                      // dasselbe Wort zweimal hintereinander
+  if(t.some(x=>/^[a-z]$/.test(x)&&x!=='a'&&x!=='i'))return true;                             // einzelne Buchstaben
+  if(t.some(x=>/^[a-z]{3,}$/.test(x)&&!/[aeiouy]/.test(x)))return true;                      // „Wörter“ ohne Selbstlaut
+  if(t.some(x=>/(.)\1\1/.test(x)||/(asdf|qwer|yxcv|hjkl)/.test(x)))return true;            // aaa, asdf
+  const cnt={};t.forEach(x=>{if(x.length>=4)cnt[x]=(cnt[x]||0)+1});
+  return Object.entries(cnt).some(([w,n])=>n>=4&&w!=='than');                                  // dasselbe Wort viermal
+}
 function rulesHint(rules,raw,U){
   const S=splitSentences(raw),cs=S.map(s=>canon(s,U)),C=canon(raw,U);
+  if(gibberish(C))return'Schreibe echte englische Sätze mit richtigen Wörtern.';
   for(const r of rules){
     let pass=true,found='';
     switch(r.type){
@@ -1543,6 +1617,14 @@ function evaluate(a,raw,U){
   if(!hint&&a.else)hint=a.else;
   const near=list.some(x=>{const cx=canon(x,U);return cx.length>=4&&lev(c,cx)<=(SENT_TYPES.includes(a.t)?2:1)});
   return{ok:false,hint,near};
+}
+/* Die Hilfe-Stufen lassen sich nicht „durchklicken“: Dieselbe falsche Antwort noch einmal oder eine neue falsche Antwort
+   innerhalb von 3 Sekunden nach dem Hinweis zählt nicht als Versuch (kein Nachteil – das Kind soll nur den Hinweis lesen). */
+function softReject(st,c){
+  st.wrongs??=[];
+  if(st.wrongs.includes(c))return'Das hast du schon probiert. Lies den Hinweis und versuch etwas anderes.'+(st.lastHint?' '+st.lastHint:'');
+  if(st.hintAt&&Date.now()-st.hintAt<3000)return'Nicht so schnell – lies zuerst den Hinweis. '+(st.lastHint||'');
+  st.wrongs.push(c);return null;
 }
 function isJunk(raw,expected){
   const letters=x=>String(x).toLowerCase().replace(/[^a-zäöüß]/g,'');
@@ -1577,7 +1659,8 @@ function checkTyped(){
     complete(a,r.ok);render();focusAnswer();return;
   }
   // Unsinn zählt nicht als Versuch – so lässt sich die Hilfe nicht „durchklicken“
-  if(!r.ok&&isJunk(raw,a.t==='find'?a.fix:(a.ans||[]))){d.junk++;st.msg='Versuch es wirklich – schreib, was du glaubst. Unsinn-Eingaben zählen nicht als Versuch.';st.msgGood=false;save();render();focusAnswer();return}
+  if(!r.ok&&(isJunk(raw,a.t==='find'?a.fix:(a.ans||[]))||(SENT_TYPES.includes(a.t)&&gibberish(canon(raw))))){d.junk++;st.msg='Versuch es wirklich – schreib, was du glaubst. Unsinn-Eingaben zählen nicht als Versuch.';st.msgGood=false;save();render();focusAnswer();return}
+  if(!r.ok){const soft=softReject(st,canon(raw));if(soft){st.msg=soft;st.msgGood=false;save();render();focusAnswer();return}}
   st.tries=(st.tries||0)+1;
   if(!r.ok&&st.firstWrong==null)st.firstWrong=raw;
   if(r.ok){
@@ -1590,13 +1673,14 @@ function checkTyped(){
   }else if(isLadder(a)){
     // Hilfe-Treppe: 1 Hinweis · 2 Satzgerüst (bleibt sichtbar) · 3 Bausteine
     st.level=Math.min(3,(st.level||0)+1);st.msgGood=false;
+    st.hintAt=Date.now();
     if(st.level===1)st.msg=hintText(a,1,r);
     else if(st.level===2){st.frame=true;st.msg=(r.hint?r.hint+' ':'')+(a.t==='correct'&&a.mark?'Hilfe: Die falschen Wörter sind jetzt markiert.':'Hilfe: Unten siehst du ein Satzgerüst. Ergänze die fehlenden Wörter.')+(a.hint2?' '+a.hint2:'')}
     else{startTiles(a);st.msg='Hilfe: Baue die Lösung aus den Bausteinen.'}
-    save();
+    st.lastHint=st.msg;save();
   }else{
     st.level=Math.min(3,(st.level||0)+1);
-    st.msg=hintText(a,st.level,r);st.msgGood=false;
+    st.msg=hintText(a,st.level,r);st.msgGood=false;st.hintAt=Date.now();st.lastHint=st.msg;
     if(st.level>=3){st.showSol=true;st.val=''}
     save();
   }
@@ -1713,7 +1797,9 @@ document.addEventListener('click',e=>{
     case'endearly':cur.d.stepSec=0;save();view='endask';render();window.scrollTo(0,0);return;
     case'next':advance();return;
     case'is-sel':if(!st.idone){st.isel=i;saveSoon();render()}return;
-    case'is-check':if(!st.idone&&st.isel!=null){st.idone=true;cur.d.stepSec=0;save();render()}return;
+    case'is-check':if(!st.idone&&st.isel!=null){
+      if(st.isel!==0&&Date.now()-(st.stepAt||0)<3500&&!st.fastOnce){st.fastOnce=true;st.isel=null;st.imsg='⚡ Nicht raten – lies zuerst die Erklärung oben. Dann wähle noch einmal.';render();return}
+      st.imsg='';st.idone=true;cur.d.stepSec=0;save();render()}return;
     case'is-again':st.ck=1;st.isel=null;st.idone=false;save();render();return;
     case'is-next':st.si=(st.si||0)+1;st.ck=0;st.isel=null;st.idone=false;cur.d.stepSec=0;save();render();window.scrollTo(0,0);return;
     case'mc-sel':if(!st.done){st.sel=i;saveSoon();render()}return;
@@ -1772,9 +1858,9 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{const t=e.target;if(t.classList?.contains('clz')&&cur&&(view==='task'||view==='practice')){const st=currentTask().st;if(!st.done){st.vals[+t.dataset.i]=t.value;saveSoon()}}});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='answer'&&e.target.tagName==='INPUT'){e.preventDefault();view==='vocab'?vCheckWrite():checkTyped()}});
 ['paste','drop'].forEach(ev=>document.addEventListener(ev,e=>{
-  if(e.target.id==='answer'){e.preventDefault();const m=$('#msg');if(m){m.textContent='Einfügen ist hier nicht möglich – bitte selbst tippen.';m.className='fb bad'}}
+  if(e.target.id==='answer'||e.target.classList?.contains('clz')){e.preventDefault();const m=$('#msg');if(m){m.textContent='Einfügen ist hier nicht möglich – bitte selbst tippen.';m.className='fb bad'}}
 }));
-document.addEventListener('copy',e=>{if(e.target.closest&&e.target.closest('.sol'))e.preventDefault()});
+['copy','cut'].forEach(ev=>document.addEventListener(ev,e=>{const el=e.target.closest?e.target:e.target.parentElement;if(el?.closest&&el.closest('.sol,.reading,.cloze,.q,.step'))e.preventDefault()}));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()});
 window.addEventListener('pagehide',save);
 

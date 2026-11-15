@@ -109,6 +109,18 @@ words: {
   wild:    {en: 'wild', de: 'wild', skipGen: true}             // skipGen: nicht automatisch abfragen (z. B. gleich auf Deutsch)
 }
 ```
+**Beispielsätze und Wortgruppen (wichtig für Wiederholungen, Zusatzrunde, Lernkontrolle und Nachüben):**
+```js
+rhino:  {en: 'rhino', de: 'Nashorn', cat: 'animal', ex: ['The ___ is very heavy and has got a big horn on its nose.', 'A ___ is big, grey and strong. It can weigh more than two tons.']},
+strong: {en: 'strong', de: 'stark', cat: 'adj', avoid: ['powerful', 'heavy'], ex: 'An elephant can lift a whole tree. It is very ___.'},
+pigeon: {en: 'pigeon', de: 'Taube', cat: 'animal', ex: ['There are lots of grey ___ in the city park.', 'A ___ is a grey bird. …'], exAns: ['pigeons', 'pigeon']},
+```
+- `ex`: ein Satz oder (besser) **zwei Sätze** mit `___`. So sieht das Kind beim Wiederholen und in der Lernkontrolle einen neuen Satz statt desselben. Der Satz muss das Wort **eindeutig** machen. `exAns`, wenn in der Lücke eine andere Form steht (Mehrzahl, Großschreibung).
+- `cat`: Wortgruppe (z. B. `animal`, `adj`, `noun`, `verb`, `other`). Auswahl-Wiederholungen nehmen die falschen Antworten **nur aus derselben Gruppe** – sonst erkennt man die Lösung an der Wortart. Ohne `cat` (oder mit weniger als 3 anderen Wörtern in der Gruppe) gibt es nur die Schreib-Variante.
+- `avoid`: Wörter derselben Gruppe, die im Beispielsatz **auch passen würden** (strong/powerful, clever/smart) – sie werden nie als falsche Antwort angeboten.
+- `noPl: true`: Wort hat keine sinnvolle Mehrzahl (luck).
+- Ohne `ex` kann das Programm das Wort nur „nackt“ abfragen („Wie heißt das auf Englisch?“) – das soll nicht vorkommen.
+
 Optional: `img` (Bild zum Wort) oder unit-weit `wordImg: 'units/bilder/u4-{id}.jpg'`; `noImg: true`, wenn es kein Bild gibt. Das Bild erscheint bei Schreib-Wiederholungen erst nach dem 1. Fehler als Hilfe.
 
 Wörter, die in Aufgaben vorkommen, werden über `w: ['costume']` verknüpft. Das steuert Wiederholungen, Zusatzaufgaben und die Lernkontrolle. Abgefragt werden automatisch nur Wörter, die in dieser oder einer früheren HÜ schon vorkamen.
@@ -239,6 +251,15 @@ readings: { zoo: { title: '…', text: `…`, gloss: '…',
 ```
 Detailfragen **mit anderen Worten** formulieren als der Text, damit die Suche nach einem Stichwort allein nicht reicht. Die Lehrerseite prüft, ob jedes `ref` genau so im Text steht.
 
+**Wort-Hilfe im Text (`glosses`):** Schwierige Wörter und Wendungen werden im Text gepunktet unterstrichen. Antippen (Handy, Tablet) oder mit der Maus darauf zeigen (Computer) zeigt die Übersetzung. Übersetzt wird **im Zusammenhang**, nicht Wort für Wort:
+```js
+glosses: {'took part': 'nahmen teil', 'had to stop': 'musste stehen bleiben', 'he didn’t care': 'es war ihm egal'}
+```
+- Der englische Teil muss **genau so** im Text stehen (Groß-/Kleinschreibung egal). Die Lehrerseite prüft das.
+- **Unit-Wörter nicht übersetzen** – die sind das Lernziel. Die Lehrerseite warnt, wenn eines dabei ist.
+- Ca. 12–20 Einträge pro Text, nur was über dem Niveau der Klasse liegt. Zu viele Unterstreichungen stören beim Lesen.
+- Ältere Units mit `gloss: 'tall = groß · …'` funktionieren weiter.
+
 **Keine Frage darf ohne den Text lösbar sein.** Die Kinder suchen sich den kürzesten Weg. Darum:
 - Nichts fragen, was man aus dem **Allgemeinwissen** weiß („Ein Nashorn ist schwer“, „Ein Strauß kann nicht fliegen“). Gefragt wird, was **nur in diesem Text** steht: Namen, Zahlen, wer was gesagt hat, was zuerst passiert ist.
 - Am besten Geschichten, in denen etwas **anders** kommt als erwartet (z. B. gewinnt der Strauß das Rennen, weil der Gepard müde wird). Dann führt Raten aus dem Allgemeinwissen sicher zur falschen Antwort.
@@ -247,6 +268,10 @@ Detailfragen **mit anderen Worten** formulieren als der Text, damit die Suche na
 
 ### Keine Abkürzungen in Satz-Aufgaben
 In einem Satz, in dem ein Wort fehlt, steht **kein deutsches Wort in Klammern** – sonst übersetzt das Kind nur das Wort und liest den Satz gar nicht. Stattdessen `first: true`: Das Kind sieht den Anfangsbuchstaben und für jeden weiteren Buchstaben einen Strich (z. B. „d _ _ _ _ _ _ _ _“). Welches Wort es ist, ergibt sich erst aus dem Satz. Darum muss der Satz das Wort **eindeutig** machen (z. B. „Crocodiles can kill people. They are very d…“). Die Lehrerseite meldet Lücken mit deutschem Wort in Klammern. Die Hilfe-Stufen sind dann: 1. zurück zum Satz (und Bild, falls vorhanden) · 2. die ersten Buchstaben · 3. Lösung. Die automatischen Wiederholungen arbeiten genauso.
+
+**Grammatik-Lücken, die das Lesen verlangen:** Statt „A cheetah is ___ than an antelope. (fast)“ besser zwei Adjektive anbieten: „… (fast or slow?)“ mit `else: 'Lies den Satz genau: Welches der beiden Adjektive passt?'`. So muss das Kind den Satz verstehen, bevor es die Form bildet.
+
+**Freies Schreiben (`open`):** Immer eine Inhalts-Regel dazugeben (z. B. `{type: 'count', res: U4_ANIMALS, n: 2, hint: 'Vergleiche echte Tiere …'}`), sonst erfüllt „A a is bigger than a a.“ die Aufgabe. Buchstabensalat und Fantasiewörter erkennt das Programm zusätzlich selbst; sie zählen nicht als Versuch.
 
 Ausnahmen: Bei Übersetzungs-Aufgaben (`sent`, Buchstabensalat, Vokabeltrainer) ist das deutsche Wort die Aufgabe selbst. Bei Grammatik-Lücken darf die **englische Grundform** in Klammern stehen („(fast)“), weil das Bilden der Form die eigentliche Arbeit ist. Ab der HÜ, in der Komparativ und Superlativ gemischt vorkommen, muss das Kind den Satz lesen, um die richtige Form zu wählen.
 
@@ -260,6 +285,12 @@ Grammatik wird **nicht** als lange Textseite erklärt, sondern in kleinen Schrit
  summary: 'Kurzes Adjektiv + **-er** + **than**'}
 ```
 Pro Schritt höchstens 3–4 Zeilen. In `check`/`why` keine Sternchen-Formatierung (wird dort nicht umgewandelt).
+
+### Schutz vor Abkürzungen (eingebaut, nichts zu tun)
+- Die automatische Übersetzung des Browsers ist abgeschaltet; Lesetexte, Aufgaben und Lösungen lassen sich nicht markieren oder kopieren; Einfügen in Antwortfelder ist gesperrt.
+- Schreibaufgaben: Dieselbe falsche Antwort noch einmal oder eine neue falsche Antwort innerhalb von 3 Sekunden nach dem Hinweis zählt nicht als Versuch – die Hilfen lassen sich nicht „durchklicken“.
+- Verständnisfragen in Erklär-Schritten: schnell und falsch → „Nicht raten – lies zuerst die Erklärung“.
+- Was sich **nicht** verhindern lässt: ein zweites Gerät mit Übersetzer oder KI, Hilfe von anderen, und der Blick in die öffentlichen Dateien auf GitHub (dort stehen alle Lösungen). Hinweise darauf geben die Werte „auf Anhieb richtig“ und der Lernstand auf der Karte.
 
 ### Grundregel: Kein Durchkommen durch Probieren – aber auch kein Steckenbleiben
 - **Nach einem Fehler wird nie dieselbe Aufgabe mit weniger Möglichkeiten wiederholt.** Auswahlaufgaben (mc, odd, sort, dialog, order, match, Lückentext mit Auswahl) haben **einen** Versuch. Danach gibt es die Lösung mit Erklärung, und später kommt eine **neue** Aufgabe zur selben Regel bzw. zum selben Wort.
