@@ -595,6 +595,9 @@ The dodo is a famous example of an animal that died out. Its story shows us that
   /* ---------- Vokabeltraining: 29 fett gedruckte Wörter + 16 unregelmäßige Verben ---------- */
   vocab: {
     title: 'Vokabeln – Unit 4',
+    // Verteiltes Lernen: an 1 Tag sicher = 80 %, an einem zweiten Tag noch gewusst = 100 % (siehe ANLEITUNG)
+    // strenger: spaced: [70, 85, 100] (drei Tage) · aus: Zeile löschen
+    spaced: [80, 100],
     items: [
       {img: 'units/bilder/u4-ago.jpg', en: 'ago', de: 'vor (zeitlich, z. B. vor zwei Tagen)', ex: 'Two days ___, I saw a crocodile at the river.', wrong: ['tomorrow', 'next', 'soon'], trap: {before: 'Fast – „vor zwei Tagen“ heißt two days ago. Das Wort steht nach der Zeitangabe.'}},
       {img: 'units/bilder/u4-farmer.jpg', pic: true, en: 'farmer', de: 'Bauer, Bäuerin', ex: 'The ___ has got cows, pigs and a big field.', wrong: ['scientist', 'desert', 'reason']},
