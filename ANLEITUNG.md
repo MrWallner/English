@@ -149,6 +149,8 @@ Jede Aufgabe hat `t` (Typ). Optional `topic` ('vocabulary' | 'grammar' | 'readin
 - erscheint die Regel auf der Karte unter „Regel üben“, wenn der letzte Versuch dazu falsch war,
 - kommt nach einem Fehler eine Wiederholung zu genau dieser Regel,
 - können die Kinder die Regel nach der Abgabe nachüben.
+**Regeln so fein wie die Erklär-Schritte:** Eine Regel ist ein Lernschritt, der an **einer** Stelle erklärt wird (z. B. „Komparativ: -er + than“, „Schreibweise: bigger, heavier“, „lange Adjektive: more / the most“, „good – better / bad – worse“). Keine Sammelregel wie „Steigerung“. Sonst holt eine Wiederholung nach einem Fehler bei „faster“ womöglich eine Aufgabe mit „more interesting“, das noch gar nicht erklärt wurde. Braucht eine Aufgabe mehrere Schritte, bekommt sie die Regel des **spätesten** Schritts (z. B. ein Lückentext mit bigger und better → good/bad-Regel).
+
 Jede Regel braucht mindestens 4 Aufgaben vom Typ `gap`, `find`, `order` oder `sent` (in `extras` oder in den HÜs), damit das Nachüben abwechslungsreich ist. Freie Schreibaufgaben (`open`, `pic` mit `multi`) bekommen keine `rule`.
 
 | Typ | Felder | Hinweis |
