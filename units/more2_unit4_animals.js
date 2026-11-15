@@ -190,7 +190,7 @@ Today, Bahati weighs more than two tons. She is much bigger and stronger than Jo
         {q: 'How often did Joseph give the baby rhino milk?', right: 'Every three hours.', wrong: ['Every eight hours.', 'Every morning.', 'Twice a day.'], tip: 'Lies den zweiten Absatz.', ref: 'gave it milk every three hours'},
         {q: 'What does the rhino’s name mean in English?', right: 'Luck.', wrong: ['Friend.', 'Strong.', 'Forever.'], tip: 'Lies das Ende des zweiten Absatzes.', ref: 'that means “luck” in Swahili'},
         {q: 'What do Joseph and Bahati do every morning?', right: 'They walk around the farm.', wrong: ['They sleep in the barn.', 'They drink milk together.', 'They look for other rhinos.'], tip: 'Lies den dritten Absatz.', ref: 'Every morning, they walk around the farm together.'},
-        {q: 'Joseph says that Bahati is dangerous.', tf: false, tip: 'Joseph sagt: Die Leute glauben, Nashörner sind gefährlich – aber Bahati ist sanft (gentle).', ref: 'But Bahati is gentle.'}
+        {q: 'Joseph thinks that Bahati is not dangerous.', tf: true, tip: 'Joseph sagt: Die Leute glauben, Nashörner sind gefährlich – aber Bahati ist sanft (gentle).', ref: 'But Bahati is gentle.'}
       ]
     },
     dodo: {
@@ -213,7 +213,7 @@ The dodo is a famous example of an animal that died out. Its story shows us that
         {q: 'Where was the dodo’s home?', right: 'On an island in the Indian Ocean.', wrong: ['On an island near Europe.', 'In a forest in Africa.', 'On a ship from Europe.'], tip: 'Lies den ersten Absatz.', ref: 'a small island in the Indian Ocean'},
         {q: 'Why weren’t the dodos afraid of anything?', right: 'For a long time, they had no enemies.', wrong: ['They were bigger than the sailors.', 'They could run very fast.', 'Their nests were high in the trees.'], tip: 'Lies den zweiten Absatz.', ref: 'For a long time, they had no enemies'},
         {q: 'What happened to the dodos’ eggs?', right: 'Animals from the ships ate them.', wrong: ['The sailors took them to Europe.', 'Scientists put them in a museum.', 'The dodos left them in the trees.'], tip: 'Lies den dritten Absatz.', ref: 'These animals caught the dodos and ate their eggs.'},
-        {q: 'We know the exact date when the last dodo died.', tf: false, tip: 'Vierter Absatz: Niemand weiß genau, wann.', ref: 'Nobody knows exactly when.'},
+        {q: 'Nobody can say exactly when the last dodo died.', tf: true, tip: 'Vierter Absatz: Niemand weiß genau, wann.', ref: 'Nobody knows exactly when.'},
         {q: 'How do scientists learn about dodos today?', right: 'From old pictures and bones.', wrong: ['From dodos in zoos.', 'From old dodo eggs.', 'From sailors on Mauritius.'], tip: 'Lies den vierten Absatz.', ref: 'old pictures and bones'}
       ]
     }
