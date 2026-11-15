@@ -80,7 +80,7 @@ registerUnit({
     {t: 'odd', items: ['pumpkin', 'ghost', 'stairs', 'witch'], odd: 'stairs', why: 'stairs (Treppe) hat nichts mit Halloween zu tun.', w: ['stairs']},
     {t: 'letters', word: 'polite', de: 'höflich', w: ['polite']},
     {t: 'letters', word: 'vampire', de: 'Vampir', w: ['vampire']},
-    {t: 'gap', q: 'Mia walks up the ___ to her room. (Treppe)', ans: ['stairs'], w: ['stairs']},
+    {t: 'gap', q: 'Mia walks up the ___ to her room.', first: true, ans: ['stairs'], w: ['stairs']},
     {t: 'mc', rule: 'should / shouldn’t + Grundform', topic: 'grammar', q: 'Which sentence is correct?', right: 'You shouldn’t scare your sister.', wrong: ['You shouldn’t to scare your sister.', 'You shouldn’t scares your sister.', 'You shouldn’t scaring your sister.'], why: 'Nach shouldn’t steht die Grundform: scare.'},
     {t: 'transform', rule: 'should / shouldn’t + Grundform', q: 'Mach den Satz bejahend (should).', from: "You shouldn't wear a costume.", ans: ['You should wear a costume.']},
     {t: 'transform', rule: 'should / shouldn’t + Grundform', q: 'Mach den Satz verneinend (shouldn’t).', from: 'We should watch the scary film.', ans: ["We shouldn't watch the scary film."]},
