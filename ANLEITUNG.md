@@ -235,6 +235,20 @@ vocab: {
 - Wertung je Wort: erkennen 25 % · im Satz 50 % · mit Hilfe schreiben 75 % · zweimal ohne Hilfe (mit anderen Wörtern dazwischen) 100 %. Fehler werfen höchstens eine Stufe zurück.
 - Auf der Lehrerseite: eigener Link mit Frist, **Vorschau Vokabeln** und **Wortliste ansehen** zum Korrekturlesen.
 
+### Vokabeltraining: verteiltes Lernen (`spaced`)
+Ohne `spaced` gilt ein Wort als „sicher“ (100 %), sobald es zweimal ohne Hilfe geschrieben wurde – das geht an einem einzigen Tag. Mit `spaced` zählt ein Wort mehr, wenn das Kind es an **verschiedenen Tagen** gewusst hat:
+```js
+vocab: { title: '…', spaced: [80, 100], items: [...] }     // an 1 Tag sicher = 80 % · an einem zweiten Tag noch gewusst = 100 %
+vocab: { title: '…', spaced: [70, 85, 100], items: [...] } // strenger: drei Tage
+```
+- „Sicher“ wird ein Wort wie bisher (zweimal ohne Hilfe, dazwischen mindestens 8 andere Aufgaben).
+- An jedem späteren Kalendertag beginnt das Training mit „Weißt du es noch?“: Jedes sichere Wort wird einmal ohne Hilfe abgefragt. Gewusst → nächste Stufe. Vergessen → das Wort wird neu geübt; schafft es das Kind am selben Tag wieder bis „sicher“, zählt der Tag trotzdem.
+- Wie lange oder wie oft geübt wird, ist egal. Es zählt nur, dass die Tage verschieden sind.
+- Sind alle Wörter für heute erledigt, sagt das Programm das und nennt den Wert, der am nächsten Tag möglich ist.
+- Die Kinder können **mehrmals abgeben**; es zählt die neueste Karte. Auf der Karte steht, an wie vielen Tagen geübt wurde.
+- Der Kalendertag wird auf dem Gerät des Kindes gezählt. Das Kind muss immer **dasselbe Gerät und denselben Browser** verwenden.
+- In der Vorschau gibt es den Knopf „Nächsten Tag simulieren“.
+
 ### Fehler werden aufgearbeitet – verstehen, dann anwenden
 - Nach einem Fehler kommen **zwei** Wiederholungen: zuerst **verstehen** (das Wort/die Regel im Satz erkennen, Auswahl), später **anwenden** (selbst in einen Satz schreiben). Je Fehler höchstens 2, pro HÜ höchstens 10.
 - Wörter kommen dabei **in einem neuen Satz** wieder – aus den Zusatzaufgaben, aus früheren HÜs, aus den Beispielsätzen des Vokabeltrainings und aus dem Beispielsatz beim Wort selbst (siehe unten). Das gilt auch für die Lernkontrolle und das Nachüben.

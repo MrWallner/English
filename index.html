@@ -195,7 +195,7 @@ const CONFIG = {
   flagAt: 6,               // ab so vielen Schnellklicks/Unsinn-Eingaben erscheint ein Hinweis auf der Karte
   maxReviews: 10,          // höchstens so viele Wiederholungsaufgaben pro Hausübung (je Fehler höchstens 2)
   readSecPerWord: 0.25,    // Lesetext: „Gelesen“-Knopf frühestens nach so vielen Sekunden pro Wort (sehr schneller Leser)
-  version: '9.6'
+  version: '9.7'
 };
 /* ===================================================================== */
 const UNITS = [], LOAD_ERRORS = [];
@@ -1228,7 +1228,7 @@ function renderHome(){
   ${knownUsers()}
   <p class="note">Nicht du? Trag deinen eigenen Namen und deine Klasse ein, bevor du startest. Mach die Aufgabe auf <b>demselben Gerät</b> fertig – auf einem anderen Gerät beginnst du von vorn.</p>
   <div id="hwlist"></div>
-  ${isV?`<p class="note">So funktioniert’s: Ziel ist, dass du <b>alle Wörter sicher schreiben</b> kannst. Jedes Wort lernst du in Stufen: erkennen → im Satz verwenden → mit Hilfe schreiben → ohne Hilfe schreiben. Wörter, die noch nicht sitzen, kommen immer wieder. Es gibt keine Mindestzeit – übe am besten öfter kurz. Mit <b>⏸ Pause</b> hörst du auf und machst später über denselben Link weiter. Wenn du fertig bist, tippe auf <b>Abgeben</b>, mach einen Screenshot von der Karte und lade ihn in edhu hoch.</p></section>`:`<p class="note">So funktioniert’s: <b>Ziel sind 100 %</b> – die bekommst du, wenn du alle Aufgaben und am Ende die kurze Lernkontrolle machst. Fehler kosten keine Prozente. Das dauert etwa ${Math.round(CONFIG.minSeconds/60)}–20 Minuten. Bist du schneller als ${Math.round(CONFIG.minSeconds/60)} Minuten, kommen Zusatzaufgaben; nach spätestens ${Math.round(CONFIG.capSeconds/60)} Minuten geht es direkt zur Lernkontrolle. Mit <b>⏸ Pause</b> hörst du auf und machst später über denselben Link weiter – das ist <b>keine</b> Abgabe. Am Ende bekommst du eine <b>Ergebniskarte</b>: Mach davon einen Screenshot und lade ihn in edhu hoch.</p></section>`}`;
+  ${isV?`<p class="note">So funktioniert’s: Ziel ist, dass du <b>alle Wörter sicher schreiben</b> kannst. Jedes Wort lernst du in Stufen: erkennen → im Satz verwenden → mit Hilfe schreiben → ohne Hilfe schreiben. Wörter, die noch nicht sitzen, kommen immer wieder. ${vSpaced(UNITS[FOCUS.ui])?`<b>Wichtig:</b> Ein Wort zählt erst voll, wenn du es an <b>${vDayVal(UNITS[FOCUS.ui]).length} verschiedenen Tagen</b> gewusst hast (${vDayVal(UNITS[FOCUS.ui]).map((x,k)=>`${k+1} ${k?'Tage':'Tag'} = ${x} %`).join(', ')}). Fang also früh an und übe an mehreren Tagen – auch kurz. Du kannst mehrmals abgeben; es zählt deine neueste Karte.`:'Es gibt keine Mindestzeit – übe am besten öfter kurz.'} Mit <b>⏸ Pause</b> hörst du auf und machst später über denselben Link weiter. Wenn du fertig bist, tippe auf <b>Abgeben</b>, mach einen Screenshot von der Karte und lade ihn in edhu hoch.</p></section>`:`<p class="note">So funktioniert’s: <b>Ziel sind 100 %</b> – die bekommst du, wenn du alle Aufgaben und am Ende die kurze Lernkontrolle machst. Fehler kosten keine Prozente. Das dauert etwa ${Math.round(CONFIG.minSeconds/60)}–20 Minuten. Bist du schneller als ${Math.round(CONFIG.minSeconds/60)} Minuten, kommen Zusatzaufgaben; nach spätestens ${Math.round(CONFIG.capSeconds/60)} Minuten geht es direkt zur Lernkontrolle. Mit <b>⏸ Pause</b> hörst du auf und machst später über denselben Link weiter – das ist <b>keine</b> Abgabe. Am Ende bekommst du eine <b>Ergebniskarte</b>: Mach davon einen Screenshot und lade ihn in edhu hoch.</p></section>`}`;
   renderHWList();
 }
 // Wer hat auf diesem Gerät schon begonnen? → „Weitermachen als …“ (verhindert Neustart wegen anders geschriebenem Namen)
@@ -1246,7 +1246,9 @@ function renderHWList(){
     const U=UNITS[FOCUS.ui],v=u?.units?.[U.id]?.voc,over=FOCUS.deadline&&Date.now()>FOCUS.deadline;
     let status=over?'Frist abgelaufen – du kannst trotzdem üben':'Noch nicht begonnen – starten',cls='hwbtn';
     if(v?.submitted){status=`✓ Abgegeben · ${v.submitted.wert} % – Karte ansehen oder weiterüben`;cls+=' done'}
-    else if(v&&Object.keys(v.items).length){const s=vStats(v,U);status=`Stand ${s.pct} % · ${s.c[4]} von ${s.N} Wörtern sicher – weiterüben`}
+    else if(v&&Object.keys(v.items).length&&!vSpaced(U)){const s=vStats(v,U);status=`Stand ${s.pct} % · ${s.c[4]} von ${s.N} Wörtern sicher – weiterüben`}
+    if(vSpaced(U)&&v&&Object.keys(v.items).length&&!over){const s=vStats(v,U),neu=s.N-s.c[4];
+      status=`Stand ${s.pct} %${v.submitted?' (abgegeben: '+v.submitted.wert+' %)':''} · Heute: ${s.due?s.due+(s.due===1?' Wort':' Wörter')+' bestätigen':''}${s.due&&neu?' und ':''}${neu?neu+' weiterlernen':''}${!s.due&&!neu?'alles erledigt – an einem anderen Tag wiederkommen':''}`;cls='hwbtn'}
     el.innerHTML=`<div class="unit"><h3>${esc(unitLabel(U))}</h3><div class="hwrow"><button class="${cls}" data-act="start" data-u="${FOCUS.ui}" data-h="V"><b>${esc(vTitle(U))}</b><span class="note">${status}</span></button></div></div>`;return;
   }
   el.innerHTML=UNITS.map((U,ui)=>FOCUS&&FOCUS.ui!==ui?'':`<div class="unit"><h3>${esc(unitLabel(U))}</h3>${U.homeworks.map((hw,i)=>{
@@ -1265,6 +1267,9 @@ const flagged=p=>(p.quick+p.junk)>=Math.max(CONFIG.flagAt,Math.round(.1*(p.tasks
 const isOrange=p=>['early','deadline','vdeadline'].includes(statusOf(p));
 function cardInfo(p){
   const min=`${Math.round(p.sec/60)} Min.`;
+  if(p.kind==='voc'&&p.sp){const D=p.dv||[70,85,100],top=D.length-1,work=p.N-p.dd.reduce((a,x)=>a+x,0),lab=k=>k?`an ${k+1} Tagen gewusst`:'an 1 Tag sicher';
+    return{bigLabel:'Vokabel-Stand',sub:`geübt an ${p.days} ${p.days===1?'Tag':'Tagen'}`,tiles:[[min,'Übungszeit'],[`${p.dd[top]}/${p.N}`,lab(top)],[`${p.dd[top-1]}/${p.N}`,lab(top-1)]],
+      line:(top>1?`an 1 Tag sicher ${p.dd[0]} · `:'')+`noch in Arbeit ${work}`,none:`Alle Wörter an ${top+1} Tagen gewusst – super!`}}
   if(p.kind==='voc'){const one=p.one??null;return{bigLabel:'Vokabel-Stand',tiles:[[min,'Übungszeit'],[`${p.counts[4]}/${p.N}`,'sicher (2× ohne Hilfe)'],one!=null?[`${one}/${p.N}`,'1× ohne Hilfe']:[`${p.counts[3]}/${p.N}`,'mit Hilfe schreiben']],
     line:`${one!=null?`mit Hilfe ${p.counts[3]-one} · `:''}im Satz ${p.counts[2]} · erkannt ${p.counts[1]} · noch neu ${p.counts[0]}`,none:'Alle Wörter sitzen sicher – super!'}}
   const sub=p.total?`${p.done} von ${p.total} Aufgaben ${p.lost?'gezählt':'erledigt'}${p.lost?` · ${p.lost} zu schnell geklickt`:''}${p.capped?` · nach ${Math.round(CONFIG.capSeconds/60)} Min. verkürzt`:''}`:'';
@@ -1288,7 +1293,7 @@ function renderCard(p){
   <section class="card"><h3 style="margin-top:0">📸 So gibst du ab</h3>
     <ol class="steps"><li>Mach einen <b>Screenshot</b> von der Karte oben:<br><span class="note">iPad/iPhone: Ein-/Aus-Taste + Lauter-Taste gleichzeitig (mit Home-Taste: Home + Ein/Aus) · Android: Ein/Aus + Leiser · Windows: Windows-Taste + Umschalt + S</span></li><li>Lade das Bild in <b>edhu</b> bei der Aufgabe hoch.</li></ol>
     <p><button data-act="saveimg">Ergebnis als Bild speichern</button> <button class="secondary" data-act="${cur?.preview?'teacher':'home'}">Zur Übersicht</button> ${p.kind==='voc'&&cur?.v?'<button class="secondary" data-act="vresume">Weiterüben</button>':''}</p>
-    ${p.kind==='voc'?'<p class="note">Du kannst nach dem Abgeben weiterüben. Die abgegebene Karte bleibt dabei gleich.</p>':''}
+    ${p.kind==='voc'?(p.sp?'<p class="note">Du kannst an einem anderen Tag weiterüben und dann <b>noch einmal abgeben</b>. Lade in edhu immer deine neueste Karte hoch.</p>':'<p class="note">Du kannst nach dem Abgeben weiterüben. Die abgegebene Karte bleibt dabei gleich.</p>'):''}
     <p class="note" id="imgnote">Klappt der Screenshot nicht? Dann speichere die Karte mit dem Knopf als Bild.</p></section>
   ${p.kind!=='voc'&&cur?.d?practiceTeaser():''}`;
 }
@@ -1373,13 +1378,27 @@ function vItems(U){
   return U._vi=order;
 }
 const vItem=id=>vItems(cur.unit).find(x=>x.id===id);
+/* Verteiltes Lernen (vocab.spaced: true): Ein Wort zählt mehr, wenn es an VERSCHIEDENEN Tagen ohne Hilfe gewusst wurde.
+   „sicher“ am Lerntag = 70 % · an einem zweiten Tag bestätigt = 85 % · an einem dritten Tag bestätigt = 100 %.
+   Wie lange oder wie oft ein Kind übt, ist egal – es zählt nur, dass die Tage verschieden sind (Kalendertag auf diesem Gerät).
+   Pro Wort gespeichert: d1 = Tag, an dem es zum ersten Mal sicher war · cday = Tag der letzten Wertung · conf = Zahl der Bestätigungen (0–2). */
+// Werte je Zahl der Tage: spaced: true → [70, 85, 100] · oder eigene Liste, z. B. spaced: [80, 100] (zwei Tage genügen)
+const vDayVal=U=>{const x=(U||cur?.unit)?.vocab?.spaced;return Array.isArray(x)&&x.length>=2?x:[70,85,100]};
+const vMaxConf=U=>vDayVal(U).length-1;
+let DAYSHIFT=0;   // nur in der Vorschau: „Nächster Tag“ simulieren
+function dayKey(){const d=new Date(Date.now()+(cur?.preview?DAYSHIFT:0)*864e5),p=n=>String(n).padStart(2,'0');return`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`}
+const vSpaced=U=>!!(U||cur?.unit)?.vocab?.spaced;
+const vConfDue=S=>!!S&&S.lvl===4&&(S.conf||0)<vMaxConf()&&S.cday!==dayKey();
+const vVal=(S,sp,U)=>{const l=S?.lvl||0,D=vDayVal(U);return sp?(l===4?D[Math.min(D.length-1,S.conf||0)]:V_VAL[l]*D[0]/100):V_VAL[l]};
 function vNewState(){return{items:{},n:0,seconds:0,sessionSec:0,stepSec:0,quick:0,junk:0,cur:null,lastId:null,submitted:null,started:new Date().toISOString()}}
 function vStats(v,U){
   const L=vItems(U),c=[0,0,0,0,0];let sum=0;const weak=[];
   let one=0;
-  L.forEach(it=>{const S=v.items[it.id],l=S?.lvl||0;c[l]++;sum+=V_VAL[l];if(l===3&&S.wins>=1)one++;if(l<4)weak.push([l,it.show])});
+  const sp=vSpaced(U),dd=[0,0,0];let due=0;
+  L.forEach(it=>{const S=v.items[it.id],l=S?.lvl||0;c[l]++;sum+=vVal(S,sp,U);if(l===3&&S.wins>=1)one++;if(l<4)weak.push([l,it.show]);if(l===4)dd[Math.min(vMaxConf(U),S.conf||0)]++;if(sp&&vConfDue(S))due++});
   weak.sort((a,b)=>a[0]-b[0]);
-  return{pct:L.length?Math.round(sum/L.length):0,c,one,N:L.length,weak:weak.map(x=>x[1])};
+  // dd = sicher an 1 / 2 / 3 Tagen · due = heute zu bestätigen · maxNext = was am nächsten Übungstag höchstens erreichbar ist
+  return{pct:L.length?Math.round(sum/L.length):0,c,one,N:L.length,weak:weak.map(x=>x[1]),sp,dd,due,dv:vDayVal(U),days:(v.days||[]).length};
 }
 function vPick(){
   const v=cur.v,L=vItems(cur.unit),S=v.items;
@@ -1387,6 +1406,13 @@ function vPick(){
   const learning=intro.filter(it=>S[it.id].lvl<3);
   const due=intro.filter(it=>S[it.id].due<=v.n&&it.id!==v.lastId);
   const introduce=()=>{const it=fresh[0];S[it.id]={lvl:0,wins:0,due:v.n+1,lastWin:null};return{type:'learn',id:it.id}};
+  if(vSpaced()){
+    // zuerst: Wörter von früheren Tagen bestätigen („Weißt du es noch?“)
+    let conf=intro.filter(it=>vConfDue(S[it.id])&&it.id!==v.lastId);if(!conf.length)conf=intro.filter(it=>vConfDue(S[it.id]));
+    if(conf.length){const it=conf[Math.floor(Math.random()*conf.length)];return{type:'write',id:it.id,confirm:true}}
+    // alles für heute geschafft → einmal pro Tag Bescheid sagen
+    if(!fresh.length&&intro.length&&intro.every(it=>S[it.id].lvl===4)&&v.dayEnd!==dayKey())return{type:'dayend',id:null};
+  }
   if(fresh.length&&learning.length<4)return introduce();   // höchstens 4 Wörter gleichzeitig in der Lernphase
   let pool=due.filter(it=>S[it.id].lvl<4);if(!pool.length)pool=due;
   if(!pool.length)pool=intro.filter(it=>it.id!==v.lastId&&S[it.id].lvl<4).sort((a,b)=>S[a.id].due-S[b.id].due).slice(0,3);
@@ -1399,7 +1425,7 @@ function vPick(){
   return{type:l===0?'rec':l===1?'ctx':'write',id:it.id};
 }
 function vMake(t){
-  const U=cur.unit,all=vItems(U),it=all.find(x=>x.id===t.id);t.st={};
+  const U=cur.unit,all=vItems(U),it=all.find(x=>x.id===t.id);t.st={};if(t.type==='dayend')return t;
   if(t.type==='rec'){
     const ok=x=>x.id!==it.id&&x.de!==it.de&&!(it.avoid||[]).includes(x.en)&&!(x.avoid||[]).includes(it.en);
     let pool=all.filter(x=>ok(x)&&x.verb===it.verb);if(pool.length<3)pool=all.filter(ok);
@@ -1419,17 +1445,23 @@ function vNextTask(){
 }
 function vAfter(id,type,ok,help){
   const v=cur.v,S=v.items[id];v.n++;v.stepSec=0;
+  const sp=vSpaced(),today=dayKey();let ev=null;
+  if(sp){v.days??=[];if(!v.days.includes(today))v.days.push(today)}
   if(type==='rec'){if(ok)S.lvl=Math.max(S.lvl,1);S.due=v.n+(ok?2:1)}
   if(type==='ctx'){if(ok)S.lvl=Math.max(S.lvl,2);else S.lvl=Math.min(S.lvl,1);S.due=v.n+(ok?3:2)}
   if(type==='write'){
     if(ok&&!help){
-      if(S.lastWin==null||v.n-S.lastWin>=4)S.wins++;
+      if(S.lastWin==null||v.n-S.lastWin>=(sp?8:4))S.wins++;   // verteilt: mind. 8 andere Aufgaben zwischen den zwei richtigen Antworten
       S.lastWin=v.n;S.lvl=Math.max(S.lvl,3);if(S.wins>=2)S.lvl=4;
-      S.due=v.n+(S.lvl>=4?20:6)+Math.floor(Math.random()*3);
+      if(sp&&S.lvl===4){
+        if(!S.d1){S.d1=today;S.cday=today;S.conf=0;ev='first'}
+        else if(S.cday!==today&&(S.conf||0)<vMaxConf()){S.conf=(S.conf||0)+1;S.cday=today;ev='conf'}   // an einem weiteren Tag gewusst (oder am selben Tag neu gelernt)
+      }
+      S.due=v.n+(S.lvl>=4?20:sp?9:6)+Math.floor(Math.random()*3);
     }else if(help==='sol'){S.wins=0;S.lvl=S.lvl>=3?3:S.lvl;S.due=v.n+2}   // Lösung abgeschrieben → kein Aufstieg, kommt bald wieder
     else{S.wins=0;S.lvl=3;S.due=v.n+3}
   }
-  save();
+  save();return ev;
 }
 function vFormCheck(it,c,U){
   const tgt=it.forms.map(f=>canonV(f,U).split(' ')),tok=c.split(' ');
@@ -1461,9 +1493,9 @@ function vCheckWrite(){
   st.tries=(st.tries||0)+1;
   if(answers.includes(c)){
     const help=st.sawSol?'sol':st.tries>1;st.done=true;st.msgGood=true;st.showSol=false;
-    vAfter(it.id,'write',true,help);
+    const ev=vAfter(it.id,'write',true,help);
     const S=v.items[it.id];
-    st.msg=help==='sol'?`✓ Richtig abgeschrieben. „${it.show}“ kommt gleich noch einmal – dann schaffst du es selbst.`:help?`✓ Richtig – diesmal mit Hilfe. „${it.show}“ kommt bald noch einmal.`:S.lvl===4?`✓ Richtig! „${it.show}“ sitzt jetzt sicher. ⭐`:'✓ Richtig, ohne Hilfe! Noch einmal so, dann sitzt das Wort sicher.';
+    st.msg=ev==='first'?`✓ Richtig! „${it.show}“ sitzt für heute (${vDayVal()[0]} %). An einem anderen Tag fragst du es noch einmal ab.`:ev==='conf'?(S.conf>=vMaxConf()?`✓ Noch gewusst! „${it.show}“ hast du jetzt an ${S.conf+1} Tagen gewusst – 100 % ⭐`:`✓ Noch gewusst! „${it.show}“ hast du jetzt an ${S.conf+1} Tagen gewusst (${vDayVal()[S.conf]} %).`):help==='sol'?`✓ Richtig abgeschrieben. „${it.show}“ kommt gleich noch einmal – dann schaffst du es selbst.`:help?`✓ Richtig – diesmal mit Hilfe. „${it.show}“ kommt bald noch einmal.`:S.lvl===4?`✓ Richtig! „${it.show}“ sitzt jetzt sicher. ⭐`:'✓ Richtig, ohne Hilfe! Noch einmal so, dann sitzt das Wort sicher.';
   }else{
     st.level=Math.min(3,(st.level||0)+1);st.msgGood=false;if(st.level>=3)st.sawSol=true;
     st.msg=vHint(it,c,st.level,U);st.hintAt=Date.now();st.lastHint=st.msg;
@@ -1490,18 +1522,20 @@ function startVocab(ui){
     if(Object.keys(v.items).length){vSubmit('vdeadline');return}
     alert('Die Abgabefrist ist abgelaufen. Du kannst trotzdem üben – abgeben geht aber nicht mehr.');
   }
-  if(v.submitted){cardData=v.submitted;view='card';render();window.scrollTo(0,0);return}
-  view='vocab';if(!v.cur)vNextTask();else{render();window.scrollTo(0,0)}
+  if(v.submitted&&(!vSpaced(U)||vOver())){cardData=v.submitted;view='card';render();window.scrollTo(0,0);return}
+  view='vocab';if(!v.cur||v.cur.type==='dayend'||(vSpaced(U)&&v.cur.st&&!v.cur.st.tries&&!v.cur.st.done))vNextTask();else{render();window.scrollTo(0,0)}
 }
 function startVocabPreview(ui){cur={u:{name:'Vorschau',klasse:'–'},unit:UNITS[ui],ui,h:'V',v:vNewState(),preview:true};view='vocab';vNextTask()}
 function vSubmit(status){
   const v=cur.v,s=vStats(v,cur.unit);
   const p={kind:'voc',unit:cur.unit.id,unitLabel:unitLabel(cur.unit),hwTitle:vTitle(cur.unit),h:'V',n:cur.u.name,k:cur.u.klasse,wert:s.pct,sec:v.seconds,lvl:'-',
-    counts:s.c,one:s.one,N:s.N,weak:s.weak.slice(0,10),quick:v.quick,junk:v.junk,tasks:v.n,date:dateStr(),finished:true,status};
+    counts:s.c,one:s.one,N:s.N,sp:s.sp,dd:s.dd,dv:s.dv,days:s.days,weak:s.weak.slice(0,10),quick:v.quick,junk:v.junk,tasks:v.n,date:dateStr(),finished:true,status};
   p.code=sig(p);v.submitted=p;save();cardData=p;view='card';render();window.scrollTo(0,0);
 }
 function renderVocab(){
-  const v=cur.v,t=v.cur,it=vItem(t.id),st=t.st;
+  const v=cur.v,t=v.cur;
+  if(t.type==='dayend')return shellV(dayEndHTML());
+  const it=vItem(t.id),st=t.st;
   const sk='v'+v.n+'-'+t.id;if(!shownAt[sk])shownAt[sk]=Date.now();
   let h='';
   if(t.type==='learn'){
@@ -1514,16 +1548,25 @@ function renderVocab(){
     const fbText=st.done?(st.ok?'✓ Richtig! ':`Nicht ganz – richtig ist: „${t.opts[t.ans]}“. `)+(t.type==='rec'?`${it.show} = ${it.de}`:''):'';
     h=q+`<div class="choices">${opts}</div>`+(st.done?fbox(fbText,st.ok)+nextBtn():`<button data-act="v-check" ${st.sel==null?'disabled':''}>Antwort bestätigen</button>`);
   }else{
-    h=(t.mode==='pic'?`<h2>Was ist das? Schreibe das englische Wort.</h2><img class="vimg" src="${esc(imgSrc(it.img))}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><p class="q vbig" style="display:none">${esc(it.de)}</p>`:`<h2>Schreibe auf Englisch</h2><p class="q vbig">${esc(it.de)}</p>`)+`${it.verb?'<p class="note">Schreibe alle drei Formen hintereinander, mit Leerzeichen dazwischen.</p>':''}`+typedBlock({t:'gap',st,ans:[it.show]});
+    h=(t.mode==='pic'?`<h2>Was ist das? Schreibe das englische Wort.</h2><img class="vimg" src="${esc(imgSrc(it.img))}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><p class="q vbig" style="display:none">${esc(it.de)}</p>`:`<h2>${t.confirm?'Weißt du es noch? Schreibe auf Englisch':'Schreibe auf Englisch'}</h2><p class="q vbig">${esc(it.de)}</p>`)+`${it.verb?'<p class="note">Schreibe alle drei Formen hintereinander, mit Leerzeichen dazwischen.</p>':''}`+typedBlock({t:'gap',st,ans:[it.show]});
   }
   shellV(h);
+}
+function dayEndHTML(){
+  const v=cur.v,s=vStats(v,cur.unit),D=s.dv,top=D.length-1,left=s.dd.slice(0,top).reduce((a,x)=>a+x,0);
+  const next=Math.round(s.dd.reduce((a,n,k)=>a+n*D[Math.min(top,k+1)],0)/s.N);
+  return`<h2>${left?'Für heute ist alles geschafft! 🎉':`Alle Wörter sitzen – an ${top+1} Tagen gewusst! ⭐`}</h2>
+  <p class="q">Dein Stand: ${s.pct} %</p>
+  ${left?`<div class="fb"><b>So kommst du weiter:</b> Öffne den Link an einem <b>anderen Tag</b> wieder. Dann fragst du ${left} ${left===1?'Wort':'Wörter'} noch einmal ab – das geht schnell. Damit sind beim nächsten Mal bis zu <b>${next} %</b> möglich.</div>`:'<div class="fb good">Mehr geht nicht – gib jetzt deine Ergebniskarte ab.</div>'}
+  <p><button data-act="vsubmit">${v.submitted?'Neue Ergebniskarte abgeben':'Ergebniskarte abgeben'}</button></p>
+  <p><button class="secondary" data-act="next">Trotzdem weiterüben</button></p>`;
 }
 function shellV(inner){
   const v=cur.v,s=vStats(v,cur.unit);
   setHeader(unitLabel(cur.unit),cur.preview?'Vorschau – nichts wird gespeichert':CONFIG.title);
-  const right=cur.preview?'<button class="secondary small" data-act="next" style="margin-left:auto">Überspringen ⏭</button>':v.submitted?'<button class="secondary small" data-act="vcard" style="margin-left:auto">Meine Ergebniskarte</button>':vOver()?'':'<button class="secondary small" data-act="vsubmit" style="margin-left:auto">Abgeben</button>';
+  const right=cur.preview?`${s.sp?'<button class="secondary small" data-act="vnextday" style="margin-left:auto">📅 Nächsten Tag simulieren</button>':''}<button class="secondary small" data-act="next" ${s.sp?'':'style="margin-left:auto"'}>Überspringen ⏭</button>`:v.submitted&&!s.sp?'<button class="secondary small" data-act="vcard" style="margin-left:auto">Meine Ergebniskarte</button>':vOver()?'':`<button class="secondary small" data-act="vsubmit" style="margin-left:auto">${v.submitted?'Neu abgeben':'Abgeben'}</button>`;
   app.innerHTML=`<section class="card compact"><div class="row"><strong>${esc(vTitle(cur.unit))}</strong><span class="note">Stand: <b>${s.pct} %</b></span></div><div class="progress"><div style="width:${s.pct}%"></div></div>
-  <div class="vdist"><span>sicher <b>${s.c[4]}</b></span><span>1× ohne Hilfe <b>${s.one}</b></span><span>mit Hilfe <b>${s.c[3]-s.one}</b></span>${[2,1,0].map(i=>`<span>${V_NAMES[i]} <b>${s.c[i]}</b></span>`).join('')}</div><div id="clock" class="clock"></div></section>
+  <div class="vdist">${s.sp?s.dv.map((_,k)=>`<span>an ${k+1} ${k?'Tagen':'Tag'}${k===s.dv.length-1?' ⭐':''} <b>${s.dd[k]}</b></span>`).reverse().join(''):`<span>sicher <b>${s.c[4]}</b></span>`}<span>1× ohne Hilfe <b>${s.one}</b></span><span>mit Hilfe <b>${s.c[3]-s.one}</b></span>${[2,1,0].map(i=>`<span>${V_NAMES[i]} <b>${s.c[i]}</b></span>`).join('')}</div><div id="clock" class="clock"></div></section>
   <section class="card" id="task">${inner}</section>
   <div class="nav"><button class="secondary small" data-act="${cur.preview?'teacher':'vpause'}">${cur.preview?'← Zur Lehrerseite':'⏸ Pause'}</button>${right}</div>`;
   updateClock();
@@ -1608,7 +1651,7 @@ function renderTeacher(){
   const firstReal=UNITS.findIndex(U=>!U.demo);
   const links=UNITS.map((U,ui)=>U.demo?'':`<details class="unit" ${ui===firstReal?'open':''}><summary><h3 style="display:inline">${esc(unitLabel(U))}</h3>${ui===firstReal?'':' <span class="note">(ältere Unit – antippen zum Aufklappen)</span>'}</summary>${U.homeworks.map((h,i)=>{const l=hwLink(U,i+1,'');return`<div class="linkbox"><b>HÜ ${hwNo(U,i+1)} – ${esc(h.title)}</b>
     <label class="note" style="font-weight:400">Abgabefrist (leer lassen = keine Frist)<input type="datetime-local" class="input dl" data-u="${ui}" data-h="${i+1}"></label>
-    <div class="hwrow" style="margin:0"><input class="input linkout" readonly value="${esc(l)}" style="font-size:.8rem;margin:0"><button class="secondary small" data-act="copylink" data-link="${esc(l)}" style="align-self:center">Kopieren</button></div></div>`}).join('')}${U.vocab?(()=>{const l=hwLink(U,'V','');return`<div class="linkbox"><b>📚 ${esc(vTitle(U))}</b>
+    <div class="hwrow" style="margin:0"><input class="input linkout" readonly value="${esc(l)}" style="font-size:.8rem;margin:0"><button class="secondary small" data-act="copylink" data-link="${esc(l)}" style="align-self:center">Kopieren</button></div></div>`}).join('')}${U.vocab?(()=>{const l=hwLink(U,'V','');return`<div class="linkbox"><b>📚 ${esc(vTitle(U))}</b>${vSpaced(U)?`<p class="note" style="margin:4px 0">Verteiltes Lernen: Ein Wort zählt je nach Zahl der Tage, an denen das Kind es gewusst hat: ${vDayVal(U).map((x,k)=>`${k+1} ${k?'Tage':'Tag'} = ${x} %`).join(' · ')}. Plane mindestens eine Woche Frist ein. Die Kinder können mehrmals abgeben – es zählt die neueste Karte. Wichtig: immer <b>dasselbe Gerät</b>.</p>`:''}
     <label class="note" style="font-weight:400">Abgabefrist (leer lassen = keine Frist)<input type="datetime-local" class="input dl" data-u="${ui}" data-h="V"></label>
     <div class="hwrow" style="margin:0"><input class="input linkout" readonly value="${esc(l)}" style="font-size:.8rem;margin:0"><button class="secondary small" data-act="copylink" data-link="${esc(l)}" style="align-self:center">Kopieren</button></div></div>`})():''}</details>`).join('');
   app.innerHTML=`<section class="card"><h2>Links für deine Hausübungen</h2><p class="note">Jede Hausübung hat einen eigenen Link. Wähle bei Bedarf eine Abgabefrist – der Link darunter ändert sich dann automatisch. Diesen Link stellst du in die edhu-Aufgabe. Nur Links von dieser Seite funktionieren; wird die Frist in der Adresse verändert, wird der Link ungültig. Die zuletzt gewählte Frist merkt sich diese Seite. <b>Nachfrist für ein einzelnes Kind:</b> späteres Datum wählen, Link kopieren und nur diesem Kind schicken – auch eine wegen Fristende abgeschlossene HÜ öffnet sich damit wieder. ${location.protocol==='file:'?'<br><b>Achtung:</b> Du hast die Datei gerade lokal geöffnet – die richtigen Links siehst du, sobald die Seite online ist.':''}</p>${links}</section>
@@ -1846,7 +1889,8 @@ document.addEventListener('click',e=>{
   if(cur&&view==='vocab'){
     const v=cur.v,t=v.cur,vst=t?.st;
     switch(act){
-      case'next':if(t.type==='learn'){v.n++;v.stepSec=0;vNextTask()}else if(vst.done||cur.preview)vNextTask();return;
+      case'next':if(t.type==='dayend'){v.dayEnd=dayKey();vNextTask()}else if(t.type==='learn'){v.n++;v.stepSec=0;vNextTask()}else if(vst.done||cur.preview)vNextTask();return;
+      case'vnextday':if(cur.preview){DAYSHIFT++;v.dayEnd=null;vNextTask()}return;
       case'v-say':{const it=vItem(t.id);say(it.verb?it.forms.join(', '):it.en);return}
       case'v-sel':if(!vst.done){vst.sel=i;saveSoon();render()}return;
       case'v-check':{if(vst.done||vst.sel==null)return;const sk='v'+v.n+'-'+t.id;if(shownAt[sk]&&Date.now()-shownAt[sk]<1200)v.quick++;
@@ -1854,7 +1898,10 @@ document.addEventListener('click',e=>{
       case'typed-check':vCheckWrite();return;
       case'vpause':v.stepSec=0;clockState='';save();view='vpause';render();window.scrollTo(0,0);return;
       case'vcard':cardData=v.submitted;view='card';render();window.scrollTo(0,0);return;
-      case'vsubmit':{const s=vStats(v,cur.unit);if(confirm(`Du hast ${s.pct} % erreicht (${s.c[4]} von ${s.N} Wörtern sicher).\n\nWenn du abgibst, wird deine Ergebniskarte festgehalten. Du kannst danach weiterüben, aber die Karte ändert sich nicht mehr.\n\nJetzt abgeben?`))vSubmit('voc');return}
+      case'vsubmit':{const s=vStats(v,cur.unit);if(cur.preview){vSubmit('voc');return}
+        const txt=s.sp?`Du hast ${s.pct} % erreicht.\n\nVon ${s.N} Wörtern hast du ${s.dv.map((_,k)=>`${s.dd[k]} an ${k+1} ${k?'Tagen':'Tag'}`).reverse().join(', ')} gewusst.\n\nDu kannst an einem anderen Tag weiterüben und danach noch einmal abgeben – lade dann die neue Karte hoch.\n\nJetzt abgeben?`
+          :`Du hast ${s.pct} % erreicht (${s.c[4]} von ${s.N} Wörtern sicher).\n\nWenn du abgibst, wird deine Ergebniskarte festgehalten. Du kannst danach weiterüben, aber die Karte ändert sich nicht mehr.\n\nJetzt abgeben?`;
+        if(confirm(txt))vSubmit('voc');return}
     }
     return;
   }
