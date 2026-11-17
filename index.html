@@ -195,7 +195,7 @@ const CONFIG = {
   flagAt: 6,               // ab so vielen Schnellklicks/Unsinn-Eingaben erscheint ein Hinweis auf der Karte
   maxReviews: 10,          // höchstens so viele Wiederholungsaufgaben pro Hausübung (je Fehler höchstens 2)
   readSecPerWord: 0.25,    // Lesetext: „Gelesen“-Knopf frühestens nach so vielen Sekunden pro Wort (sehr schneller Leser)
-  version: '9.7'
+  version: '9.9'
 };
 /* ===================================================================== */
 const UNITS = [], LOAD_ERRORS = [];
@@ -253,6 +253,8 @@ function nameProblem(name){
   if(name.length<3||parts.length<2)return'Bitte gib deinen Vor- und Nachnamen ein.';
   const last=parts[parts.length-1],letters=last.replace(/[^A-Za-zÄÖÜäöüß]/g,'');
   if(letters.length<2||(/\./.test(last)&&letters.length<=3))return'Bitte schreib deinen ganzen Nachnamen – nicht nur Anfangsbuchstaben.';
+  const first=parts[0],fl=first.replace(/[^A-Za-zÄÖÜäöüß]/g,'');
+  if(fl.length<2||(/\./.test(first)&&fl.length<=3))return'Bitte schreib deinen ganzen Vornamen – nicht nur Anfangsbuchstaben.';
   return null;
 }
 function dateStr(d=new Date()){const p=n=>String(n).padStart(2,'0');return`${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`}
@@ -411,14 +413,49 @@ function newSession(){return{queue:[],index:0,seconds:0,stepSec:0,phase:'core',u
 const usable=t=>t.t!=='listen'||canSpeak();
 function buildHW(d,U,h){U.homeworks[h-1].tasks.forEach((t,i)=>{if(usable(t))addTask(d,{...clone(t),key:`c${h}-${i}`})})}
 
+let pendingUser=null;
 function readUser(){
+  if(pendingUser){const p=pendingUser;pendingUser=null;return p}
   const name=niceName($('#name')?.value||''),k=($('#klasse')?.value||'').trim().toUpperCase().replace(/\s+/g,'');
   return{name,k};
+}
+/* Vertippt? Bevor ein NEUER Name startet, mit den Namen vergleichen, die auf diesem Gerät schon gespeichert sind.
+   Ähnlich = gleiche Wörter in anderer Reihenfolge · ein Wort gleich, das andere ähnlich (Tippfehler, Spitzname, Anfang gleich) · ganzer Name 1–2 Buchstaben anders.
+   Dann fragen: „Bist du …?“ – so findet das Kind seinen Fortschritt wieder und du bekommst immer dieselbe Schreibweise. */
+let simSkip=new Set(),simLast=null;
+function nameSimilar(a,b){
+  const A=normName(a).split(' '),B=normName(b).split(' ');if(normName(a)===normName(b))return true;
+  if([...A].sort().join(' ')===[...B].sort().join(' '))return true;
+  if(lev(A.join(' '),B.join(' '))<=2)return true;
+  const close=(x,y)=>x===y||(x.length>=3&&y.length>=3&&(x.startsWith(y)||y.startsWith(x)))||(Math.min(x.length,y.length)>=4&&lev(x,y)<=1);
+  const fa=A[0],la=A[A.length-1],fb=B[0],lb=B[B.length-1];
+  return(fa===fb&&close(la,lb))||(la===lb&&close(fa,fb))||(fa===lb&&close(la,fb))||(la===fb&&close(fa,lb));
+}
+function similarUsers(name,k){
+  return Object.entries(store.users||{}).filter(([key,u])=>key!==userKey(name,k)&&Object.keys(u.units||{}).length&&
+    ((normName(u.klasse)===normName(k)&&nameSimilar(u.name,name))||normName(u.name)===normName(name))).map(([key,u])=>({key,u}));
+}
+function startInfo(u){
+  const out=[];UNITS.forEach(U=>{const x=u.units?.[U.id];if(!x)return;
+    U.homeworks.forEach((h,i)=>{const d=x[i+1];if(d)out.push(`HÜ ${hwNo(U,i+1)} ${d.finished?'fertig':'mit '+progress(d,U,i+1).pct+' % begonnen'}`)});
+    if(x.voc)out.push(`${vTitle(U)} ${x.voc.submitted?'abgegeben':'begonnen'}`)});
+  return out.slice(0,3).join(', ');
+}
+function checkSimilar(ui,h,name,k){
+  if(cur?.preview||store.users[userKey(name,k)]||simSkip.has(userKey(name,k)))return false;
+  simLast={name,k};
+  const S=similarUsers(name,k);if(!S.length)return false;
+  app.innerHTML=`<section class="card"><h2>Bist du das?</h2><p>Auf diesem Gerät hat schon jemand mit einem ähnlichen Namen gearbeitet:</p>
+    ${S.map(({key,u})=>`<button class="hwbtn" style="width:100%;margin:6px 0" data-act="sim-yes" data-key="${esc(key)}" data-u="${ui}" data-h="${h}"><b>Ja, ich bin ${esc(u.name)} (${esc(u.klasse)})</b><span class="note">${esc(startInfo(u))}</span></button>`).join('')}
+    <p style="margin-top:14px"><button class="secondary" data-act="sim-no" data-u="${ui}" data-h="${h}">Nein, ich bin ${esc(name)} (${esc(k)}) – neu beginnen</button></p>
+    <p class="note">Wähle deinen Namen, damit dein Fortschritt erhalten bleibt und deine Lehrkraft alle deine Karten richtig zuordnen kann.</p></section>`;
+  window.scrollTo(0,0);return true;
 }
 function startHW(ui,h){
   const {name,k}=readUser();
   const np=nameProblem(name);if(np){alert(np);$('#name').focus();return}
   if(!k){alert('Bitte gib deine Klasse ein.');$('#klasse').focus();return}
+  if(checkSimilar(ui,h,name,k))return;
   const U=UNITS[ui];
   store.last={name,klasse:k};
   const key=userKey(name,k);
@@ -598,7 +635,7 @@ function addControl(d){
   const words=[...new Set([...weakIds(d),...shuffle(hwWords(U,cur.h)),...shuffle(introduced(U,cur.h))])].slice(0,plan.words);
   words.forEach(w=>{const W=U.words[w];
     const c=genCtx(w,'write',used)||genCtx(w,'write',new Set());   // möglichst ein Satz, den das Kind noch nicht hatte
-    if(c&&c.ans?.length)addTask(d,{t:c.t==='sent'?'sent':'gap',control:true,q:c.q,first:c.first,ans:c.ans,w:[w],key:'ctl-w-'+w});
+    if(c&&c.ans?.length)addTask(d,{t:c.t==='sent'?'sent':'gap',control:true,q:c.q,first:c.first,...(c.img?{img:c.img}:{}),...(c.imgs?{imgs:c.imgs}:{}),ans:c.ans,w:[w],key:'ctl-w-'+w});
     else addTask(d,{t:'gap',control:true,q:`Wie heißt das auf Englisch? → ${W.de}`,ans:[W.en,...(W.alt||[])],w:[w],key:'ctl-w-'+w})});
   const sents=shuffle(plan.sentences.filter(s=>!used.has('s:'+canon(s.ans[0])))).concat(shuffle(plan.sentences)).filter((s,i,arr)=>arr.indexOf(s)===i).slice(0,plan.nSent);
   sents.forEach((s,i)=>addTask(d,{t:'sent',control:true,q:'Übersetze ins Englische: '+s.de,ans:s.ans,key:'ctl-s-'+i}));
@@ -887,6 +924,9 @@ function taskHTML(a){
     case'transform':html=rTyped(a,'Forme den Satz um',`<p class="q">${esc(a.q)}</p><div class="srcsent">${esc(a.from)}</div>`);break;
     case'correct':{const n=a.n||1;html=rTyped(a,'Verbessere den Satz',`<p class="q">${esc(a.q||`In diesem Satz ${n===1?'ist ein Fehler':'sind '+n+' Fehler'}. Schreib den ganzen Satz richtig.`)}</p><div class="srcsent">${a.st.level>=2&&a.mark?markWords(a.sentence,a.mark):esc(a.sentence)}</div>`);break}
   }
+  // Bildfrage ohne Bild (z. B. in einer früher erstellten Lernkontrolle): Bild zum Wort ergänzen – gibt es keines, nach dem deutschen Wort fragen
+  if(!a.img&&!a.imgs&&a.t==='gap'&&/(welches tier ist das|dieses tier|was ist das)/i.test(a.q||'')&&a.w?.[0]&&cur.unit.words[a.w[0]]){
+    const p=imgOfWord(a.w[0]);if(p)a.img=p;else a.q=`Wie heißt das auf Englisch? → ${cur.unit.words[a.w[0]].de}`}
   if(a.st?.noImg)return`<h2>Bild fehlt</h2>${fbox('Das Bild zu dieser Aufgabe konnte nicht geladen werden. Die Aufgabe wird übersprungen und zählt nicht gegen dich.',null)}<p><button data-act="next" id="nextbtn">Weiter →</button></p>`;
   if(a.t!=='reading'&&(a.img||a.imgs))html=html.replace('</h2>','</h2>'+imgStrip(a));
   if(a.st?.quickWrong)html=html.replace('</h2>','</h2><div class="fb bad"><b>⚡ Zu schnell geklickt – diese Aufgabe zählt nicht.</b> Lies zuerst genau und denk nach, bevor du antwortest!</div>');
@@ -1329,7 +1369,7 @@ function drawCard(p){
 }
 function saveImage(){
   const p=cardData,c=drawCard(p);
-  const fname=`${p.kind==='voc'?'Vokabeln':'HUE'+p.h}_${(p.n||'ergebnis').replace(/[^A-Za-z0-9ÄÖÜäöüß]+/g,'_')}.jpg`;
+  const fname=`${p.kind==='voc'?'Vokabeln':'HUE'+hwNo(UNITS.find(U=>U.id===p.unit),p.h)}_${(p.n||'ergebnis').replace(/[^A-Za-z0-9ÄÖÜäöüß]+/g,'_')}.jpg`;
   // Teilen-Menü nur auf Handy/Tablet (dort: „Bild sichern“ → Fotos). Am Computer direkt herunterladen.
   const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   c.toBlob(b=>{
@@ -1504,15 +1544,16 @@ function vCheckWrite(){
   }
   render();focusAnswer();
 }
-function needUser(){
+function needUser(ui){
   const {name,k}=readUser();
   const np=nameProblem(name);if(np){alert(np);$('#name').focus();return null}
   if(!k){alert('Bitte gib deine Klasse ein.');$('#klasse').focus();return null}
+  if(ui!=null&&checkSimilar(ui,'V',name,k))return null;
   store.last={name,klasse:k};const key=userKey(name,k);store.users[key]??={name,klasse:k,units:{}};store.users[key].name=name;return store.users[key];
 }
 const vOver=()=>cur?.v?.deadline&&Date.now()>cur.v.deadline;
 function startVocab(ui){
-  const u=needUser();if(!u)return;
+  const u=needUser(ui);if(!u)return;
   const U=UNITS[ui];u.units[U.id]??={};
   const v=u.units[U.id].voc??=vNewState();
   if(v.submitted?.status==='vdeadline'&&FOCUS?.deadline&&FOCUS.deadline>Date.now()){v.submitted=null}   // Nachfrist öffnet wieder
@@ -1703,7 +1744,10 @@ function rulesHint(rules,raw,U){
       case'someSentence':pass=cs.some(s=>RX(r.re).test(s));break;
       case'differentStarts':{const st=cs.map(s=>s.split(' ').slice(0,r.words||2).join(' '));pass=new Set(st).size===st.length;break}
     }
-    if(!pass){const h=(r.hint||'Lies die Aufgabe noch einmal genau.').replace('{found}',found);
+    if(!pass){let h=(r.hint||'Lies die Aufgabe noch einmal genau.').replace('{found}',found);
+      // Aufzählung (z. B. „giraffe, elefant, rhino“): sagen, WELCHES Wort nicht gezählt wurde
+      if(r.type==='count'&&/,/.test(raw)){const miss=raw.split(/[,;]+/).map(x=>x.trim()).filter(Boolean).filter(x=>!r.res.some(re=>RX(re).test(canon(x,U))));
+        if(miss.length)h+=` Nicht gezählt: ${miss.map(x=>'„'+x+'“').join(', ')} – prüfe die Schreibweise.`}
       // Satz für Satz: zeigen, was schon gelungen ist
       if(per&&per.length>1&&per.some(Boolean)){const ok=per.map((x,i)=>x?i+1:0).filter(Boolean),bad=per.map((x,i)=>x?0:i+1).filter(Boolean);
         return`Satz ${ok.join(' und ')} passt ✓. Schau dir Satz ${bad.join(' und ')} noch einmal an: ${h}`}
@@ -1866,6 +1910,10 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
   const act=b.dataset.act,i=+b.dataset.i,j=+b.dataset.j;
   switch(act){
+    case'sim-yes':case'sim-no':{
+      let name,k;if(act==='sim-yes'){const u=store.users[b.dataset.key];if(!u)return;name=u.name;k=u.klasse}
+      else{if(!simLast)return;name=simLast.name;k=simLast.k;simSkip.add(userKey(name,k))}
+      pendingUser={name,k};if(b.dataset.h==='V')startVocab(+b.dataset.u);else startHW(+b.dataset.u,+b.dataset.h);return}
     case'start':if(b.dataset.h==='V')startVocab(+b.dataset.u);else startHW(+b.dataset.u,+b.dataset.h);return;
     case'vresume':if(cur?.v){if(!cur.preview&&!cur.v.submitted&&vOver()){vSubmit('vdeadline');return}lastActivity=Date.now();cur.v.sessionSec=cur.v.sessionSec||0;view='vocab';if(!cur.v.cur)vNextTask();else{render();window.scrollTo(0,0)}}return;
     case'vpreview':startVocabPreview(+b.dataset.u);return;
