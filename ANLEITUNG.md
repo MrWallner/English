@@ -25,11 +25,11 @@ Dort findest du:
 
 Die Adresse ohne Zusatz zeigt den Kindern nur den Hinweis, den Link der Lehrkraft zu verwenden.
 
-**Nachfrist für einzelne Kinder (z. B. krank):** Auf der Lehrerseite bei der HÜ ein späteres Datum wählen, Link kopieren und nur diesem Kind schicken. Das funktioniert, wenn das Kind die HÜ noch nicht begonnen hat oder sie begonnen, aber die Seite nach Fristende nicht mehr geöffnet hat – dann macht es genau dort weiter. Hat das Kind die Seite nach Fristende schon geöffnet, ist die HÜ mit „Frist abgelaufen“ abgeschlossen; dann hilft der neue Link derzeit nicht. Das Datum auf der Karte ist durch das Prüfzeichen geschützt, eine Abgabe mit Nachfrist erkennst du also am Datum.
+**Nachfrist für einzelne Kinder (z. B. krank):** Auf der Lehrerseite bei der HÜ ein späteres Datum wählen, Link kopieren und nur diesem Kind schicken. Das Kind macht genau dort weiter, wo es war. Auch eine HÜ, die wegen Fristende schon mit „Frist abgelaufen“ abgeschlossen wurde, öffnet sich mit dem neuen Link wieder (nicht aber eine, die das Kind selbst vorzeitig abgegeben oder fertig gemacht hat). Achtung umgekehrt: Ein Link mit einem schon vergangenen Datum schließt eine begonnene HÜ – der richtige Link öffnet sie wieder, der Fortschritt bleibt. Das Datum auf der Karte ist durch das Prüfzeichen geschützt, eine Abgabe mit Nachfrist erkennst du also am Datum.
 
-**Hilfen für die Kinder:** 30 Minuten vor Fristende warnt die Uhrzeile („⚠ Abgabe endet um 20:00“), am Abgabetag auch die Startseite. Wer auf dem Gerät schon begonnen hat, kann auf der Startseite einfach auf seinen Namen tippen („Weitermachen als …“) – so beginnt niemand wegen eines anders geschriebenen Namens von vorn. Beim Lesen eines Textes pausiert die Uhr erst nach 4 Minuten ohne Berührung (sonst nach 90 Sekunden, bei Schreibaufgaben nach 2,5 Minuten). Vorgelesen wird nur mit einer englischen Stimme; hat ein Gerät keine, werden Höraufgaben weggelassen. Auf der Ergebniskarte fehlt der Kopf der Seite, damit sie auch auf kleinen Handys ganz auf einen Screenshot passt.
+**Hilfen für die Kinder:** 30 Minuten vor Fristende warnt die Uhrzeile („⚠ Abgabe endet um 20:00“), am Abgabetag auch die Startseite. Name und Klasse der letzten Eingabe sind vorausgefüllt. Wer auf dem Gerät schon begonnen hat, kann auf der Startseite auf seinen Namen tippen („Schon begonnen auf diesem Gerät“). Abgekürzte Vor- oder Nachnamen („Hans Z.“, „H. Zimmermann“) werden abgelehnt. Tippt ein Kind einen Namen, der einem gespeicherten ähnelt (andere Reihenfolge, Tippfehler, Spitzname), fragt das Programm „Bist du …?“ – so beginnt niemand wegen eines anders geschriebenen Namens von vorn. Beim Lesen eines Textes pausiert die Uhr erst nach 4 Minuten ohne Berührung (sonst nach 90 Sekunden, bei Schreibaufgaben nach 2,5 Minuten). Vorgelesen wird nur mit einer englischen Stimme; hat ein Gerät keine, werden Höraufgaben weggelassen. Auf der Ergebniskarte fehlt der Kopf der Seite, damit sie auch auf kleinen Handys ganz auf einen Screenshot passt.
 
-**Pausieren:** Mit **⏸ Pause** speichern die Kinder ihren Stand, die Uhr bleibt stehen. Der Pause-Bildschirm ist grau gestreift und sagt deutlich „noch NICHT abgegeben“ – lädt ein Kind trotzdem davon ein Foto hoch, siehst du sofort, dass es keine Abgabe ist (und den aktuellen Stand). Später öffnen sie denselben Link auf demselben Gerät und machen genau dort weiter. Achtung: Auf iPad/iPhone (Safari) kann ein Stand verloren gehen, wenn die Seite länger als 7 Tage nicht geöffnet wurde – Fristen von höchstens einer Woche sind deshalb ideal.
+**Pausieren:** Mit **⏸ Pause** speichern die Kinder ihren Stand, die Uhr bleibt stehen. Der Pause-Bildschirm ist grau gestreift und sagt deutlich „noch NICHT abgegeben“ – lädt ein Kind trotzdem davon ein Foto hoch, siehst du sofort, dass es keine Abgabe ist (und den aktuellen Stand). Später öffnen sie denselben Link auf demselben Gerät und machen genau dort weiter. Achtung: Auf iPad/iPhone (Safari) kann ein Stand verloren gehen, wenn die Seite länger als 7 Tage nicht geöffnet wurde. Bei längeren Fristen den Kindern sagen, dass sie den Link mindestens einmal pro Woche öffnen sollen.
 
 **Was die Kinder am Ende abgeben:** eine Ergebniskarte (Screenshot) mit einem dieser Köpfe:
 - **✓ Hausübung erledigt** – 100 %, mit Lernstand aus der Lernkontrolle
@@ -47,7 +47,7 @@ Die Adresse ohne Zusatz zeigt den Kindern nur den Hinweis, den Link der Lehrkraf
 
 **Hilfe bei Schreibaufgaben (Sätze):** 1. Fehler → gezielter Hinweis · 2. Fehler → **Satzgerüst**, das beim Tippen sichtbar bleibt (z. B. „You ____ ____ ____.“) · 3. Fehler → **Bausteine**: Die Lösung wird Satz für Satz aus gemischten Wörtern gebaut, dazu 1–2 falsche Bausteine. Niemand muss sich eine Lösung merken, nachdenken muss man trotzdem. Mit Hilfe gelöste Aufgaben zählen nicht als „auf Anhieb richtig“ und kommen später noch einmal. **Unsinn-Eingaben zählen nicht als Versuch** – die Hilfen lassen sich nicht „durchklicken“.
 
-**Vokabeltraining:** Wer die angezeigte Lösung nur abschreibt, steigt keine Stufe auf (das Wort kommt bald wieder). Unsinn zählt nicht als Versuch. Die Karte zeigt „sicher“ und „1× ohne Hilfe“ getrennt. Der Hinweis zu schnellen Antworten/Unsinn erscheint erst, wenn es im Verhältnis zur Zahl der Aufgaben viele sind (ab 10 %, mindestens 6).
+**Vokabeltraining:** Wer die angezeigte Lösung nur abschreibt, steigt keine Stufe auf (das Wort kommt bald wieder). Unsinn zählt nicht als Versuch. Mit verteiltem Lernen (Unit 4) zählt ein Wort 80 %, wenn es an einem Tag sicher ist, und 100 %, wenn es an einem anderen Tag noch gewusst wird; die Karte zeigt, an wie vielen Tagen geübt wurde, und die Kinder dürfen mehrmals abgeben (es zählt die neueste Karte). Details siehe Teil 3, „verteiltes Lernen“. Der Hinweis zu schnellen Antworten/Unsinn erscheint erst, wenn es im Verhältnis zur Zahl der Aufgaben viele sind (ab 10 %, mindestens 6).
 
 **Beispiel-Unit:** Auf der Lehrerseite gibt es „Beispiel · Neue Aufgabentypen“ mit allen Aufgabentypen zum Ausprobieren (nur Vorschau, keine Schüler-Links).
 
@@ -62,15 +62,16 @@ Nach Fristende kann niemand mehr starten oder weitermachen, die eigene Ergebnisk
 ## Teil 2: Eine neue Unit hinzufügen
 
 1. **Fotografiere die Seiten der Unit**: Wortliste (Vocabulary), Grammatik-Kasten, wichtige Texte/Übungen.
-2. Öffne einen neuen Chat mit Claude, lade **diese Anleitung**, **die Unit-3-Datei als Beispiel** und **die Fotos** hoch und schreibe:
+2. Öffne einen neuen Chat mit Claude, lade **diese Anleitung**, **die Unit-4-Datei als Beispiel** und **die Fotos** hoch und schreibe:
 
-   > Erstelle aus diesen Buchseiten eine neue Unit-Datei für meinen Englisch-Lerntrainer. Halte dich genau an das Format und die Qualitätsregeln in ANLEITUNG.md, Teil 3. Die Datei für Unit 3 ist das Muster. Klasse: 2. Klasse Mittelschule, Buch: MORE! 2. Vier Hausübungen à ca. 15 Minuten.
+   > Erstelle aus diesen Buchseiten eine neue Unit-Datei für meinen Englisch-Lerntrainer. Halte dich genau an das Format und die Qualitätsregeln in ANLEITUNG.md, Teil 3. Die Datei für Unit 4 (more2_unit4_animals.js) ist das Muster. Klasse: 2. Klasse Mittelschule, Buch: MORE! 2. Vier Hausübungen à ca. 15 Minuten, HÜ-Nummern ab hwStart: 8, Vokabeltraining mit spaced: [80, 100].
 
-3. Die fertige Datei (z. B. `more2_unit4_food.js`) auf GitHub in den Ordner `units` hochladen.
+3. Die fertige Datei (z. B. `more2_unit5_food.js`) auf GitHub in den Ordner `units` hochladen.
 4. In `index.html` ganz oben in der Liste `units:` eine Zeile ergänzen – **neueste Unit zuerst**:
    ```js
    units: [
-     'units/more2_unit4_food.js',
+     'units/more2_unit5_food.js',
+     'units/more2_unit4_animals.js',
      'units/more2_unit3_halloween.js'
    ],
    ```
